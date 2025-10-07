@@ -8,8 +8,8 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetClose,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from '../ui/separator';
 
@@ -36,14 +36,14 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <div className="flex items-center">
+        <div className="flex-1 flex justify-start">
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-bold text-xl">Glittershop</span>
           </Link>
         </div>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex flex-1 justify-center items-center space-x-6 ml-6">
+        <nav className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center space-x-6">
             <Link href="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                 Home
             </Link>
@@ -58,21 +58,46 @@ export default function Header() {
             </Link>
         </nav>
 
-        <div className="flex items-center space-x-1">
-          <Button variant="ghost" size="icon" aria-label="Search">
+        <div className="flex-1 flex justify-end items-center space-x-1">
+          <Button variant="ghost" size="icon" aria-label="Search" className="hidden md:inline-flex">
             <Search className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" aria-label="User Profile" asChild>
+          <Button variant="ghost" size="icon" aria-label="User Profile" asChild className="hidden md:inline-flex">
             <Link href="/login">
               <User className="h-5 w-5" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Shopping Cart">
+          <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="hidden md:inline-flex">
             <ShoppingCart className="h-5 w-5" />
           </Button>
+          <nav className="hidden md:flex items-center space-x-6 ml-6">
+            <Link href="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                Home
+            </Link>
+            <Link href="/#products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                Colecciones
+            </Link>
+            <Link href="/gift-guide" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                Gift Guide
+            </Link>
+            <Link href="/interactive-gift-guide" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                Interactive Guide
+            </Link>
+        </nav>
 
-          {/* Mobile Nav */}
-          <div className="md:hidden">
+          {/* Mobile Nav Trigger */}
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" aria-label="Search" className="md:hidden">
+              <Search className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="User Profile" asChild className="md:hidden">
+              <Link href="/login">
+                <User className="h-5 w-5" />
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="md:hidden">
+              <ShoppingCart className="h-5 w-5" />
+            </Button>
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
