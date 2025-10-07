@@ -28,7 +28,7 @@ export default function Header() {
 
         <div className="flex-1 flex justify-end items-center space-x-1">
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center space-x-6 mr-6">
+          <nav className="hidden md:flex items-center space-x-6 ml-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -61,7 +61,7 @@ export default function Header() {
                   <span className="sr-only">Abrir menú</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left">
+              <SheetContent side="right">
                 <nav className="grid gap-6 text-lg font-medium mt-8">
                   {navLinks.map((link) => (
                     <Link
