@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,8 +48,8 @@ export default function LoginPage() {
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" required />
           </div>
-          <Button type="submit" className="w-full">
-            Sign in
+          <Button type="submit" className="w-full" asChild>
+            <Link href="/profile">Sign in</Link>
           </Button>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
