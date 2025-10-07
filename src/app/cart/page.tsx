@@ -7,6 +7,7 @@ import { Heart, Trash2, Lock } from 'lucide-react';
 import { products } from '@/lib/products';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 const cartItems = [
   {
@@ -168,8 +169,8 @@ export default function CartPage() {
             </div>
 
             {/* Action Button */}
-            <Button className="w-full h-12 text-lg font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
-                Pagar
+            <Button asChild className="w-full h-12 text-lg font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
+                <Link href="/shipping">Pagar</Link>
             </Button>
 
             {/* Payment Info */}
@@ -194,8 +195,8 @@ export default function CartPage() {
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>
             </div>
-            <Button className="w-full h-12 text-lg font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
-                Pagar
+            <Button asChild className="w-full h-12 text-lg font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
+                 <Link href="/shipping">Pagar</Link>
             </Button>
         </div>
       </div>
