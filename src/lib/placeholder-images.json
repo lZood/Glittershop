@@ -1,3 +1,64 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-image",
+      "description": "Elegant jewelry on a soft background",
+      "imageUrl": "https://images.unsplash.com/photo-1616837874254-8d5aaa63e273?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxsdXh1cnklMjBqZXdlbHJ5fGVufDB8fHx8MTc1OTc3Mzc1OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "luxury jewelry"
+    },
+    {
+      "id": "product-ring-1",
+      "description": "Solitaire diamond ring",
+      "imageUrl": "https://images.unsplash.com/photo-1512217358397-b68c2bc84682?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxkaWFtb25kJTIwcmluZ3xlbnwwfHx8fDE3NTk3MzAxMjF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "diamond ring"
+    },
+    {
+      "id": "product-necklace-1",
+      "description": "Gold pendant necklace",
+      "imageUrl": "https://images.unsplash.com/photo-1610223515982-5bae48b7c2c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxnb2xkJTIwbmVja2xhY2V8ZW58MHx8fHwxNzU5NzgxODM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "gold necklace"
+    },
+    {
+      "id": "product-earrings-1",
+      "description": "Pearl drop earrings",
+      "imageUrl": "https://images.unsplash.com/photo-1742029561055-a7baf0289e69?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZWFybCUyMGVhcnJpbmdzfGVufDB8fHx8MTc1OTc3MzY1NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pearl earrings"
+    },
+    {
+      "id": "product-bracelet-1",
+      "description": "Silver tennis bracelet",
+      "imageUrl": "https://picsum.photos/seed/bracelet1/600/600",
+      "imageHint": "tennis bracelet"
+    },
+    {
+      "id": "product-ring-2",
+      "description": "Sapphire and diamond band",
+      "imageUrl": "https://images.unsplash.com/photo-1605553961482-818a48382ad4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzYXBwaGlyZSUyMHJpbmd8ZW58MHx8fHwxNzU5NzczNjU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sapphire ring"
+    },
+    {
+      "id": "product-necklace-2",
+      "description": "Rose gold chain",
+      "imageUrl": "https://picsum.photos/seed/necklace2/600/600",
+      "imageHint": "rose gold"
+    },
+    {
+      "id": "product-earrings-2",
+      "description": "Diamond stud earrings",
+      "imageUrl": "https://picsum.photos/seed/earrings2/600/600",
+      "imageHint": "diamond studs"
+    },
+    {
+      "id": "product-gift-guide",
+      "description": "Beautifully wrapped gift box",
+      "imageUrl": "https://picsum.photos/seed/giftguide/1200/800",
+      "imageHint": "jewelry gift"
+    },
+    {
+      "id": "interactive-gift-guide",
+      "description": "Person interacting with a tablet showing jewelry",
+      "imageUrl": "https://picsum.photos/seed/interactivegift/1200/800",
+      "imageHint": "interactive shopping"
+    }
+  ]
 }
