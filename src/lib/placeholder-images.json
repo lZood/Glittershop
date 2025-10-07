@@ -9,13 +9,13 @@
     {
       "id": "product-ring-1",
       "description": "Solitaire diamond ring",
-      "imageUrl": "https://images.unsplash.com/photo-1600143674013-a690b5d25104?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxkaWFtb25kJTIwcmluZ3xlbnwwfHx8fDE3NTk3MzAxMjF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://picsum.photos/seed/jade-earrings/600/600",
       "imageHint": "diamond ring"
     },
     {
       "id": "product-necklace-1",
       "description": "Gold pendant necklace",
-      "imageUrl": "https://images.unsplash.com/photo-1610223515982-5bae48b7c2c2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxnb2xkJTIwbmVja2xhY2V8ZW58MHx8fHwxNzU5NzgxODM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1623321673989-830eff0fd59f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxnb2xkJTIwbmVja2xhY2V8ZW58MHx8fHwxNzU5NzgxODM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "gold necklace"
     },
     {
@@ -27,25 +27,25 @@
     {
       "id": "product-bracelet-1",
       "description": "Silver tennis bracelet",
-      "imageUrl": "https://picsum.photos/seed/bracelet1/600/600",
+      "imageUrl": "https://picsum.photos/seed/pearl-bracelet/600/600",
       "imageHint": "tennis bracelet"
     },
     {
       "id": "product-ring-2",
       "description": "Sapphire and diamond band",
-      "imageUrl": "https://images.unsplash.com/photo-1605553961482-818a48382ad4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzYXBwaGlyZSUyMHJpbmd8ZW58MHx8fHwxNzU5NzczNjU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1735480165036-3d1d2f41460f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzYXBwaGlyZSUyMHJpbmd8ZW58MHx8fHwxNzU5NzczNjU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "sapphire ring"
     },
     {
       "id": "product-necklace-2",
       "description": "Rose gold chain",
-      "imageUrl": "https://picsum.photos/seed/luna/600/600",
+      "imageUrl": "https://picsum.photos/seed/teardrop-necklace/600/600",
       "imageHint": "rose gold"
     },
     {
       "id": "product-earrings-2",
       "description": "Diamond stud earrings",
-      "imageUrl": "https://picsum.photos/seed/pulsera/600/600",
+      "imageUrl": "https://picsum.photos/seed/leaf-brooch/600/600",
       "imageHint": "diamond studs"
     },
     {
@@ -101,6 +101,24 @@
       "description": "Ruby collection",
       "imageUrl": "https://picsum.photos/seed/ruby/600/600",
       "imageHint": "ruby earrings"
+    },
+    {
+      "id": "collection-summer-hero",
+      "description": "Summer collection hero image",
+      "imageUrl": "https://picsum.photos/seed/summer-collection/1200/600",
+      "imageHint": "summer jewelry"
+    },
+    {
+      "id": "customer-1",
+      "description": "Customer wearing a necklace",
+      "imageUrl": "https://picsum.photos/seed/customer1/400/400",
+      "imageHint": "woman necklace"
+    },
+    {
+      "id": "customer-2",
+      "description": "Customer wearing earrings",
+      "imageUrl": "https://picsum.photos/seed/customer2/400/400",
+      "imageHint": "woman earrings"
     }
   ]
 }
