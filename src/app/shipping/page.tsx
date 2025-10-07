@@ -153,8 +153,8 @@ export default function ShippingPage() {
             </div>
         </div>
 
-        <Button className="w-full h-12 text-lg font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
-          Continuar al Pago
+        <Button asChild className="w-full h-12 text-lg font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
+          <Link href="/payment">Continuar al Pago</Link>
         </Button>
         
         <div className="text-center mt-4 space-y-2">
