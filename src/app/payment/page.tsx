@@ -125,8 +125,8 @@ export default function PaymentPage() {
             </Label>
         </RadioGroup>
 
-        <Button className="w-full h-12 text-lg font-bold mt-8" style={{ backgroundColor: '#FDB813', color: 'black' }}>
-          Pagar {formatPrice(total)}
+        <Button asChild className="w-full h-12 text-lg font-bold mt-8" style={{ backgroundColor: '#FDB813', color: 'black' }}>
+          <Link href="/confirmation">Pagar {formatPrice(total)}</Link>
         </Button>
         
         <div className="text-center text-muted-foreground text-xs mt-4 space-y-2">
