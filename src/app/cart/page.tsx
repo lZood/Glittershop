@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Heart, Trash2, Lock } from 'lucide-react';
 import { products } from '@/lib/products';
-import Link from 'next/link';
+import { useState, useRef, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 const cartItems = [
   {
@@ -36,6 +37,32 @@ function formatPrice(price: number) {
 }
 
 export default function CartPage() {
+  const [isSummaryVisible, setIsSummaryVisible] = useState(true);
+  const summaryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsSummaryVisible(entry.isIntersecting);
+      },
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1,
+      }
+    );
+
+    if (summaryRef.current) {
+      observer.observe(summaryRef.current);
+    }
+
+    return () => {
+      if (summaryRef.current) {
+        observer.unobserve(summaryRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="bg-background min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -111,45 +138,65 @@ export default function CartPage() {
           ))}
         </div>
 
-        {/* Discount Code */}
-        <div className="flex gap-2 mb-6">
-          <Input placeholder="Añadir código de descuento" className="flex-grow" />
-          <Button className="font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>Aplicar</Button>
-        </div>
-
-        {/* Order Summary */}
-        <div className="space-y-3 mb-6">
-          <div className="flex justify-between text-muted-foreground">
-            <span>Subtotal</span>
-            <span>{formatPrice(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Envío</span>
-            <span>{shipping === 0 ? 'Gratis' : formatPrice(shipping)}</span>
-          </div>
-           <div className="flex justify-between text-muted-foreground">
-            <span>Ahorros</span>
-            <span>{formatPrice(savings)}</span>
-          </div>
-          <div className="border-t my-2"></div>
-          <div className="flex justify-between font-bold text-lg">
-            <span>Total</span>
-            <span>{formatPrice(total)}</span>
-          </div>
-        </div>
-
-        {/* Action Button */}
-        <Button className="w-full h-12 text-lg font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
-          Continuar con el envío
-        </Button>
-
-        {/* Payment Info */}
-        <div className="text-center text-muted-foreground text-xs mt-6 space-y-2">
-            <p>Métodos de pago aceptados: Visa, Mastercard, Amex, PayPal</p>
-            <div className="flex items-center justify-center gap-2">
-                <Lock className="w-3 h-3"/>
-                <span>Pago Seguro</span>
+        {/* Summary and Checkout */}
+        <div ref={summaryRef}>
+            {/* Discount Code */}
+            <div className="flex gap-2 mb-6">
+            <Input placeholder="Añadir código de descuento" className="flex-grow" />
+            <Button className="font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>Aplicar</Button>
             </div>
+
+            {/* Order Summary */}
+            <div className="space-y-3 mb-6">
+            <div className="flex justify-between text-muted-foreground">
+                <span>Subtotal</span>
+                <span>{formatPrice(subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+                <span>Envío</span>
+                <span>{shipping === 0 ? 'Gratis' : formatPrice(shipping)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+                <span>Ahorros</span>
+                <span>{formatPrice(savings)}</span>
+            </div>
+            <div className="border-t my-2"></div>
+            <div className="flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>{formatPrice(total)}</span>
+            </div>
+            </div>
+
+            {/* Action Button */}
+            <Button className="w-full h-12 text-lg font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
+                Pagar
+            </Button>
+
+            {/* Payment Info */}
+            <div className="text-center text-muted-foreground text-xs mt-6 space-y-2">
+                <p>Métodos de pago aceptados: Visa, Mastercard, Amex, PayPal</p>
+                <div className="flex items-center justify-center gap-2">
+                    <Lock className="w-3 h-3"/>
+                    <span>Pago Seguro</span>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      {/* Sticky Checkout Button */}
+      <div className={cn(
+          "fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4 transition-transform duration-300",
+          isSummaryVisible ? "translate-y-full" : "translate-y-0"
+        )}
+      >
+        <div className="container mx-auto max-w-2xl">
+            <div className='flex justify-between font-bold text-lg mb-4'>
+                <span>Total</span>
+                <span>{formatPrice(total)}</span>
+            </div>
+            <Button className="w-full h-12 text-lg font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
+                Pagar
+            </Button>
         </div>
       </div>
     </div>
