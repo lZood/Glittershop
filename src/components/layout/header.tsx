@@ -1,19 +1,35 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, ShoppingCart, User, Menu } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Heart, Instagram, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
+  SheetClose,
 } from "@/components/ui/sheet";
+import { Separator } from '../ui/separator';
 
-const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/#products', label: 'Colecciones' },
-  { href: '/gift-guide', label: 'Gift Guide' },
-  { href: '/interactive-gift-guide', label: 'Interactive Guide' },
+const tiendaLinks = [
+  { href: '#', label: 'Ver Todo' },
+  { href: '#', label: 'Anillos' },
+  { href: '#', label: 'Collares' },
+  { href: '#', label: 'Pulseras' },
+  { href: '#', label: 'Aretes' },
+];
+
+const coleccionesLinks = [
+    { href: '#', label: 'Colección: Luz de Luna' },
+    { href: '#', label: 'Colección: Verano Mediterráneo' },
+    { href: '#', label: 'Todas las Colecciones' },
+];
+
+const mainLinks = [
+    { href: '/#products', label: 'Novedades' },
+    { href: '/gift-guide', label: 'Tarjetas de Regalo' },
 ];
 
 export default function Header() {
@@ -26,20 +42,23 @@ export default function Header() {
           </Link>
         </div>
 
-        <div className="flex-1 flex justify-end items-center space-x-1">
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center space-x-6 ml-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex flex-1 justify-center items-center space-x-6 ml-6">
+            <Link href="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                Home
+            </Link>
+            <Link href="/#products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                Colecciones
+            </Link>
+            <Link href="/gift-guide" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                Gift Guide
+            </Link>
+            <Link href="/interactive-gift-guide" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                Interactive Guide
+            </Link>
+        </nav>
+
+        <div className="flex items-center space-x-1">
           <Button variant="ghost" size="icon" aria-label="Search">
             <Search className="h-5 w-5" />
           </Button>
@@ -61,18 +80,79 @@ export default function Header() {
                   <span className="sr-only">Abrir menú</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right">
-                <nav className="grid gap-6 text-lg font-medium mt-8">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </nav>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-background p-0">
+                <SheetHeader className="p-4 border-b">
+                  <SheetTitle className="flex items-center justify-between">
+                    <span>Menu</span>
+                    <SheetClose>
+                      <X className="h-5 w-5" />
+                      <span className="sr-only">Close</span>
+                    </SheetClose>
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="p-6 space-y-6 text-sm overflow-y-auto h-full">
+                    <div className="space-y-2">
+                        <h3 className="font-bold text-base">Tienda</h3>
+                        <nav className="flex flex-col space-y-3">
+                        {tiendaLinks.map((link) => (
+                            <SheetClose asChild key={link.href}>
+                                <Link
+                                    href={link.href}
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
+                                    {link.label}
+                                </Link>
+                            </SheetClose>
+                        ))}
+                        </nav>
+                    </div>
+
+                    <div className="space-y-2">
+                        <h3 className="font-bold text-base">Colecciones</h3>
+                        <nav className="flex flex-col space-y-3">
+                        {coleccionesLinks.map((link) => (
+                             <SheetClose asChild key={link.href}>
+                                <Link
+                                    href={link.href}
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
+                                    {link.label}
+                                </Link>
+                            </SheetClose>
+                        ))}
+                        </nav>
+                    </div>
+
+                    <nav className="flex flex-col space-y-3">
+                        {mainLinks.map((link) => (
+                             <SheetClose asChild key={link.href}>
+                                <Link href={link.href} className="font-bold text-base">
+                                {link.label}
+                                </Link>
+                            </SheetClose>
+                        ))}
+                    </nav>
+
+                    <SheetClose asChild>
+                        <Link href="#" className="flex items-center gap-2 font-bold text-base">
+                            <Heart className="w-5 h-5" />
+                            <span>Lista de Deseos</span>
+                        </Link>
+                    </SheetClose>
+                </div>
+
+                <div className="absolute bottom-0 left-0 right-0 p-6 border-t bg-background">
+                    <h3 className="font-bold text-center mb-4">Comunidad</h3>
+                    <div className="flex justify-center gap-4">
+                        <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
+                            <Instagram className="h-6 w-6" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
+                            <Share2 className="h-6 w-6" />
+                        </Button>
+                    </div>
+                </div>
+
               </SheetContent>
             </Sheet>
           </div>
