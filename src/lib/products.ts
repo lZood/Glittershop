@@ -4,12 +4,12 @@ import type { Product } from './types';
 export const products: Product[] = [
   {
     id: '1',
-    name: 'Anillo de Oro Clásico',
-    price: 1200,
-    description: 'Un impresionante collar de jade verde, elaborado en oro de 18k. Un símbolo atemporal de elegancia.',
+    name: 'Anillo de Diamantes',
+    price: 250.00,
+    description: 'Un impresionante anillo de diamantes, elaborado en oro blanco de 18k. Un símbolo atemporal de elegancia.',
     image: PlaceHolderImages.find(p => p.id === 'product-ring-1')!,
     category: 'Rings',
-    rating: 4,
+    rating: 5,
     reviews: 124,
   },
   {
@@ -62,5 +62,15 @@ export const products: Product[] = [
     category: 'Brooches',
     rating: 4,
     reviews: 76,
+  },
+  {
+    id: '7',
+    name: 'Collar de Perlas',
+    price: 200.00,
+    description: 'Un clásico y elegante collar de perlas, perfecto para cualquier ocasión.',
+    image: PlaceHolderImages.find(p => p.id === 'product-necklace-pearl')!,
+    category: 'Necklaces',
+    rating: 5,
+    reviews: 150,
   },
 ];

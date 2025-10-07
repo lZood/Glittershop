@@ -9,7 +9,7 @@
     {
       "id": "product-ring-1",
       "description": "Solitaire diamond ring",
-      "imageUrl": "https://picsum.photos/seed/jade-earrings/600/600",
+      "imageUrl": "https://picsum.photos/seed/diamond-ring-dark/600/600",
       "imageHint": "diamond ring"
     },
     {
@@ -47,6 +47,12 @@
       "description": "Diamond stud earrings",
       "imageUrl": "https://picsum.photos/seed/leaf-brooch/600/600",
       "imageHint": "diamond studs"
+    },
+    {
+      "id": "product-necklace-pearl",
+      "description": "Classic pearl necklace",
+      "imageUrl": "https://picsum.photos/seed/pearl-necklace-light/600/600",
+      "imageHint": "pearl necklace"
     },
     {
       "id": "product-gift-guide",

@@ -38,9 +38,9 @@ export default function Header() {
       <div className="container flex h-16 items-center px-4 sm:px-6 lg:px-10 mx-auto w-full md:w-[80%]">
 
         {/* Logo */}
-        <div className="flex items-center flex-1 md:flex-initial">
+        <div className="flex items-center flex-1 md:flex-none md:justify-start">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl">Glittershop</span>
+            <span className="font-bold text-xl" style={{ color: '#B87333' }}>Glittershop</span>
           </Link>
         </div>
 
@@ -64,7 +64,7 @@ export default function Header() {
         <div className="flex items-center justify-end md:gap-x-1">
           <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Search" className="md:inline-flex">
+                <Button variant="ghost" size="icon" aria-label="Search">
                     <Search className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -85,8 +85,10 @@ export default function Header() {
           <Button variant="ghost" size="icon" aria-label="Wishlist">
             <Heart className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Shopping Cart">
-            <ShoppingCart className="h-5 w-5" />
+          <Button variant="ghost" size="icon" aria-label="Shopping Cart" asChild>
+             <Link href="/cart">
+                <ShoppingCart className="h-5 w-5" />
+             </Link>
           </Button>
           
           {/* Mobile Nav Trigger */}
