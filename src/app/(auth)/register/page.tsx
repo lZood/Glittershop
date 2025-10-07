@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,14 +16,14 @@ export default function RegisterPage() {
     <div className="flex items-center justify-center py-12 px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl font-headline">Sign Up</CardTitle>
+          <CardTitle className="text-2xl font-headline">Regístrate</CardTitle>
           <CardDescription>
-            Enter your information to create an account.
+            Ingresa tu información para crear una cuenta.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="full-name">Full name</Label>
+            <Label htmlFor="full-name">Nombre completo</Label>
             <Input id="full-name" placeholder="Jane Doe" required />
           </div>
           <div className="grid gap-2">
@@ -35,17 +36,17 @@ export default function RegisterPage() {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <Input id="password" type="password" required />
           </div>
           <Button type="submit" className="w-full">
-            Create an account
+            Crear una cuenta
           </Button>
         </CardContent>
         <div className="mt-4 text-center text-sm p-6 pt-0">
-          Already have an account?{' '}
+          ¿Ya tienes una cuenta?{' '}
           <Link href="/login" className="underline">
-            Sign in
+            Iniciar sesión
           </Link>
         </div>
       </Card>

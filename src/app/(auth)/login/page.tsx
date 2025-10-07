@@ -36,7 +36,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="text-2xl font-headline">Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account.
+            Ingresa tu correo electrónico para acceder a tu cuenta.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -45,11 +45,11 @@ export default function LoginPage() {
             <Input id="email" type="email" placeholder="m@example.com" required />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <Input id="password" type="password" required />
           </div>
           <Button type="submit" className="w-full" asChild>
-            <Link href="/profile">Sign in</Link>
+            <Link href="/profile">Iniciar sesión</Link>
           </Button>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -57,7 +57,7 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
+                O continuar con
               </span>
             </div>
           </div>
@@ -73,9 +73,9 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <div className="mt-4 text-center text-sm p-6 pt-0">
-          Don&apos;t have an account?{' '}
+          ¿No tienes una cuenta?{' '}
           <Link href="/register" className="underline">
-            Sign up
+            Regístrate
           </Link>
         </div>
       </Card>

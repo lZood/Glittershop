@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
@@ -21,8 +22,8 @@ const initialState = {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} className="w-full md:w-auto">
-      {pending ? 'Thinking...' : 'Find Gift'}
+    <Button type="submit" disabled={pending} className="w-full md:w-auto font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
+      {pending ? 'Pensando...' : 'Encontrar Regalo'}
     </Button>
   );
 }
@@ -46,23 +47,23 @@ export default function GiftGuideForm() {
       <form action={formAction}>
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline text-2xl">Tell Us About Them</CardTitle>
+            <CardTitle className="font-headline text-2xl">Cuéntanos sobre esa persona</CardTitle>
             <CardDescription>
-              The more details you provide, the better the recommendations will be.
+              Mientras más detalles nos des, mejores serán las recomendaciones.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="occasion">Occasion</Label>
-              <Input type="text" id="occasion" name="occasion" placeholder="e.g., 10th Anniversary, Birthday, Graduation" />
+              <Label htmlFor="occasion">Ocasión</Label>
+              <Input type="text" id="occasion" name="occasion" placeholder="Ej: 10º Aniversario, Cumpleaños, Graduación" />
             </div>
             <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="recipient">Recipient</Label>
-              <Input type="text" id="recipient" name="recipient" placeholder="e.g., My wife, Best friend, Mother" />
+              <Label htmlFor="recipient">Destinatario</Label>
+              <Input type="text" id="recipient" name="recipient" placeholder="Ej: Mi esposa, Mejor amiga, Mamá" />
             </div>
             <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="stylePreferences">Style & Preferences</Label>
-              <Textarea id="stylePreferences" name="stylePreferences" placeholder="e.g., Loves minimalist gold jewelry, wears a lot of classic pearls, prefers bold and modern designs..." />
+              <Label htmlFor="stylePreferences">Estilo y Preferencias</Label>
+              <Textarea id="stylePreferences" name="stylePreferences" placeholder="Ej: Le encantan las joyas minimalistas de oro, usa muchas perlas clásicas, prefiere diseños audaces y modernos..." />
             </div>
           </CardContent>
           <CardFooter>
@@ -75,14 +76,14 @@ export default function GiftGuideForm() {
         <div className="mt-8">
             <Alert>
                 <Bot className="h-4 w-4" />
-                <AlertTitle className="font-headline">Personalized Suggestions</AlertTitle>
+                <AlertTitle className="font-headline">Sugerencias Personalizadas</AlertTitle>
                 <AlertDescription className="mt-2 space-y-4">
                     <div>
-                        <h3 className="font-bold flex items-center gap-2 mb-1"><Lightbulb className="w-4 h-4 text-primary" />Reasoning</h3>
+                        <h3 className="font-bold flex items-center gap-2 mb-1"><Lightbulb className="w-4 h-4 text-primary" />Razonamiento</h3>
                         <p>{state.data.reasoning}</p>
                     </div>
                     <div>
-                        <h3 className="font-bold">Gift Ideas:</h3>
+                        <h3 className="font-bold">Ideas de Regalo:</h3>
                         <ul className="list-disc pl-5 mt-1 space-y-1">
                             {state.data.productSuggestions.map((suggestion, index) => (
                                 <li key={index}>{suggestion}</li>
