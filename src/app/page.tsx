@@ -6,8 +6,25 @@ import { products } from '@/lib/products';
 import ProductCard from '@/components/product-card';
 import type { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Camera, ChevronDown } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Camera, ListFilter, ArrowUpDown } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from '@/components/ui/sheet';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 export default function Home({
   searchParams,
@@ -17,9 +34,11 @@ export default function Home({
   };
 }) {
   const searchQuery = searchParams?.q || '';
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = searchQuery
+    ? products.filter((product) =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
   
   const socialImages = [
     PlaceHolderImages.find(p => p.id === 'social-1'),
@@ -36,6 +55,94 @@ export default function Home({
 
   const recommendations = products.slice(0, 3);
   const recentlyViewed = products.slice(3, 6);
+
+  if (searchQuery) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p className="text-center text-muted-foreground mb-4">
+          Mostrando {filteredProducts.length} resultados para '{searchQuery}'
+        </p>
+        <div className="grid grid-cols-2 gap-4 mb-8">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="w-full justify-center gap-2 bg-accent hover:bg-border">
+                    <ListFilter className="w-4 h-4" />
+                    Filtrar
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <SheetHeader>
+                    <SheetTitle>Filtrar Productos</SheetTitle>
+                </SheetHeader>
+                <div className="py-4 space-y-6">
+                    <div>
+                        <h3 className="font-semibold mb-3">Categoría</h3>
+                        <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="cat-anillos" />
+                                <Label htmlFor="cat-anillos">Anillos</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="cat-collares" />
+                                <Label htmlFor="cat-collares">Collares</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="cat-pulseras" />
+                                <Label htmlFor="cat-pulseras">Pulseras</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="cat-aretes" />
+                                <Label htmlFor="cat-aretes">Aretes</Label>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-3">Precio</h3>
+                         <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="price-1" />
+                                <Label htmlFor="price-1">Menos de $1000</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="price-2" />
+                                <Label htmlFor="price-2">$1000 - $2000</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="price-3" />
+                                <Label htmlFor="price-3">Más de $2000</Label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <SheetClose asChild>
+                    <Button className="w-full">Aplicar Filtros</Button>
+                </SheetClose>
+              </SheetContent>
+            </Sheet>
+
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full justify-center gap-2 bg-accent hover:bg-border">
+                    <ArrowUpDown className="w-4 h-4" />
+                    Ordenar
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                    <DropdownMenuItem>Novedades</DropdownMenuItem>
+                    <DropdownMenuItem>Precio: de menor a mayor</DropdownMenuItem>
+                    <DropdownMenuItem>Precio: de mayor a menor</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-8">
+          {filteredProducts.map((product: Product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col bg-background">

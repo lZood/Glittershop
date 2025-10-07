@@ -4,7 +4,10 @@ export type Product = {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number;
   description: string;
   image: ImagePlaceholder;
   category: string;
+  rating?: number;
+  reviews?: number;
 };
