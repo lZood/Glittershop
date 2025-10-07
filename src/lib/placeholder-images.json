@@ -9,7 +9,7 @@
     {
       "id": "product-ring-1",
       "description": "Solitaire diamond ring",
-      "imageUrl": "https://images.unsplash.com/photo-1512217358397-b68c2bc84682?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxkaWFtb25kJTIwcmluZ3xlbnwwfHx8fDE3NTk3MzAxMjF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1600143674013-a690b5d25104?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxkaWFtb25kJTIwcmluZ3xlbnwwfHx8fDE3NTk3MzAxMjF8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "diamond ring"
     },
     {
@@ -39,13 +39,13 @@
     {
       "id": "product-necklace-2",
       "description": "Rose gold chain",
-      "imageUrl": "https://picsum.photos/seed/necklace2/600/600",
+      "imageUrl": "https://picsum.photos/seed/luna/600/600",
       "imageHint": "rose gold"
     },
     {
       "id": "product-earrings-2",
       "description": "Diamond stud earrings",
-      "imageUrl": "https://picsum.photos/seed/earrings2/600/600",
+      "imageUrl": "https://picsum.photos/seed/pulsera/600/600",
       "imageHint": "diamond studs"
     },
     {
@@ -59,6 +59,48 @@
       "description": "Person interacting with a tablet showing jewelry",
       "imageUrl": "https://picsum.photos/seed/interactivegift/1200/800",
       "imageHint": "interactive shopping"
+    },
+    {
+      "id": "social-1",
+      "description": "Social media post 1",
+      "imageUrl": "https://picsum.photos/seed/social1/400/400",
+      "imageHint": "jewelry lifestyle"
+    },
+    {
+      "id": "social-2",
+      "description": "Social media post 2",
+      "imageUrl": "https://images.unsplash.com/photo-1667610508662-08ac0deec289?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxlYXJyaW5ncyUyMG1vZGVsfGVufDB8fHx8MTc1OTc3NjYyNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "earrings model"
+    },
+    {
+      "id": "social-3",
+      "description": "Social media post 3",
+      "imageUrl": "https://picsum.photos/seed/social3/400/400",
+      "imageHint": "rings flatlay"
+    },
+    {
+      "id": "collection-diamond",
+      "description": "Diamond collection",
+      "imageUrl": "https://picsum.photos/seed/diamond/600/600",
+      "imageHint": "diamond necklace"
+    },
+    {
+      "id": "collection-emerald",
+      "description": "Emerald collection",
+      "imageUrl": "https://picsum.photos/seed/emerald/600/600",
+      "imageHint": "emerald ring"
+    },
+    {
+      "id": "collection-sapphire",
+      "description": "Sapphire collection",
+      "imageUrl": "https://images.unsplash.com/photo-1743127187686-e6145b08658b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzYXBwaGlyZSUyMGJyYWNlbGV0fGVufDB8fHx8MTc1OTY5MzEyOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sapphire bracelet"
+    },
+    {
+      "id": "collection-ruby",
+      "description": "Ruby collection",
+      "imageUrl": "https://picsum.photos/seed/ruby/600/600",
+      "imageHint": "ruby earrings"
     }
   ]
 }

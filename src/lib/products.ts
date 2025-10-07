@@ -4,7 +4,7 @@ import type { Product } from './types';
 export const products: Product[] = [
   {
     id: '1',
-    name: 'Elysian Diamond Ring',
+    name: 'Collar Estrella',
     price: 2400,
     description: 'A stunning solitaire diamond ring, crafted in 18k white gold. A timeless symbol of love.',
     image: PlaceHolderImages.find(p => p.id === 'product-ring-1')!,
@@ -12,18 +12,18 @@ export const products: Product[] = [
   },
   {
     id: '2',
-    name: 'Celestial Pendant',
+    name: 'Anillo Luna',
     price: 850,
     description: 'A delicate gold pendant necklace featuring a starburst design with a central diamond.',
-    image: PlaceHolderImages.find(p => p.id === 'product-necklace-1')!,
+    image: PlaceHolderImages.find(p => p.id === 'product-necklace-2')!,
     category: 'Necklaces',
   },
   {
     id: '3',
-    name: 'Serene Pearl Drops',
+    name: 'Pulsera',
     price: 620,
     description: 'Elegant freshwater pearl drop earrings, perfect for adding a touch of classic sophistication.',
-    image: PlaceHolderImages.find(p => p.id === 'product-earrings-1')!,
+    image: PlaceHolderImages.find(p => p.id === 'product-earrings-2')!,
     category: 'Earrings',
   },
   {
@@ -47,7 +47,7 @@ export const products: Product[] = [
     name: 'Orion Studs',
     price: 1500,
     description: 'Classic round-cut diamond stud earrings, a must-have for any jewelry collection.',
-    image: PlaceHolderImages.find(p => p.id === 'product-earrings-2')!,
+    image: PlaceHolderImages.find(p => p.id === 'product-earrings-1')!,
     category: 'Earrings',
   },
 ];

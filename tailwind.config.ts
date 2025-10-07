@@ -17,8 +17,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        body: ['PT Sans', 'sans-serif'],
-        headline: ['Playfair Display', 'serif'],
+        body: ['Jost', 'sans-serif'],
+        headline: ['Jost', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
