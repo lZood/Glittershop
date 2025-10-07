@@ -6,7 +6,7 @@ import { products } from '@/lib/products';
 import ProductCard from '@/components/product-card';
 import type { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Camera, ListFilter, ArrowUpDown } from 'lucide-react';
+import { Camera, ListFilter, ArrowUpDown, SearchX } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
@@ -55,93 +55,128 @@ export default function Home({
 
   const recommendations = products.slice(0, 3);
   const recentlyViewed = products.slice(3, 6);
+  const bestSellers = products.slice(0, 3);
 
   if (searchQuery) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <p className="text-center text-muted-foreground mb-4">
-          Mostrando {filteredProducts.length} resultados para '{searchQuery}'
-        </p>
-        <div className="grid grid-cols-2 gap-4 mb-8">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="w-full justify-center gap-2 bg-accent hover:bg-border">
-                    <ListFilter className="w-4 h-4" />
-                    Filtrar
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left">
-                <SheetHeader>
-                    <SheetTitle>Filtrar Productos</SheetTitle>
-                </SheetHeader>
-                <div className="py-4 space-y-6">
-                    <div>
-                        <h3 className="font-semibold mb-3">Categoría</h3>
-                        <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="cat-anillos" />
-                                <Label htmlFor="cat-anillos">Anillos</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="cat-collares" />
-                                <Label htmlFor="cat-collares">Collares</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="cat-pulseras" />
-                                <Label htmlFor="cat-pulseras">Pulseras</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="cat-aretes" />
-                                <Label htmlFor="cat-aretes">Aretes</Label>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 className="font-semibold mb-3">Precio</h3>
-                         <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="price-1" />
-                                <Label htmlFor="price-1">Menos de $1000</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="price-2" />
-                                <Label htmlFor="price-2">$1000 - $2000</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="price-3" />
-                                <Label htmlFor="price-3">Más de $2000</Label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                 <SheetClose asChild>
-                    <Button className="w-full">Aplicar Filtros</Button>
-                </SheetClose>
-              </SheetContent>
-            </Sheet>
+    if (filteredProducts.length > 0) {
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <p className="text-center text-muted-foreground mb-4">
+            Mostrando {filteredProducts.length} resultados para '{searchQuery}'
+          </p>
+          <div className="grid grid-cols-2 gap-4 mb-8">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="w-full justify-center gap-2 bg-accent hover:bg-border">
+                      <ListFilter className="w-4 h-4" />
+                      Filtrar
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left">
+                  <SheetHeader>
+                      <SheetTitle>Filtrar Productos</SheetTitle>
+                  </SheetHeader>
+                  <div className="py-4 space-y-6">
+                      <div>
+                          <h3 className="font-semibold mb-3">Categoría</h3>
+                          <div className="space-y-2">
+                              <div className="flex items-center space-x-2">
+                                  <Checkbox id="cat-anillos" />
+                                  <Label htmlFor="cat-anillos">Anillos</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                  <Checkbox id="cat-collares" />
+                                  <Label htmlFor="cat-collares">Collares</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                  <Checkbox id="cat-pulseras" />
+                                  <Label htmlFor="cat-pulseras">Pulseras</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                  <Checkbox id="cat-aretes" />
+                                  <Label htmlFor="cat-aretes">Aretes</Label>
+                              </div>
+                          </div>
+                      </div>
+                      <div>
+                          <h3 className="font-semibold mb-3">Precio</h3>
+                           <div className="space-y-2">
+                              <div className="flex items-center space-x-2">
+                                  <Checkbox id="price-1" />
+                                  <Label htmlFor="price-1">Menos de $1000</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                  <Checkbox id="price-2" />
+                                  <Label htmlFor="price-2">$1000 - $2000</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                  <Checkbox id="price-3" />
+                                  <Label htmlFor="price-3">Más de $2000</Label>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                   <SheetClose asChild>
+                      <Button className="w-full">Aplicar Filtros</Button>
+                  </SheetClose>
+                </SheetContent>
+              </Sheet>
 
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-center gap-2 bg-accent hover:bg-border">
-                    <ArrowUpDown className="w-4 h-4" />
-                    Ordenar
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                    <DropdownMenuItem>Novedades</DropdownMenuItem>
-                    <DropdownMenuItem>Precio: de menor a mayor</DropdownMenuItem>
-                    <DropdownMenuItem>Precio: de mayor a menor</DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
+              <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-center gap-2 bg-accent hover:bg-border">
+                      <ArrowUpDown className="w-4 h-4" />
+                      Ordenar
+                      </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                      <DropdownMenuItem>Novedades</DropdownMenuItem>
+                      <DropdownMenuItem>Precio: de menor a mayor</DropdownMenuItem>
+                      <DropdownMenuItem>Precio: de mayor a menor</DropdownMenuItem>
+                  </DropdownMenuContent>
+              </DropdownMenu>
+          </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-8">
-          {filteredProducts.map((product: Product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-8">
+            {filteredProducts.map((product: Product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
         </div>
-      </div>
-    );
+      );
+    } else {
+      return (
+        <div className="container mx-auto px-4 py-12 text-center">
+          <div className="flex justify-center items-center">
+            <div className="bg-yellow-100/50 rounded-full p-4 inline-block mb-4">
+              <SearchX className="w-10 h-10 text-yellow-500" />
+            </div>
+          </div>
+          <h2 className="text-3xl font-bold mb-2">No encontramos lo que buscas</h2>
+          <p className="text-muted-foreground mb-6">
+            Intenta con otras palabras clave o explora nuestras categorías más populares.
+          </p>
+          <h3 className="text-xl font-bold mb-3">Sugerencias</h3>
+          <div className="flex justify-center gap-2 mb-12">
+            <Button variant="outline" asChild className="rounded-full bg-accent hover:bg-border">
+              <Link href="#">Anillos</Link>
+            </Button>
+            <Button variant="outline" asChild className="rounded-full bg-accent hover:bg-border">
+              <Link href="#">Collares</Link>
+            </Button>
+            <Button variant="outline" asChild className="rounded-full bg-accent hover:bg-border">
+              <Link href="#">Pulseras</Link>
+            </Button>
+          </div>
+          <h3 className="text-2xl font-bold text-left mb-6">Nuestros más vendidos</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-8 text-left">
+            {bestSellers.map((product: Product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </div>
+      );
+    }
   }
 
   return (
