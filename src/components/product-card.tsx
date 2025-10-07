@@ -35,7 +35,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const reviews = product.reviews || 0;
   
   return (
-    <Link href="#" className="group">
+    <Link href={`/products/${product.id}`} className="group">
       <div className="aspect-square relative bg-secondary rounded-lg overflow-hidden">
         {product.image && (
             <Image
