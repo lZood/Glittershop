@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -30,7 +29,6 @@ const coleccionesLinks = [
 
 const mainLinks = [
     { href: '/gift-guide', label: 'Guía de Regalos' },
-    { href: '/interactive-gift-guide', label: 'Guía Interactiva' },
 ];
 
 export default function Header() {
@@ -55,9 +53,6 @@ export default function Header() {
             </Link>
             <Link href="/gift-guide" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                 Guía de Regalos
-            </Link>
-            <Link href="/interactive-gift-guide" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-                Guía Interactiva
             </Link>
         </nav>
 
