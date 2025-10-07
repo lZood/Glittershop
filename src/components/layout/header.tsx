@@ -36,94 +36,8 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
 
-        {/* Mobile Nav Trigger */}
-        <div className="md:hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Abrir menú</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[300px] sm:w-[400px] bg-background p-0">
-              <SheetHeader className="p-4 border-b">
-                <SheetTitle className="flex items-center justify-between">
-                  <span>Menu</span>
-                  <SheetClose>
-                    <X className="h-5 w-5" />
-                    <span className="sr-only">Close</span>
-                  </SheetClose>
-                </SheetTitle>
-              </SheetHeader>
-              <div className="p-6 space-y-6 text-sm overflow-y-auto h-full">
-                  <div className="space-y-2">
-                      <h3 className="font-bold text-base">Tienda</h3>
-                      <nav className="flex flex-col space-y-3">
-                      {tiendaLinks.map((link) => (
-                          <SheetClose asChild key={link.href}>
-                              <Link
-                                  href={link.href}
-                                  className="text-muted-foreground hover:text-foreground"
-                              >
-                                  {link.label}
-                              </Link>
-                          </SheetClose>
-                      ))}
-                      </nav>
-                  </div>
-
-                  <div className="space-y-2">
-                      <h3 className="font-bold text-base">Colecciones</h3>
-                      <nav className="flex flex-col space-y-3">
-                      {coleccionesLinks.map((link) => (
-                           <SheetClose asChild key={link.href}>
-                              <Link
-                                  href={link.href}
-                                  className="text-muted-foreground hover:text-foreground"
-                              >
-                                  {link.label}
-                              </Link>
-                          </SheetClose>
-                      ))}
-                      </nav>
-                  </div>
-
-                  <nav className="flex flex-col space-y-3">
-                      {mainLinks.map((link) => (
-                           <SheetClose asChild key={link.href}>
-                              <Link href={link.href} className="font-bold text-base">
-                              {link.label}
-                              </Link>
-                          </SheetClose>
-                      ))}
-                  </nav>
-
-                  <SheetClose asChild>
-                      <Link href="#" className="flex items-center gap-2 font-bold text-base">
-                          <Heart className="w-5 h-5" />
-                          <span>Lista de Deseos</span>
-                      </Link>
-                  </SheetClose>
-              </div>
-
-              <div className="absolute bottom-0 left-0 right-0 p-6 border-t bg-background">
-                  <h3 className="font-bold text-center mb-4">Comunidad</h3>
-                  <div className="flex justify-center gap-4">
-                      <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
-                          <Instagram className="h-6 w-6" />
-                      </Button>
-                      <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
-                          <Share2 className="h-6 w-6" />
-                      </Button>
-                  </div>
-              </div>
-
-            </SheetContent>
-          </Sheet>
-        </div>
-
         {/* Logo */}
-        <div className="flex justify-center md:flex-1 md:justify-start">
+        <div className="flex-1 md:flex-none">
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-bold text-xl">Glittershop</span>
           </Link>
@@ -145,7 +59,7 @@ export default function Header() {
             </Link>
         </nav>
 
-        {/* Right-side Icons */}
+        {/* Right-side Icons and Mobile Menu*/}
         <div className="flex flex-1 justify-end items-center space-x-1">
           <Button variant="ghost" size="icon" aria-label="Search">
             <Search className="h-5 w-5" />
@@ -161,6 +75,92 @@ export default function Header() {
           <Button variant="ghost" size="icon" aria-label="Shopping Cart">
             <ShoppingCart className="h-5 w-5" />
           </Button>
+          
+          {/* Mobile Nav Trigger */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Abrir menú</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-background p-0">
+                <SheetHeader className="p-4 border-b">
+                  <SheetTitle className="flex items-center justify-between">
+                    <span>Menu</span>
+                    <SheetClose>
+                      <X className="h-5 w-5" />
+                      <span className="sr-only">Close</span>
+                    </SheetClose>
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="p-6 space-y-6 text-sm overflow-y-auto h-full">
+                    <div className="space-y-2">
+                        <h3 className="font-bold text-base">Tienda</h3>
+                        <nav className="flex flex-col space-y-3">
+                        {tiendaLinks.map((link) => (
+                            <SheetClose asChild key={link.href}>
+                                <Link
+                                    href={link.href}
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
+                                    {link.label}
+                                </Link>
+                            </SheetClose>
+                        ))}
+                        </nav>
+                    </div>
+
+                    <div className="space-y-2">
+                        <h3 className="font-bold text-base">Colecciones</h3>
+                        <nav className="flex flex-col space-y-3">
+                        {coleccionesLinks.map((link) => (
+                            <SheetClose asChild key={link.href}>
+                                <Link
+                                    href={link.href}
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
+                                    {link.label}
+                                </Link>
+                            </SheetClose>
+                        ))}
+                        </nav>
+                    </div>
+
+                    <nav className="flex flex-col space-y-3">
+                        {mainLinks.map((link) => (
+                            <SheetClose asChild key={link.href}>
+                                <Link href={link.href} className="font-bold text-base">
+                                {link.label}
+                                </Link>
+                            </SheetClose>
+                        ))}
+                    </nav>
+
+                    <SheetClose asChild>
+                        <Link href="#" className="flex items-center gap-2 font-bold text-base">
+                            <Heart className="w-5 h-5" />
+                            <span>Lista de Deseos</span>
+                        </Link>
+                    </SheetClose>
+                </div>
+
+                <div className="absolute bottom-0 left-0 right-0 p-6 border-t bg-background">
+                    <h3 className="font-bold text-center mb-4">Comunidad</h3>
+                    <div className="flex justify-center gap-4">
+                        <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
+                            <Instagram className="h-6 w-6" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
+                            <Share2 className="h-6 w-6" />
+                        </Button>
+                    </div>
+                </div>
+
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
 
       </div>
