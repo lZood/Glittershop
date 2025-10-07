@@ -25,15 +25,11 @@ import {
 } from '@/components/ui/sheet';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { useSearchParams } from 'next/navigation';
 
-export default function Home({
-  searchParams,
-}: {
-  searchParams?: {
-    q?: string;
-  };
-}) {
-  const searchQuery = searchParams?.q || '';
+export default function Home() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('q') || '';
   const filteredProducts = searchQuery
     ? products.filter((product) =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
