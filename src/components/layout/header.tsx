@@ -34,10 +34,10 @@ const mainLinks = [
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
+      <div className="container flex h-16 items-center px-4 sm:px-6 lg:px-10">
 
         {/* Logo */}
-        <div className="flex-1 md:flex-none">
+        <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-bold text-xl">Glittershop</span>
           </Link>
@@ -60,24 +60,38 @@ export default function Header() {
         </nav>
 
         {/* Right-side Icons and Mobile Menu*/}
-        <div className="flex flex-1 justify-end items-center space-x-1">
-          <Button variant="ghost" size="icon" aria-label="Search">
+        <div className="flex items-center justify-end md:gap-x-1 flex-grow md:flex-grow-0">
+          <Button variant="ghost" size="icon" aria-label="Search" className="hidden md:inline-flex">
             <Search className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" aria-label="User Profile" asChild>
+          <Button variant="ghost" size="icon" aria-label="User Profile" className="hidden md:inline-flex" asChild>
             <Link href="/login">
               <User className="h-5 w-5" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Wishlist">
+          <Button variant="ghost" size="icon" aria-label="Wishlist" className="hidden md:inline-flex">
             <Heart className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Shopping Cart">
+          <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="hidden md:inline-flex">
             <ShoppingCart className="h-5 w-5" />
           </Button>
           
           {/* Mobile Nav Trigger */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center">
+            <Button variant="ghost" size="icon" aria-label="Search">
+                <Search className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="User Profile" asChild>
+                <Link href="/login">
+                    <User className="h-5 w-5" />
+                </Link>
+            </Button>
+             <Button variant="ghost" size="icon" aria-label="Wishlist">
+                <Heart className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Shopping Cart">
+                <ShoppingCart className="h-5 w-5" />
+            </Button>
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
