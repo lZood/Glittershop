@@ -125,6 +125,30 @@
       "description": "Customer wearing earrings",
       "imageUrl": "https://picsum.photos/seed/customer2/400/400",
       "imageHint": "woman earrings"
+    },
+    {
+      "id": "gift-guide-couple",
+      "description": "A couple holding hands.",
+      "imageUrl": "https://picsum.photos/seed/couple-hands/400/400",
+      "imageHint": "couple hands"
+    },
+    {
+      "id": "gift-guide-family",
+      "description": "A mother and daughter hugging.",
+      "imageUrl": "https://picsum.photos/seed/mother-daughter/400/400",
+      "imageHint": "mother daughter"
+    },
+    {
+      "id": "gift-guide-friend",
+      "description": "Two friends together.",
+      "imageUrl": "https://picsum.photos/seed/friends-portrait/400/400",
+      "imageHint": "friends portrait"
+    },
+    {
+      "id": "gift-guide-for-me",
+      "description": "A woman wearing jewelry.",
+      "imageUrl": "https://picsum.photos/seed/woman-jewelry/400/400",
+      "imageHint": "woman jewelry"
     }
   ]
 }

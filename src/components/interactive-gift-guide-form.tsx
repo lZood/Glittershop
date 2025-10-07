@@ -22,8 +22,8 @@ const initialState = {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} className="w-full md:w-auto">
-      {pending ? 'Thinking...' : 'Find Gift'}
+    <Button type="submit" disabled={pending} className="w-full md:w-auto font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
+      {pending ? 'Pensando...' : 'Encontrar Regalo'}
     </Button>
   );
 }
@@ -47,64 +47,64 @@ export default function InteractiveGiftGuideForm() {
       <form action={formAction}>
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline text-2xl">Find Their Perfect Jewelry</CardTitle>
+            <CardTitle className="font-headline text-2xl">Encuentra la joya perfecta</CardTitle>
             <CardDescription>
-              The more details you provide, the better the recommendations will be.
+              Mientras más detalles nos des, mejores serán las recomendaciones.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="occasion">Occasion</Label>
-                <Input type="text" id="occasion" name="occasion" placeholder="e.g., 10th Anniversary" required />
+                <Label htmlFor="occasion">Ocasión</Label>
+                <Input type="text" id="occasion" name="occasion" placeholder="Ej: 10º Aniversario" required />
               </div>
               <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="recipient">Recipient</Label>
-                <Input type="text" id="recipient" name="recipient" placeholder="e.g., My wife" required />
+                <Label htmlFor="recipient">Destinatario</Label>
+                <Input type="text" id="recipient" name="recipient" placeholder="Ej: Mi esposa" required />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="grid w-full items-center gap-1.5">
-                    <Label htmlFor="jewelryType">Jewelry Type</Label>
+                    <Label htmlFor="jewelryType">Tipo de Joya</Label>
                     <Select name="jewelryType" required>
                         <SelectTrigger id="jewelryType">
-                            <SelectValue placeholder="Select type" />
+                            <SelectValue placeholder="Seleccionar tipo" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Necklace">Necklace</SelectItem>
-                            <SelectItem value="Earrings">Earrings</SelectItem>
-                            <SelectItem value="Bracelet">Bracelet</SelectItem>
-                            <SelectItem value="Ring">Ring</SelectItem>
-                            <SelectItem value="Any">Any</SelectItem>
+                            <SelectItem value="Necklace">Collar</SelectItem>
+                            <SelectItem value="Earrings">Aretes</SelectItem>
+                            <SelectItem value="Bracelet">Pulsera</SelectItem>
+                            <SelectItem value="Ring">Anillo</SelectItem>
+                            <SelectItem value="Any">Cualquiera</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
 
                 <div className="grid w-full items-center gap-1.5">
-                    <Label htmlFor="budget">Budget</Label>
+                    <Label htmlFor="budget">Presupuesto</Label>
                     <Select name="budget" required>
                         <SelectTrigger id="budget">
-                            <SelectValue placeholder="Select budget" />
+                            <SelectValue placeholder="Seleccionar presupuesto" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="under $500">Under $500</SelectItem>
+                            <SelectItem value="under $500">Menos de $500</SelectItem>
                             <SelectItem value="$500 - $1000">$500 - $1000</SelectItem>
                             <SelectItem value="$1000 - $2500">$1000 - $2500</SelectItem>
-                            <SelectItem value="over $2500">Over $2500</SelectItem>
+                            <SelectItem value="over $2500">Más de $2500</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
             </div>
 
             <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="stylePreferences">Style & Preferences</Label>
-              <Textarea id="stylePreferences" name="stylePreferences" placeholder="e.g., Loves minimalist gold jewelry, wears a lot of classic pearls..." required/>
+              <Label htmlFor="stylePreferences">Estilo y Preferencias</Label>
+              <Textarea id="stylePreferences" name="stylePreferences" placeholder="Ej: Le encantan las joyas minimalistas de oro, usa muchas perlas clásicas..." required/>
             </div>
 
             <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="additionalDetails">Additional Details (Optional)</Label>
-              <Textarea id="additionalDetails" name="additionalDetails" placeholder="e.g., Her favorite color is blue, she has an allergy to nickel..." />
+              <Label htmlFor="additionalDetails">Detalles Adicionales (Opcional)</Label>
+              <Textarea id="additionalDetails" name="additionalDetails" placeholder="Ej: Su color favorito es el azul, tiene alergia al níquel..." />
             </div>
 
           </CardContent>
@@ -118,14 +118,14 @@ export default function InteractiveGiftGuideForm() {
         <div className="mt-8">
             <Alert>
                 <Bot className="h-4 w-4" />
-                <AlertTitle className="font-headline">Personalized Suggestions</AlertTitle>
+                <AlertTitle className="font-headline">Sugerencias Personalizadas</AlertTitle>
                 <AlertDescription className="mt-2 space-y-4">
                     <div>
-                        <h3 className="font-bold flex items-center gap-2 mb-1"><Lightbulb className="w-4 h-4 text-primary" />Reasoning</h3>
+                        <h3 className="font-bold flex items-center gap-2 mb-1"><Lightbulb className="w-4 h-4 text-primary" />Razonamiento</h3>
                         <p>{state.data.reasoning}</p>
                     </div>
                     <div>
-                        <h3 className="font-bold">Gift Ideas:</h3>
+                        <h3 className="font-bold">Ideas de Regalo:</h3>
                         <ul className="list-disc pl-5 mt-1 space-y-1">
                             {state.data.productSuggestions.map((suggestion, index) => (
                                 <li key={index}>{suggestion}</li>
