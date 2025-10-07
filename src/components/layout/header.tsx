@@ -45,13 +45,13 @@ export default function Header() {
           </Sheet>
         </div>
 
-        <div className="flex-1 flex justify-center">
+        <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-bold text-xl">Glittershop</span>
           </Link>
         </div>
 
-        <div className="flex items-center justify-end space-x-1">
+        <div className="flex-1 flex justify-end items-center space-x-1">
           <Button variant="ghost" size="icon" aria-label="Search">
             <Search className="h-5 w-5" />
           </Button>
@@ -63,6 +63,18 @@ export default function Header() {
           <Button variant="ghost" size="icon" aria-label="Shopping Cart">
             <ShoppingCart className="h-5 w-5" />
           </Button>
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center space-x-6 ml-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
         </div>
       </div>
     </header>
