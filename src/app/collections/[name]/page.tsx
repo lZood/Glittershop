@@ -57,6 +57,7 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
   const filterBarRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const [openAccordion, setOpenAccordion] = useState('');
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
 
 
   useEffect(() => {
@@ -116,10 +117,11 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
 
   const FilterAndSortButtons = () => (
     <div className="border-t border-b grid grid-cols-2 divide-x">
-      <DropdownMenu>
+      <DropdownMenu open={isSortMenuOpen} onOpenChange={setIsSortMenuOpen}>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none">
+          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none w-full">
             <span>CLASIFICAR POR</span>
+            {isSortMenuOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">
