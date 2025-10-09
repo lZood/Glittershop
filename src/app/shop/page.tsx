@@ -9,8 +9,6 @@ import {
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ListFilter, Plus, Minus } from 'lucide-react';
@@ -85,27 +83,24 @@ export default function ShopPage() {
 
   const FilterAndSortButtons = () => (
     <div className="border-t border-b grid grid-cols-2 divide-x">
-       <Accordion type="single" collapsible value={openAccordion} onValueChange={setOpenAccordion}>
-          <AccordionItem value="item-1" className="border-none">
-              <AccordionTrigger className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none no-underline hover:no-underline">
-                  <span>CLASIFICAR POR</span>
-                  {openAccordion === 'item-1' ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              </AccordionTrigger>
-              <AccordionContent>
-                  <div className="border-t">
-                      <DropdownMenuRadioGroup
-                          className="p-2"
-                          value={sortOption}
-                          onValueChange={setSortOption}>
-                          <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="precio-alto">El precio más alto</DropdownMenuRadioItem>
-                      </DropdownMenuRadioGroup>
-                  </div>
-              </AccordionContent>
-          </AccordionItem>
-      </Accordion>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none">
+            <span>CLASIFICAR POR</span>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56">
+          <DropdownMenuRadioGroup
+            className="p-2"
+            value={sortOption}
+            onValueChange={setSortOption}>
+            <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="precio-alto">El precio más alto</DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Sheet>
         <SheetTrigger asChild>
