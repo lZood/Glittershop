@@ -74,8 +74,10 @@ export default function Header() {
               <User className="h-5 w-5" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Wishlist">
-            <Heart className="h-5 w-5" />
+          <Button variant="ghost" size="icon" aria-label="Wishlist" asChild>
+            <Link href="/wishlist">
+              <Heart className="h-5 w-5" />
+            </Link>
           </Button>
           <Button variant="ghost" size="icon" aria-label="Shopping Cart" asChild>
              <Link href="/cart">
@@ -145,7 +147,7 @@ export default function Header() {
                   </nav>
 
                   <SheetClose asChild>
-                      <Link href="#" className="flex items-center gap-2 font-bold text-base border-t pt-6">
+                      <Link href="/wishlist" className="flex items-center gap-2 font-bold text-base border-t pt-6">
                           <Heart className="w-5 h-5" />
                           <span>Lista de Deseos</span>
                       </Link>
