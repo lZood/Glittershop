@@ -22,8 +22,8 @@ const tiendaLinks = [
 ];
 
 const coleccionesLinks = [
-    { href: '/collections', label: 'Colección: Luz de Luna' },
-    { href: '/collections', label: 'Colección: Verano Mediterráneo' },
+    { href: '/collections/luz-de-luna', label: 'Colección: Luz de Luna' },
+    { href: '/collections/verano-mediterraneo', label: 'Colección: Verano Mediterráneo' },
     { href: '/collections', label: 'Todas las Colecciones' },
 ];
 

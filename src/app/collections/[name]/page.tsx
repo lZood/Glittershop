@@ -5,11 +5,14 @@ import { products } from '@/lib/products';
 import ProductCard from '@/components/product-card';
 import type { Product } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ListFilter, ArrowUpDown } from 'lucide-react';
+import { ListFilter } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -22,6 +25,8 @@ import {
 } from '@/components/ui/sheet';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { useState, useRef, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 const collectionDetails = {
     'verano-mediterraneo': {
@@ -44,6 +49,57 @@ const collectionDetails = {
 export default function CollectionDetailPage({ params }: { params: { name: string } }) {
   const collectionKey = params.name as keyof typeof collectionDetails;
   const collection = collectionDetails[collectionKey];
+  const [sortOption, setSortOption] = useState('recomendado');
+  
+  const [isHeaderVisible, setIsHeaderVisible] = useState(false);
+  const [isFilterBarVisible, setIsFilterBarVisible] = useState(true);
+  const filterBarRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
+
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > lastScrollY.current) {
+        // Scrolling down
+        setIsHeaderVisible(false);
+      } else {
+        // Scrolling up
+        if (!isFilterBarVisible) {
+          setIsHeaderVisible(true);
+        }
+      }
+      lastScrollY.current = currentScrollY;
+
+       if (currentScrollY === 0) {
+        setIsHeaderVisible(false);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsFilterBarVisible(entry.isIntersecting);
+        if(entry.isIntersecting) {
+            setIsHeaderVisible(false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (filterBarRef.current) {
+      observer.observe(filterBarRef.current);
+    }
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+        window.removeEventListener('scroll', handleScroll);
+        if (filterBarRef.current) {
+            observer.unobserve(filterBarRef.current);
+        }
+    };
+  }, [isFilterBarVisible]);
+
 
   const socialImages = [
     PlaceHolderImages.find(p => p.id === 'social-1'),
@@ -56,8 +112,72 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
     return <div className="container mx-auto py-8 text-center">Colección no encontrada.</div>;
   }
 
+  const FilterAndSortButtons = () => (
+    <div className="grid grid-cols-2 gap-4">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="w-full justify-center gap-2">
+                Filtrar
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left">
+            <SheetHeader>
+                <SheetTitle>Filtrar Productos</SheetTitle>
+            </SheetHeader>
+            <div className="py-4 space-y-6">
+                <div>
+                    <h3 className="font-semibold mb-3">Categoría</h3>
+                    <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="cat-anillos" />
+                            <Label htmlFor="cat-anillos">Anillos</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="cat-collares" />
+                            <Label htmlFor="cat-collares">Collares</Label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <SheetClose asChild>
+                <Button className="w-full">Aplicar Filtros</Button>
+            </SheetClose>
+          </SheetContent>
+        </Sheet>
+
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-center gap-2">
+                Ordenar
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+                <DropdownMenuLabel>CLASIFICAR POR</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
+                    <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="precio-alto">El precio más alto</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    </div>
+  );
+
+
   return (
     <div className="bg-background">
+      <div 
+        className={cn(
+            "sticky top-16 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b p-4 transition-transform duration-300",
+            isHeaderVisible ? "translate-y-0" : "-translate-y-full"
+        )}
+      >
+        <div className="container mx-auto px-4">
+            <FilterAndSortButtons />
+        </div>
+      </div>
       <section className="relative w-full h-[40vh] bg-gray-300 flex flex-col items-center justify-center text-center p-4">
         {collection.heroImage && (
           <Image
@@ -103,50 +223,8 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
 
       <section className="container mx-auto px-4 pb-12">
         <h2 className="text-2xl font-bold mb-6">Productos</h2>
-        <div className="grid grid-cols-2 gap-4 mb-8">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="w-full justify-center gap-2 bg-amber-50 border-amber-200">
-                    Filtrar
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left">
-                <SheetHeader>
-                    <SheetTitle>Filtrar Productos</SheetTitle>
-                </SheetHeader>
-                <div className="py-4 space-y-6">
-                    <div>
-                        <h3 className="font-semibold mb-3">Categoría</h3>
-                        <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="cat-anillos" />
-                                <Label htmlFor="cat-anillos">Anillos</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="cat-collares" />
-                                <Label htmlFor="cat-collares">Collares</Label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                 <SheetClose asChild>
-                    <Button className="w-full">Aplicar Filtros</Button>
-                </SheetClose>
-              </SheetContent>
-            </Sheet>
-
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-center gap-2 bg-yellow-500 text-black">
-                    Ordenar
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                    <DropdownMenuItem>Novedades</DropdownMenuItem>
-                    <DropdownMenuItem>Precio: de menor a mayor</DropdownMenuItem>
-                    <DropdownMenuItem>Precio: de mayor a menor</DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+        <div ref={filterBarRef} className="mb-8">
+            <FilterAndSortButtons />
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-8">
