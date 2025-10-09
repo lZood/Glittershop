@@ -3,60 +3,78 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { products } from '@/lib/products';
-import { Heart, ShoppingCart, Trash2, Star } from 'lucide-react';
-import Link from 'next/link';
-import ProductCard from '@/components/product-card';
+import { Heart } from 'lucide-react';
 import type { Product } from '@/lib/types';
+import Link from 'next/link';
 
 const wishlistItems = [
   products.find(p => p.id === '1'),
-  products.find(p => p.id === '5'),
-  products.find(p => p.id === '3'),
+  products.find(p => p.id === '2'),
   products.find(p => p.id === '4'),
 ].filter(Boolean) as Product[];
 
-const recommendedItems = products.slice(4, 7);
+function formatPrice(price: number) {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+    }).format(price);
+}
 
 export default function WishlistPage() {
   return (
     <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-center mb-2">Mi Lista de Deseos</h1>
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-4xl font-black tracking-tighter mb-1 uppercase">Favoritos</h1>
           {wishlistItems.length > 0 && (
-            <p className="text-muted-foreground">
-              Tienes {wishlistItems.length} joyas guardadas.
+            <p className="text-muted-foreground uppercase text-sm font-medium tracking-wide">
+              {wishlistItems.length} artículos
             </p>
           )}
         </div>
 
         {wishlistItems.length > 0 ? (
-          <>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-8">
-              {wishlistItems.map((item) => (
-                <div key={item.id} className="relative group">
-                  <ProductCard product={item} />
-                  <div className="flex justify-center mt-3 space-x-2">
-                    <Button variant="outline" size="icon" className="rounded-full border-gray-300">
-                      <ShoppingCart className="w-5 h-5 text-gray-600" />
-                    </Button>
-                     <Button variant="outline" size="icon" className="rounded-full border-gray-300">
-                      <Trash2 className="w-5 h-5 text-gray-600" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <section className="py-16">
-              <h2 className="text-2xl font-bold text-center mb-6">Completa tu Look</h2>
-              <div className="grid grid-cols-2 gap-4">
-                {recommendedItems.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8">
+            {wishlistItems.map((item) => (
+              <div key={item.id} className="relative group">
+                <Link href={`/products/${item.id}`} className="group">
+                    <div className="aspect-[3/4] relative bg-secondary rounded-lg overflow-hidden">
+                        {item.image && (
+                            <Image
+                            src={item.image.imageUrl}
+                            alt={item.description}
+                            data-ai-hint={item.image.imageHint}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
+                        )}
+                        <Button variant="ghost" size="icon" className="absolute top-2 right-2 bg-transparent hover:bg-white/50 rounded-full">
+                            <Heart className="w-5 h-5 text-black fill-white" />
+                        </Button>
+                    </div>
+                    <div className="mt-3 text-left">
+                        <h3 className="font-medium text-sm md:text-base leading-tight">
+                            {item.name}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                            <p className={`font-semibold text-sm md:text-base ${item.originalPrice ? 'text-red-500' : ''}`}>
+                                {formatPrice(item.price)}
+                            </p>
+                            {item.originalPrice && (
+                                <p className="text-xs md:text-sm text-muted-foreground line-through">
+                                    {formatPrice(item.originalPrice)}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </Link>
+                <Button variant="outline" className="w-full mt-3 rounded-none border-black hover:bg-black hover:text-white uppercase tracking-wider text-xs h-9">
+                  Agregar
+                </Button>
               </div>
-            </section>
-          </>
+            ))}
+          </div>
         ) : (
           <div className="text-center py-16">
             <Heart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />

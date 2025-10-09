@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/types';
-import { Star } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 type ProductCardProps = {
   product: Product;
@@ -14,29 +14,13 @@ function formatPrice(price: number) {
     }).format(price);
 }
 
-function renderStars(rating: number) {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-        stars.push(
-        <Star
-            key={i}
-            className={`w-4 h-4 ${
-            i <= rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'
-            }`}
-        />
-        );
-    }
-    return stars;
-}
-
-
 export default function ProductCard({ product }: ProductCardProps) {
   const rating = product.rating || 0;
   const reviews = product.reviews || 0;
   
   return (
     <Link href={`/products/${product.id}`} className="group">
-      <div className="aspect-square relative bg-secondary rounded-lg overflow-hidden">
+      <div className="aspect-[3/4] relative bg-secondary rounded-lg overflow-hidden">
         {product.image && (
             <Image
               src={product.image.imageUrl}
@@ -47,27 +31,23 @@ export default function ProductCard({ product }: ProductCardProps) {
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
         )}
-         <button className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors">
-            <Star className="w-5 h-5 text-black" />
+         <button className="absolute top-2 right-2 bg-white/50 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors opacity-0 group-hover:opacity-100">
+            <Heart className="w-5 h-5 text-black" />
          </button>
       </div>
-      <div className="mt-2">
-        <h3 className="font-medium text-base leading-tight">
+      <div className="mt-3 text-left">
+        <h3 className="font-medium text-sm md:text-base leading-tight">
             {product.name}
         </h3>
         <div className="flex items-center gap-2 mt-1">
-            <p className={`font-semibold ${product.originalPrice ? 'text-red-500' : ''}`}>
+            <p className={`font-semibold text-sm md:text-base ${product.originalPrice ? 'text-red-500' : ''}`}>
                 {formatPrice(product.price)}
             </p>
             {product.originalPrice && (
-                <p className="text-sm text-muted-foreground line-through">
+                <p className="text-xs md:text-sm text-muted-foreground line-through">
                     {formatPrice(product.originalPrice)}
                 </p>
             )}
-        </div>
-        <div className="flex items-center gap-1 mt-1">
-            {renderStars(rating)}
-            <span className="text-xs text-muted-foreground">({reviews})</span>
         </div>
       </div>
     </Link>
