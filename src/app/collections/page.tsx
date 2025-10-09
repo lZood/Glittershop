@@ -18,19 +18,19 @@ const collectionsData: Collection[] = [
     name: 'Luz de Luna',
     tagline: 'Capturando la magia del cielo nocturno.',
     image: PlaceHolderImages.find(p => p.id === 'collection-moonlight')!,
-    href: '/shop?collection=moonlight',
+    href: '/collections/luz-de-luna',
   },
   {
     name: 'Verano Mediterráneo',
     tagline: 'La calidez del sol y la brisa del mar en cada joya.',
     image: PlaceHolderImages.find(p => p.id === 'collection-summer-hero')!,
-    href: '/shop?collection=summer',
+    href: '/collections/verano-mediterraneo',
   },
   {
     name: 'Geometría Urbana',
     tagline: 'Líneas limpias y diseños audaces para la ciudad.',
     image: PlaceHolderImages.find(p => p.id === 'collection-urban')!,
-    href: '/shop?collection=urban',
+    href: '/collections/geometria-urbana',
   },
 ];
 
