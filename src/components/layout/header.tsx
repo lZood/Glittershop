@@ -27,8 +27,7 @@ const coleccionesLinks = [
     { href: '#', label: 'Todas las Colecciones' },
 ];
 
-const mainLinks = [
-    { href: '/gift-guide', label: 'Guía de Regalos' },
+const mainLinks: { href: string, label: string }[] = [
 ];
 
 export default function Header() {
@@ -50,9 +49,6 @@ export default function Header() {
             </Link>
             <Link href="/#products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                 Colecciones
-            </Link>
-            <Link href="/gift-guide" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-                Guía de Regalos
             </Link>
         </nav>
 

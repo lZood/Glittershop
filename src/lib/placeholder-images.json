@@ -55,18 +55,6 @@
       "imageHint": "pearl necklace"
     },
     {
-      "id": "product-gift-guide",
-      "description": "Person opening a jewelry gift box",
-      "imageUrl": "https://images.unsplash.com/photo-1611652022417-a0409324564c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNXx8amV3ZWxyeSUyMGdpZnR8ZW58MHx8fHwxNzYwMzU2NDg4fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "jewelry gift"
-    },
-    {
-      "id": "interactive-gift-guide",
-      "description": "Person interacting with a tablet showing jewelry",
-      "imageUrl": "https://picsum.photos/seed/interactivegift/1200/800",
-      "imageHint": "interactive shopping"
-    },
-    {
       "id": "social-1",
       "description": "Social media post 1",
       "imageUrl": "https://picsum.photos/seed/social1/400/400",
@@ -125,30 +113,6 @@
       "description": "Customer wearing earrings",
       "imageUrl": "https://picsum.photos/seed/customer2/400/400",
       "imageHint": "woman earrings"
-    },
-    {
-      "id": "gift-guide-couple",
-      "description": "A couple holding hands.",
-      "imageUrl": "https://picsum.photos/seed/couple-hands/400/400",
-      "imageHint": "couple hands"
-    },
-    {
-      "id": "gift-guide-family",
-      "description": "A mother and daughter hugging.",
-      "imageUrl": "https://picsum.photos/seed/mother-daughter/400/400",
-      "imageHint": "mother daughter"
-    },
-    {
-      "id": "gift-guide-friend",
-      "description": "Two friends together.",
-      "imageUrl": "https://picsum.photos/seed/friends-portrait/400/400",
-      "imageHint": "friends portrait"
-    },
-    {
-      "id": "gift-guide-for-me",
-      "description": "A woman wearing jewelry.",
-      "imageUrl": "https://picsum.photos/seed/woman-jewelry/400/400",
-      "imageHint": "woman jewelry"
     }
   ]
 }

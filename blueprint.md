@@ -33,11 +33,6 @@ A día de hoy, hemos construido la interfaz de usuario (UI) y la experiencia de 
   - **Páginas de Login y Registro (`/login`, `/register`):** Formularios de interfaz para el inicio de sesión y la creación de cuentas.
   - **Página de Perfil (`/profile`):** Muestra información estática del usuario, como historial de pedidos y recompensas.
 
-- **✅ Funcionalidad de IA (GenAI):**
-  - **Guía de Regalos Interactiva (`/gift-guide`):**
-    - Implementación inicial de un flujo de varios pasos que comienza preguntando para quién es el regalo.
-    - Utiliza Genkit para generar recomendaciones basadas en las respuestas del usuario.
-
 ---
 
 ## 3. Desarrollo Futuro y Checklist
@@ -84,11 +79,6 @@ Esta sección describe las funcionalidades que se implementarán a continuación
   - `[ ]` Configurar una Edge Function para enviar correos electrónicos (confirmación de orden, bienvenida) utilizando SendGrid.
 
 ### 3.3. Mejoras y Funcionalidades Adicionales
-
-- **[ ] Guía de Regalos (Fase 2):**
-  - `[ ]` Completar el flujo de varios pasos (Ocasión, Estilo, etc.).
-  - `[ ]` Mejorar el prompt de Genkit para que utilice los productos reales de la base de datos como base para sus recomendaciones.
-  - `[ ]` Mostrar los productos recomendados como tarjetas de producto en lugar de una simple lista.
 
 - **[ ] Pruebas y Optimización:**
   - `[ ]` Escribir pruebas para las funcionalidades críticas.
