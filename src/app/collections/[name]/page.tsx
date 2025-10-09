@@ -51,13 +51,14 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
   const collectionKey = params.name as keyof typeof collectionDetails;
   const collection = collectionDetails[collectionKey];
   const [sortOption, setSortOption] = useState('recomendado');
+  const [headerSortOption, setHeaderSortOption] = useState('recomendado');
   
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const [isFilterBarVisible, setIsFilterBarVisible] = useState(true);
   const filterBarRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
-  const [openAccordion, setOpenAccordion] = useState('');
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+  const [isHeaderSortMenuOpen, setIsHeaderSortMenuOpen] = useState(false);
 
 
   useEffect(() => {
@@ -115,19 +116,19 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
     return <div className="container mx-auto py-8 text-center">Colección no encontrada.</div>;
   }
 
-  const FilterAndSortButtons = () => (
+  const HeaderFilterButtons = () => (
     <div className="border-t border-b grid grid-cols-2 divide-x">
-      <DropdownMenu open={isSortMenuOpen} onOpenChange={setIsSortMenuOpen}>
+      <DropdownMenu open={isHeaderSortMenuOpen} onOpenChange={setIsHeaderSortMenuOpen}>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none w-full">
             <span>CLASIFICAR POR</span>
-            {isSortMenuOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {isHeaderSortMenuOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>CLASIFICAR POR</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
+          <DropdownMenuRadioGroup value={headerSortOption} onValueChange={(value) => { setSortOption(value); setHeaderSortOption(value); }}>
             <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
@@ -170,6 +171,61 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
     </div>
   );
 
+  const PageFilterButtons = () => (
+    <div className="border-t border-b grid grid-cols-2 divide-x">
+      <DropdownMenu open={isSortMenuOpen} onOpenChange={setIsSortMenuOpen}>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none w-full">
+            <span>CLASIFICAR POR</span>
+            {isSortMenuOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56">
+          <DropdownMenuLabel>CLASIFICAR POR</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuRadioGroup value={sortOption} onValueChange={(value) => { setSortOption(value); setHeaderSortOption(value); }}>
+            <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="precio-alto">El precio más alto</DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Sheet>
+        <SheetTrigger asChild>
+          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none">
+            <span>FILTRO</span>
+            <ListFilter className="w-4 h-4" />
+          </button>
+        </SheetTrigger>
+        <SheetContent side="left">
+          <SheetHeader>
+            <SheetTitle>Filtrar Productos</SheetTitle>
+          </SheetHeader>
+          <div className="py-4 space-y-6">
+            <div>
+              <h3 className="font-semibold mb-3">Categoría</h3>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="cat-anillos-page" />
+                  <Label htmlFor="cat-anillos-page">Anillos</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="cat-collares-page" />
+                  <Label htmlFor="cat-collares-page">Collares</Label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <SheetClose asChild>
+            <Button className="w-full">Aplicar Filtros</Button>
+          </SheetClose>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+
 
   return (
     <div className="bg-background">
@@ -180,7 +236,7 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
         )}
       >
         <div className="container mx-auto px-4">
-            <FilterAndSortButtons />
+            <HeaderFilterButtons />
         </div>
       </div>
       <section className="relative w-full h-[40vh] bg-gray-300 flex flex-col items-center justify-center text-center p-4">
@@ -229,7 +285,7 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
       <section className="container mx-auto px-4 pb-12">
         <h2 className="text-2xl font-bold mb-6">Productos</h2>
         <div ref={filterBarRef} className="mb-8">
-            <FilterAndSortButtons />
+            <PageFilterButtons />
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-8">
