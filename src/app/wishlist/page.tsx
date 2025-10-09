@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { products } from '@/lib/products';
-import { Heart } from 'lucide-react';
+import { Star } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import Link from 'next/link';
 
@@ -50,7 +50,7 @@ export default function WishlistPage() {
                             />
                         )}
                         <Button variant="ghost" size="icon" className="absolute top-2 right-2 bg-transparent hover:bg-white/50 rounded-full">
-                            <Heart className="w-5 h-5 text-black fill-white" />
+                            <Star className="w-5 h-5 text-black fill-white" />
                         </Button>
                     </div>
                     <div className="mt-3 text-left">
@@ -77,7 +77,7 @@ export default function WishlistPage() {
           </div>
         ) : (
           <div className="text-center py-16">
-            <Heart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <Star className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h2 className="text-2xl font-bold mb-2">Aún no has guardado ninguna joya</h2>
             <p className="text-muted-foreground mb-6 max-w-xs mx-auto">
               ¡Explora nuestras colecciones y encuentra tus próximas favoritas!

@@ -16,7 +16,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Star, Heart, Camera, Eye } from 'lucide-react';
+import { Star, Camera, Eye } from 'lucide-react';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Product } from '@/lib/types';
 
@@ -92,7 +92,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
           <div className="flex justify-between items-start">
             <h1 className="text-2xl font-bold">{product.name}</h1>
             <Button variant="ghost" size="icon">
-              <Heart className="w-6 h-6" />
+              <Star className="w-6 h-6" />
             </Button>
           </div>
           <div className="flex items-center gap-2 mt-1">

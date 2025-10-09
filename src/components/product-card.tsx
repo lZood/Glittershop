@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/types';
-import { Heart } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 type ProductCardProps = {
   product: Product;
@@ -32,7 +32,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             />
         )}
          <button className="absolute top-2 right-2 bg-white/50 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors opacity-0 group-hover:opacity-100">
-            <Heart className="w-5 h-5 text-black" />
+            <Star className="w-5 h-5 text-black" />
          </button>
       </div>
       <div className="mt-3 text-left">
