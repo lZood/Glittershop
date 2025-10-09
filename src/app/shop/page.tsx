@@ -34,7 +34,6 @@ export default function ShopPage() {
   const [isHeaderSortMenuOpen, setIsHeaderSortMenuOpen] = useState(false);
 
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
-  const [isFilterBarVisible, setIsFilterBarVisible] = useState(true);
   const filterBarRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
@@ -44,11 +43,13 @@ export default function ShopPage() {
 
       if (filterBarRef.current) {
         if (currentScrollY > filterBarRef.current.offsetTop) {
-          if (currentScrollY < lastScrollY.current) {
-            setIsHeaderVisible(true);
-          } else {
-            setIsHeaderVisible(false);
-          }
+           if (currentScrollY > lastScrollY.current) {
+             // Scrolling down
+             setIsHeaderVisible(false);
+           } else {
+             // Scrolling up
+             setIsHeaderVisible(true);
+           }
         } else {
           setIsHeaderVisible(false);
         }
@@ -56,24 +57,11 @@ export default function ShopPage() {
 
       lastScrollY.current = currentScrollY;
     };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsFilterBarVisible(entry.isIntersecting);
-      },
-      { threshold: 0 }
-    );
-
-    if (filterBarRef.current) {
-      observer.observe(filterBarRef.current);
-    }
+    
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      if (filterBarRef.current) {
-        observer.unobserve(filterBarRef.current);
-      }
     };
   }, []);
 
@@ -245,7 +233,7 @@ export default function ShopPage() {
     <div className="bg-background">
        <div 
         className={cn(
-            "sticky top-16 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b",
+            "sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b",
             isHeaderVisible ? "block" : "hidden"
         )}
       >
