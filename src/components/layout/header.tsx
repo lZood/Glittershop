@@ -22,9 +22,9 @@ const tiendaLinks = [
 ];
 
 const coleccionesLinks = [
-    { href: '#', label: 'Colección: Luz de Luna' },
-    { href: '#', label: 'Colección: Verano Mediterráneo' },
-    { href: '#', label: 'Todas las Colecciones' },
+    { href: '/collections', label: 'Colección: Luz de Luna' },
+    { href: '/collections', label: 'Colección: Verano Mediterráneo' },
+    { href: '/collections', label: 'Todas las Colecciones' },
 ];
 
 const mainLinks: { href: string, label: string }[] = [
@@ -47,7 +47,7 @@ export default function Header() {
             <Link href="/shop" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                 Tienda
             </Link>
-            <Link href="/#products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            <Link href="/collections" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                 Colecciones
             </Link>
         </nav>

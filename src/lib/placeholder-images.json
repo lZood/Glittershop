@@ -99,8 +99,20 @@
     {
       "id": "collection-summer-hero",
       "description": "Summer collection hero image",
-      "imageUrl": "https://picsum.photos/seed/summer-collection/1200/600",
+      "imageUrl": "https://picsum.photos/seed/summer-collection/1200/800",
       "imageHint": "summer jewelry"
+    },
+    {
+      "id": "collection-moonlight",
+      "description": "Moonlight collection with stars",
+      "imageUrl": "https://picsum.photos/seed/moonlight/1200/800",
+      "imageHint": "starry sky"
+    },
+    {
+      "id": "collection-urban",
+      "description": "Urban geometry collection",
+      "imageUrl": "https://picsum.photos/seed/urban-geo/1200/800",
+      "imageHint": "modern architecture"
     },
     {
       "id": "customer-1",
