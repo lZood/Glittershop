@@ -115,68 +115,56 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
   }
 
   const FilterAndSortButtons = () => (
-    <div className="border-t border-b">
-        <Accordion type="single" collapsible value={openAccordion} onValueChange={setOpenAccordion}>
-            <AccordionItem value="sort" className="border-b-0">
-                <AccordionTrigger className="py-3 px-4 font-medium text-sm hover:no-underline justify-between w-full">
-                    <div className="flex items-center gap-2">
-                        <span>CLASIFICAR POR</span>
-                    </div>
-                     {openAccordion === 'sort' ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                    <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
-                        <div className="flex items-center justify-between py-2">
-                           <Label htmlFor="recomendado" className="font-normal">Recomendado</Label>
-                           <DropdownMenuRadioItem value="recomendado" id="recomendado" className="p-0"/>
-                        </div>
-                        <div className="flex items-center justify-between py-2">
-                           <Label htmlFor="reciente" className="font-normal">Más reciente</Label>
-                           <DropdownMenuRadioItem value="reciente" id="reciente" className="p-0"/>
-                        </div>
-                        <div className="flex items-center justify-between py-2">
-                           <Label htmlFor="precio-bajo" className="font-normal">El precio más bajo</Label>
-                           <DropdownMenuRadioItem value="precio-bajo" id="precio-bajo" className="p-0"/>
-                        </div>
-                         <div className="flex items-center justify-between py-2">
-                           <Label htmlFor="precio-alto" className="font-normal">El precio más alto</Label>
-                           <DropdownMenuRadioItem value="precio-alto" id="precio-alto" className="p-0"/>
-                        </div>
-                    </DropdownMenuRadioGroup>
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
-        <Sheet>
-          <SheetTrigger asChild>
-            <div className="flex items-center justify-between w-full py-3 px-4 text-sm font-medium border-t cursor-pointer">
-                 <span>FILTRO</span>
-                <ListFilter className="w-4 h-4" />
-            </div>
-          </SheetTrigger>
-          <SheetContent side="left">
-            <SheetHeader>
-                <SheetTitle>Filtrar Productos</SheetTitle>
-            </SheetHeader>
-            <div className="py-4 space-y-6">
-                <div>
-                    <h3 className="font-semibold mb-3">Categoría</h3>
-                    <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="cat-anillos" />
-                            <Label htmlFor="cat-anillos">Anillos</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="cat-collares" />
-                            <Label htmlFor="cat-collares">Collares</Label>
-                        </div>
-                    </div>
+    <div className="border-t border-b grid grid-cols-2 divide-x">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none">
+            <span>CLASIFICAR POR</span>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56">
+          <DropdownMenuLabel>CLASIFICAR POR</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
+            <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="precio-alto">El precio más alto</DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Sheet>
+        <SheetTrigger asChild>
+          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none">
+            <span>FILTRO</span>
+            <ListFilter className="w-4 h-4" />
+          </button>
+        </SheetTrigger>
+        <SheetContent side="left">
+          <SheetHeader>
+            <SheetTitle>Filtrar Productos</SheetTitle>
+          </SheetHeader>
+          <div className="py-4 space-y-6">
+            <div>
+              <h3 className="font-semibold mb-3">Categoría</h3>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="cat-anillos" />
+                  <Label htmlFor="cat-anillos">Anillos</Label>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="cat-collares" />
+                  <Label htmlFor="cat-collares">Collares</Label>
+                </div>
+              </div>
             </div>
-             <SheetClose asChild>
-                <Button className="w-full">Aplicar Filtros</Button>
-            </SheetClose>
-          </SheetContent>
-        </Sheet>
+          </div>
+          <SheetClose asChild>
+            <Button className="w-full">Aplicar Filtros</Button>
+          </SheetClose>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 
