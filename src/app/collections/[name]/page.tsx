@@ -56,6 +56,7 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const [isFilterBarVisible, setIsFilterBarVisible] = useState(true);
   const filterBarRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [isHeaderSortMenuOpen, setIsHeaderSortMenuOpen] = useState(false);
@@ -64,21 +65,20 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      const headerHeight = headerRef.current?.offsetHeight || 64;
 
       if (currentScrollY > lastScrollY.current) {
         // Scrolling down
         setIsHeaderVisible(false);
       } else {
         // Scrolling up
-        if (!isFilterBarVisible) {
+        if (!isFilterBarVisible && currentScrollY > headerHeight) {
           setIsHeaderVisible(true);
+        } else {
+          setIsHeaderVisible(false);
         }
       }
       lastScrollY.current = currentScrollY;
-
-       if (currentScrollY === 0) {
-        setIsHeaderVisible(false);
-      }
     };
 
     const observer = new IntersectionObserver(
@@ -229,7 +229,8 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
 
   return (
     <div className="bg-background">
-      <div 
+      <div
+        ref={headerRef} 
         className={cn(
             "sticky top-16 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b transition-transform duration-300",
             isHeaderVisible ? "translate-y-0" : "-translate-y-full"
