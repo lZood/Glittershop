@@ -36,33 +36,30 @@ export default function ShopPage() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const [isFilterBarVisible, setIsFilterBarVisible] = useState(true);
   const filterBarRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      if (currentScrollY > lastScrollY.current) {
-        // Scrolling down
-        setIsHeaderVisible(false);
-      } else {
-        // Scrolling up
-        if (!isFilterBarVisible) {
-          setIsHeaderVisible(true);
+      if (filterBarRef.current) {
+        if (currentScrollY > filterBarRef.current.offsetTop) {
+          if (currentScrollY < lastScrollY.current) {
+            setIsHeaderVisible(true);
+          } else {
+            setIsHeaderVisible(false);
+          }
         } else {
           setIsHeaderVisible(false);
         }
       }
+
       lastScrollY.current = currentScrollY;
     };
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsFilterBarVisible(entry.isIntersecting);
-        if (entry.isIntersecting) {
-          setIsHeaderVisible(false);
-        }
       },
       { threshold: 0 }
     );
@@ -70,7 +67,7 @@ export default function ShopPage() {
     if (filterBarRef.current) {
       observer.observe(filterBarRef.current);
     }
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -78,7 +75,7 @@ export default function ShopPage() {
         observer.unobserve(filterBarRef.current);
       }
     };
-  }, [isFilterBarVisible]);
+  }, []);
 
   const tags = ['Ver Todo', 'Los Más Vendidos', 'Anillos', 'Collares', 'Pulseras'];
 
@@ -247,7 +244,6 @@ export default function ShopPage() {
   return (
     <div className="bg-background">
        <div 
-        ref={headerRef}
         className={cn(
             "sticky top-16 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b",
             isHeaderVisible ? "block" : "hidden"

@@ -56,7 +56,6 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const [isFilterBarVisible, setIsFilterBarVisible] = useState(true);
   const filterBarRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [isHeaderSortMenuOpen, setIsHeaderSortMenuOpen] = useState(false);
@@ -66,14 +65,13 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Show/hide sticky header based on scroll direction and position
-      if (currentScrollY > lastScrollY.current) {
-        // Scrolling down
-        setIsHeaderVisible(false);
-      } else {
-        // Scrolling up
-        if (!isFilterBarVisible) {
-          setIsHeaderVisible(true);
+      if (filterBarRef.current) {
+        if (currentScrollY > filterBarRef.current.offsetTop) {
+          if (currentScrollY < lastScrollY.current) {
+            setIsHeaderVisible(true);
+          } else {
+            setIsHeaderVisible(false);
+          }
         } else {
           setIsHeaderVisible(false);
         }
@@ -84,17 +82,14 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsFilterBarVisible(entry.isIntersecting);
-        if(entry.isIntersecting) {
-            setIsHeaderVisible(false);
-        }
       },
-      { threshold: 0 } // Trigger as soon as the element is out of view
+      { threshold: 0 }
     );
 
     if (filterBarRef.current) {
       observer.observe(filterBarRef.current);
     }
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
         window.removeEventListener('scroll', handleScroll);
@@ -102,7 +97,7 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
             observer.unobserve(filterBarRef.current);
         }
     };
-  }, [isFilterBarVisible]);
+  }, []);
 
 
   const socialImages = [
@@ -230,7 +225,6 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
   return (
     <div className="bg-background">
       <div
-        ref={headerRef} 
         className={cn(
             "sticky top-16 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b",
             isHeaderVisible ? "block" : "hidden"
