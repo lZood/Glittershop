@@ -65,14 +65,14 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      const headerHeight = headerRef.current?.offsetHeight || 64;
-
+      
+      // Show/hide sticky header based on scroll direction and position
       if (currentScrollY > lastScrollY.current) {
         // Scrolling down
         setIsHeaderVisible(false);
       } else {
         // Scrolling up
-        if (!isFilterBarVisible && currentScrollY > headerHeight) {
+        if (!isFilterBarVisible) {
           setIsHeaderVisible(true);
         } else {
           setIsHeaderVisible(false);
@@ -88,7 +88,7 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
             setIsHeaderVisible(false);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0 } // Trigger as soon as the element is out of view
     );
 
     if (filterBarRef.current) {
@@ -232,8 +232,8 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
       <div
         ref={headerRef} 
         className={cn(
-            "sticky top-16 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b transition-transform duration-300",
-            isHeaderVisible ? "translate-y-0" : "-translate-y-full"
+            "sticky top-16 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b",
+            isHeaderVisible ? "block" : "hidden"
         )}
       >
         <div className="container mx-auto px-4">
