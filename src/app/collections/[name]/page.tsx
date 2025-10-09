@@ -51,7 +51,6 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
   const collectionKey = params.name as keyof typeof collectionDetails;
   const collection = collectionDetails[collectionKey];
   const [sortOption, setSortOption] = useState('recomendado');
-  const [headerSortOption, setHeaderSortOption] = useState('recomendado');
   
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const filterBarRef = useRef<HTMLDivElement>(null);
@@ -110,7 +109,7 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
         <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>CLASIFICAR POR</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuRadioGroup value={headerSortOption} onValueChange={(value) => { setSortOption(value); setHeaderSortOption(value); }}>
+          <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
             <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
@@ -165,7 +164,7 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
         <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>CLASIFICAR POR</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuRadioGroup value={sortOption} onValueChange={(value) => { setSortOption(value); setHeaderSortOption(value); }}>
+          <DropdownMenuRadioGroup value={sortOption} onValueChange={setSortOption}>
             <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>

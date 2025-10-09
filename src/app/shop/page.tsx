@@ -28,7 +28,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 export default function ShopPage() {
   const [activeTag, setActiveTag] = useState('Ver Todo');
   const [sortOption, setSortOption] = useState('recomendado');
-  const [headerSortOption, setHeaderSortOption] = useState('recomendado');
   const shopProducts = products;
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [isHeaderSortMenuOpen, setIsHeaderSortMenuOpen] = useState(false);
@@ -79,8 +78,8 @@ export default function ShopPage() {
         <DropdownMenuContent className="w-56">
           <DropdownMenuRadioGroup
             className="p-2"
-            value={headerSortOption}
-            onValueChange={(value) => { setSortOption(value); setHeaderSortOption(value); }}>
+            value={sortOption}
+            onValueChange={setSortOption}>
             <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
@@ -161,7 +160,7 @@ export default function ShopPage() {
           <DropdownMenuRadioGroup
             className="p-2"
             value={sortOption}
-            onValueChange={(value) => { setSortOption(value); setHeaderSortOption(value); }}>
+            onValueChange={setSortOption}>
             <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
