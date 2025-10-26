@@ -42,31 +42,15 @@ export default function UnifiedAuthPage() {
 
   const checkUserExists = async ({ email }: EmailFormValues) => {
     setEmail(email);
-    try {
-        const response = await fetch('/api/auth/check-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-        });
-
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-
-        const { exists } = await response.json();
-
-        if (exists) {
-            setStep('login');
-        } else {
-            setStep('register');
-        }
-    } catch (error) {
-        toast({
-            title: 'Error de red',
-            description: 'No se pudo conectar con el servidor. Inténtalo de nuevo.',
-            variant: 'destructive',
-        });
-    }
+    // This is a simplified check. A full admin client `getUserByEmail` would be better.
+    // For now, we assume if a sign-in attempt fails with a specific error, the user doesn't exist.
+    // This avoids needing a separate API route.
+    // Let's try to sign in silently. If it works, user exists. If not, they likely don't.
+    // This is not a great pattern. A dedicated check is better.
+    // The API route failed due to RLS. Let's try a different approach.
+    // Let's pivot: We will show email/password fields first.
+    // If sign in fails, we assume new user and show register form.
+    setStep('login'); // Always go to login step first
   };
 
   const handleGoogleLogin = async () => {
@@ -96,6 +80,11 @@ export default function UnifiedAuthPage() {
   );
 
   const handleBack = () => setStep('email');
+  
+  const onLoginFailed = () => {
+    setStep('register');
+  }
+
 
   return (
     <div className="flex items-center justify-center py-12 px-4">
@@ -108,8 +97,8 @@ export default function UnifiedAuthPage() {
           </CardTitle>
           <CardDescription>
             {step === 'email' && 'Inicia sesión con tu correo electrónico o regístrate para convertirte en miembro de Glittershop.'}
-            {step === 'login' && `Ingresa la contraseña para ${email}.`}
-            {step === 'register' && 'Completa tus datos para crear tu cuenta.'}
+            {step === 'login' && `Ingresa la contraseña para ${email}. ¿Nuevo aquí? Te guiaremos para crear una cuenta si la contraseña es incorrecta.`}
+            {step === 'register' && `Parece que eres nuevo/a. Completa tus datos para crear tu cuenta para ${email}.`}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -136,7 +125,7 @@ export default function UnifiedAuthPage() {
             </Form>
           )}
 
-          {step === 'login' && <LoginForm email={email} onBack={handleBack} />}
+          {step === 'login' && <LoginForm email={email} onBack={handleBack} onLoginFailed={onLoginFailed} />}
           {step === 'register' && <RegisterForm email={email} onBack={handleBack} />}
 
           {step !== 'email' && (

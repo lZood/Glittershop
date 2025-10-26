@@ -25,9 +25,10 @@ type LoginFormValues = z.infer<typeof formSchema>;
 interface LoginFormProps {
   email: string;
   onBack: () => void;
+  onLoginFailed: () => void;
 }
 
-export default function LoginForm({ email, onBack }: LoginFormProps) {
+export default function LoginForm({ email, onBack, onLoginFailed }: LoginFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const form = useForm<LoginFormValues>({
@@ -43,11 +44,16 @@ export default function LoginForm({ email, onBack }: LoginFormProps) {
     });
 
     if (error) {
-      toast({
-        title: 'Error al iniciar sesión',
-        description: error.message,
-        variant: 'destructive',
-      });
+      if (error.message === 'Invalid login credentials') {
+        // User likely does not exist, switch to register view
+        onLoginFailed();
+      } else {
+        toast({
+          title: 'Error al iniciar sesión',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
     } else {
       router.push('/profile');
       router.refresh();
