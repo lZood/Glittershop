@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, ShoppingCart, User, Menu, X, Heart, Instagram, Share2 } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Heart, Instagram, Share2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -12,6 +12,28 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import SearchBar from '../search-bar';
+import { useSession } from '@/lib/supabase/session-provider';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+const VerificationBanner = () => {
+  const { user } = useSession();
+
+  if (!user || user.email_confirmed_at) {
+    return null;
+  }
+
+  return (
+    <div className="bg-amber-100 border-b border-amber-200">
+      <div className="container mx-auto px-4 py-2 text-center text-sm text-amber-800">
+        <div className="flex items-center justify-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          <span>¡Bienvenida! Por favor, verifica tu correo para asegurar tu cuenta.</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const tiendaLinks = [
   { href: '/shop', label: 'Ver Todo' },
@@ -31,6 +53,8 @@ const mainLinks: { href: string, label: string }[] = [
 ];
 
 export default function Header() {
+  const { session } = useSession();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center px-4 sm:px-6 lg:px-10 mx-auto w-full md:w-[80%]">
@@ -70,7 +94,7 @@ export default function Header() {
               </SheetContent>
             </Sheet>
           <Button variant="ghost" size="icon" aria-label="User Profile" asChild>
-            <Link href="/login">
+            <Link href={session ? "/profile" : "/login"}>
               <User className="h-5 w-5" />
             </Link>
           </Button>
@@ -171,6 +195,7 @@ export default function Header() {
         </div>
 
       </div>
+       <VerificationBanner />
     </header>
   );
 }
