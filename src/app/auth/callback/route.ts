@@ -21,9 +21,10 @@ export async function GET(request: Request) {
           id: user.id,
           // Extract user's full name from metadata, fallback to a generic name
           first_name: user.user_metadata?.full_name || user.user_metadata?.name || 'Glittershop Member',
-          last_name: user.user_metadata?.last_name || '',
+          last_name: '', // Social providers usually don't provide a separate last name
           email: user.email!, // Email is guaranteed to exist with OAuth
-          // dob can be collected later in the profile settings
+          // dob is not provided by Google OAuth by default for privacy reasons.
+          // The user can be prompted to enter it in their profile settings.
         });
 
       if (!profileError) {
