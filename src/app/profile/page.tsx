@@ -1,14 +1,21 @@
-
 'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ChevronRight } from 'lucide-react';
+import { useSession } from '@/lib/supabase/session-provider';
+import { createClient } from '@/lib/supabase/client';
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { session } = useSession();
+  const user = session?.user;
+  const profile = session?.profile;
+  
   const orderNecklaceImage = PlaceHolderImages.find(p => p.id === 'product-necklace-1');
   const rewardsNecklaceImage = PlaceHolderImages.find(p => p.id === 'product-necklace-pearl');
 
@@ -19,10 +26,19 @@ export default function ProfilePage() {
     { href: '#', label: 'Mis Datos y Preferencias' },
   ];
 
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
+
+  const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Usuario';
+
   return (
     <div className="bg-background min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-md">
-        <h1 className="text-3xl font-bold mb-8">Hola, Sofia</h1>
+        <h1 className="text-3xl font-bold mb-8">Hola, {displayName}</h1>
 
         {/* Order Tracking Card */}
         <Card className="mb-6 bg-amber-50/50 border-amber-200 p-0 overflow-hidden">
@@ -85,12 +101,10 @@ export default function ProfilePage() {
                 </div>
               </Link>
             ))}
-             <Link href="#">
-                <div className="flex items-center justify-between p-4 hover:bg-accent cursor-pointer">
-                  <span className="font-medium text-red-600">Cerrar Sesión</span>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                </div>
-              </Link>
+             <div onClick={handleLogout} className="flex items-center justify-between p-4 hover:bg-accent cursor-pointer">
+                <span className="font-medium text-red-600">Cerrar Sesión</span>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
           </div>
         </Card>
       </div>

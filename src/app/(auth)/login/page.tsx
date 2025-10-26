@@ -1,5 +1,7 @@
-
+'use client';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -10,8 +12,52 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast({
+        title: 'Error al iniciar sesión',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      router.push('/profile');
+      router.refresh();
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+       toast({
+        title: 'Error al iniciar sesión con Google',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const AppleIcon = () => (
     <svg role="img" viewBox="0 0 24 24" className="w-4 h-4 mr-2">
       <path
@@ -40,17 +86,19 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" required />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <Input id="password" type="password" required />
-          </div>
-          <Button type="submit" className="w-full" asChild>
-            <Link href="/profile">Iniciar sesión</Link>
-          </Button>
+          <form onSubmit={handleLogin} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            </div>
+            <Button type="submit" className="w-full">
+              Iniciar sesión
+            </Button>
+          </form>
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
@@ -62,7 +110,7 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleGoogleLogin}>
               <GoogleIcon />
               Google
             </Button>
