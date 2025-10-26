@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +10,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
@@ -32,6 +30,7 @@ export default function UnifiedAuthPage() {
   const { toast } = useToast();
   const [step, setStep] = useState<'email' | 'login' | 'register'>('email');
   const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const emailForm = useForm<EmailFormValues>({
     resolver: zodResolver(emailSchema),
@@ -41,16 +40,37 @@ export default function UnifiedAuthPage() {
   });
 
   const checkUserExists = async ({ email }: EmailFormValues) => {
+    setIsLoading(true);
     setEmail(email);
-    // This is a simplified check. A full admin client `getUserByEmail` would be better.
-    // For now, we assume if a sign-in attempt fails with a specific error, the user doesn't exist.
-    // This avoids needing a separate API route.
-    // Let's try to sign in silently. If it works, user exists. If not, they likely don't.
-    // This is not a great pattern. A dedicated check is better.
-    // The API route failed due to RLS. Let's try a different approach.
-    // Let's pivot: We will show email/password fields first.
-    // If sign in fails, we assume new user and show register form.
-    setStep('login'); // Always go to login step first
+    try {
+      const response = await fetch('/api/auth/check-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error de red al verificar el usuario');
+      }
+
+      const { exists } = await response.json();
+      
+      if (exists) {
+        setStep('login');
+      } else {
+        setStep('register');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error de Verificación',
+        description: error.message || 'No se pudo conectar con el servidor. Inténtalo más tarde.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -80,11 +100,6 @@ export default function UnifiedAuthPage() {
   );
 
   const handleBack = () => setStep('email');
-  
-  const onLoginFailed = () => {
-    setStep('register');
-  }
-
 
   return (
     <div className="flex items-center justify-center py-12 px-4">
@@ -97,7 +112,7 @@ export default function UnifiedAuthPage() {
           </CardTitle>
           <CardDescription>
             {step === 'email' && 'Inicia sesión con tu correo electrónico o regístrate para convertirte en miembro de Glittershop.'}
-            {step === 'login' && `Ingresa la contraseña para ${email}. ¿Nuevo aquí? Te guiaremos para crear una cuenta si la contraseña es incorrecta.`}
+            {step === 'login' && `¡Bienvenido/a de nuevo! Ingresa la contraseña para ${email}.`}
             {step === 'register' && `Parece que eres nuevo/a. Completa tus datos para crear tu cuenta para ${email}.`}
           </CardDescription>
         </CardHeader>
@@ -118,15 +133,15 @@ export default function UnifiedAuthPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">
-                  Continuar
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Verificando...' : 'Continuar'}
                 </Button>
               </form>
             </Form>
           )}
 
-          {step === 'login' && <LoginForm email={email} onBack={handleBack} onLoginFailed={onLoginFailed} />}
-          {step === 'register' && <RegisterForm email={email} onBack={handleBack} />}
+          {step === 'login' && <LoginForm email={email} />}
+          {step === 'register' && <RegisterForm email={email} />}
 
           {step !== 'email' && (
              <Button variant="link" onClick={handleBack} className="w-full">

@@ -45,10 +45,9 @@ type RegisterFormValues = z.infer<typeof formSchema>;
 
 interface RegisterFormProps {
   email: string;
-  onBack: () => void;
 }
 
-export default function RegisterForm({ email, onBack }: RegisterFormProps) {
+export default function RegisterForm({ email }: RegisterFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const form = useForm<RegisterFormValues>({
@@ -64,16 +63,12 @@ export default function RegisterForm({ email, onBack }: RegisterFormProps) {
   const handleRegister = async (values: RegisterFormValues) => {
     const supabase = createClient();
     
-    // SignUp automatically logs in the user
+    // SignUp automatically signs in the user because "Confirm Email" is disabled in Supabase settings
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password: values.password,
       options: {
-        data: {
-          first_name: values.firstName,
-          last_name: values.lastName,
-          // You might want to store other info like dob in your profiles table
-        },
+        // We will insert this data into the profiles table manually after signup
       },
     });
 
@@ -87,28 +82,33 @@ export default function RegisterForm({ email, onBack }: RegisterFormProps) {
     }
 
     if (signUpData.user) {
-      // The profile is created by a trigger in Supabase, but we can add more info
+      // The user is created, now insert into the public.profiles table
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ 
-            // The trigger should handle first_name and last_name from metadata
-            // Add other fields if necessary
-         })
-        .eq('id', signUpData.user.id);
+        .insert({ 
+            id: signUpData.user.id,
+            first_name: values.firstName,
+            last_name: values.lastName,
+            email: email, // Save the email
+            dob: values.dob.toISOString(), // Save date of birth
+         });
         
        if (profileError) {
             toast({
-                title: 'Error al actualizar perfil',
+                title: 'Error al crear el perfil',
                 description: profileError.message,
                 variant: 'destructive',
             });
+            // Optional: consider deleting the auth user if profile creation fails
+            // await supabase.auth.admin.deleteUser(signUpData.user.id)
        } else {
             toast({
                 title: '¡Cuenta Creada!',
                 description: 'Hemos creado tu cuenta exitosamente.',
             });
+            // Since sign up now logs the user in, redirect to profile and refresh state
             router.push('/profile');
-            router.refresh();
+router.refresh();
        }
     }
   };

@@ -7,6 +7,8 @@ import { createClient } from './client';
 type Profile = {
   first_name: string;
   last_name: string;
+  email: string;
+  dob: string;
 };
 
 type SessionContext = {
@@ -27,10 +29,10 @@ export default function SessionProvider({ children }: { children: React.ReactNod
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
+      if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name')
+          .select('first_name, last_name, email, dob')
           .eq('id', session.user.id)
           .single();
         
@@ -42,20 +44,17 @@ export default function SessionProvider({ children }: { children: React.ReactNod
     });
 
     // Fetch initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-       if (session) {
-         supabase
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+       if (session?.user) {
+         const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name')
+          .select('first_name, last_name, email, dob')
           .eq('id', session.user.id)
-          .single()
-          .then(({ data: profile }) => {
-              setSession({ ...session, profile: profile as Profile | null });
-              setIsLoading(false);
-          });
-       } else {
-        setIsLoading(false);
+          .single();
+
+        setSession({ ...session, profile: profile as Profile | null });
        }
+       setIsLoading(false);
     });
 
     return () => {
