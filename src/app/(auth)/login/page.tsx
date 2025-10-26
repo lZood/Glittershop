@@ -42,45 +42,17 @@ export default function UnifiedAuthPage() {
 
   const checkUserExists = async ({ email }: EmailFormValues) => {
     setEmail(email);
-    const supabase = createClient();
-    
-    // We can't directly check for user existence for security reasons (email enumeration).
-    // Instead, we can use a server-side function. For now, we'll proceed and handle it
-    // on the form submission. A more robust way would be an RPC call.
-    // For this flow, let's assume we need to ask the user.
-    // A simplified (but less secure) client-side check:
-    const { data, error } = await supabase.from('profiles').select('id').eq('email', email).single();
-    
-    // This is not truly secure, as profile table needs to be readable.
-    // A better approach is an RPC function. For now, this simulates the check.
-    // Let's pretend we have an RPC function.
-    // const { data, error } = await supabase.rpc('user_exists', { email });
-
-    // Since we don't have RPC setup, we'll try a different approach.
-    // We will ask Supabase to sign them in. If it returns user data but no session,
-    // it implies the user exists but needs a password. If it returns an error
-    // or no user, they might not exist. This is complex.
-
-    // Let's simplify the logic for now: we'll just ask the user. This is not ideal UX.
-    // A better flow is to use a serverless function to check.
-    
-    // For the sake of this prompt, let's just create a "fake" check.
-    // We'll proceed to a "login" step, and if login fails, we'll offer registration.
-    // This is a common pattern.
-    
-    // Let's refine the prompt's request: The best way is to try a dummy password sign-in.
-    // If it fails with "Invalid login credentials", the user exists.
-    // If it fails differently, or succeeds (magic link), we handle that.
-    // This is still tricky.
-
-    // New strategy: Create a dedicated API route for checking user existence.
-    // This is secure and the best practice.
     try {
         const response = await fetch('/api/auth/check-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email }),
         });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
         const { exists } = await response.json();
 
         if (exists) {
