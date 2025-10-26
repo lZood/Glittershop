@@ -15,26 +15,6 @@ import SearchBar from '../search-bar';
 import { useSession } from '@/lib/supabase/session-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const VerificationBanner = () => {
-  const { user } = useSession();
-
-  if (!user || user.email_confirmed_at) {
-    return null;
-  }
-
-  return (
-    <div className="bg-amber-100 border-b border-amber-200">
-      <div className="container mx-auto px-4 py-2 text-center text-sm text-amber-800">
-        <div className="flex items-center justify-center gap-2">
-          <AlertCircle className="h-4 w-4" />
-          <span>¡Bienvenida! Por favor, verifica tu correo para asegurar tu cuenta.</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
 const tiendaLinks = [
   { href: '/shop', label: 'Ver Todo' },
   { href: '#', label: 'Anillos' },
@@ -195,7 +175,6 @@ export default function Header() {
         </div>
 
       </div>
-       <VerificationBanner />
     </header>
   );
 }

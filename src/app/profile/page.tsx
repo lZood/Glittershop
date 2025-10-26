@@ -6,9 +6,28 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, AlertCircle } from 'lucide-react';
 import { useSession } from '@/lib/supabase/session-provider';
 import { createClient } from '@/lib/supabase/client';
+
+const VerificationBanner = () => {
+  const { user } = useSession();
+
+  if (!user || user.email_confirmed_at) {
+    return null;
+  }
+
+  return (
+    <div className="bg-amber-100 border-b border-amber-200 mb-8 rounded-lg">
+      <div className="container mx-auto px-4 py-3 text-center text-sm text-amber-800">
+        <div className="flex items-center justify-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          <span>¡Bienvenida! Por favor, verifica tu correo para asegurar tu cuenta.</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -38,6 +57,7 @@ export default function ProfilePage() {
   return (
     <div className="bg-background min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-md">
+        <VerificationBanner />
         <h1 className="text-3xl font-bold mb-8">Hola, {displayName}</h1>
 
         {/* Order Tracking Card */}
