@@ -90,6 +90,23 @@ export default function UnifiedAuthPage() {
     }
   };
 
+  const handleAppleLogin = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+       toast({
+        title: 'Error al iniciar sesión con Apple',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const GoogleIcon = () => (
     <svg viewBox="0 0 48 48" className="w-5 h-5 mr-2">
       <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
@@ -97,6 +114,12 @@ export default function UnifiedAuthPage() {
       <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
       <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
       <path fill="none" d="M0 0h48v48H0z"></path>
+    </svg>
+  );
+
+  const AppleIcon = () => (
+    <svg viewBox="0 0 24 24" className="w-5 h-5 mr-2" fill="currentColor">
+        <path d="M17.363 12.325c0 2.404-1.153 4.19-2.95 4.19-1.637 0-2.684-.96-3.83-1.004-.987 0-2.224.96-3.483.96-1.886 0-3.323-1.785-3.323-4.145 0-2.88 1.93-5.324 4.09-5.324 1.345 0 2.45.828 3.528.828.987 0 2.224-.873 3.651-.873 2.19 0 4.273 2.145 4.273 5.363zm-4.74-7.512c.764-.914 1.28-2.223 1.153-3.48-1.547.045-2.95.828-3.785 1.74-1.032.96-1.84 2.403-1.592 3.829 1.74.09 3.165-.873 4.224-2.089z"/>
     </svg>
   );
 
@@ -160,10 +183,16 @@ export default function UnifiedAuthPage() {
               </span>
             </div>
           </div>
-          <Button variant="outline" onClick={handleGoogleLogin}>
-              <GoogleIcon />
-              Google
-          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="outline" onClick={handleGoogleLogin}>
+                <GoogleIcon />
+                Google
+            </Button>
+             <Button variant="outline" onClick={handleAppleLogin}>
+                <AppleIcon />
+                Apple
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
