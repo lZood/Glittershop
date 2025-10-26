@@ -29,6 +29,7 @@ export default function RegisterPage() {
     const [firstName, ...lastNameParts] = fullName.split(' ');
     const lastName = lastNameParts.join(' ');
     
+    // This will sign up the user and log them in automatically
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -49,8 +50,9 @@ export default function RegisterPage() {
       return;
     }
     
+    // The user is logged in, and the session is available.
+    // The profile is created by a trigger in Supabase, so we just need to redirect.
     if (signUpData.user) {
-      // The profile is created by a trigger in Supabase, so we just redirect.
        toast({
         title: '¡Cuenta Creada!',
         description: 'Hemos creado tu cuenta exitosamente.',
