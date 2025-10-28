@@ -30,7 +30,12 @@ export default function WishlistPage() {
         {wishlistItems.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8">
             {wishlistItems.map((item) => (
-              <ProductCard key={item.id} product={item} />
+              <div key={item.id}>
+                <ProductCard product={item} />
+                <Button variant="outline" className="w-full mt-3 rounded-none border-black hover:bg-black hover:text-white uppercase tracking-wider text-xs h-9">
+                  Agregar
+                </Button>
+              </div>
             ))}
           </div>
         ) : (

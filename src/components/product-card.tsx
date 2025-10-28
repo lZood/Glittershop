@@ -50,9 +50,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </div>
             </div>
         </Link>
-        <Button variant="outline" className="w-full mt-3 rounded-none border-black hover:bg-black hover:text-white uppercase tracking-wider text-xs h-9">
-          Agregar
-        </Button>
     </div>
   );
 }
