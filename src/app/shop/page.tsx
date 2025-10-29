@@ -128,9 +128,12 @@ export default function ShopPage() {
   
   useEffect(() => {
     const handleScroll = () => {
-      if (!stickyRef.current) return;
       const currentScrollY = window.scrollY;
-      const stickyOffsetTop = stickyRef.current.offsetTop;
+      const stickyElement = stickyRef.current;
+
+      if (!stickyElement) return;
+
+      const stickyOffsetTop = stickyElement.offsetTop;
       
       const isCurrentlySticky = currentScrollY > stickyOffsetTop - 64;
       setIsSticky(isCurrentlySticky);
@@ -177,12 +180,11 @@ export default function ShopPage() {
           ))}
         </div>
 
-        {/* This div acts as a placeholder to prevent content jump */}
         <div ref={stickyRef} className={cn('mb-8', isSticky ? 'h-[53px]' : '')}>
             <div className={cn(
-                'w-full z-30 transition-transform duration-300',
+                'w-full z-30',
                 isSticky ? 'fixed top-16 left-0 right-0' : 'relative',
-                isSticky && !isHeaderVisible ? '-translate-y-full' : 'translate-y-0',
+                isSticky && !isHeaderVisible ? 'hidden' : 'block',
                 isSticky ? 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-background'
             )}>
                  <FilterButtons 
