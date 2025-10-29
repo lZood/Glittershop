@@ -36,8 +36,6 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import AdminNav from '@/components/layout/admin-nav';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { useSession } from '@/lib/supabase/session-provider';
-import { useRouter } from 'next/navigation';
 
 export default async function AdminLayout({
   children,
@@ -119,5 +117,3 @@ export default async function AdminLayout({
     </div>
   );
 }
-
-    
