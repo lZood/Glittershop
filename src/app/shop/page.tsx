@@ -122,18 +122,25 @@ export default function ShopPage() {
 
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const filterBarRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
   
   useEffect(() => {
     const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
       if (filterBarRef.current) {
-        const { top } = filterBarRef.current.getBoundingClientRect();
-        const headerHeight = 64; // Assuming header height is 64px (h-16)
-        if (top <= headerHeight) {
-          setIsHeaderVisible(true);
+        if (currentScrollY > filterBarRef.current.offsetTop) {
+          // Scrolling down past the filter bar
+          if (currentScrollY > lastScrollY.current) {
+             setIsHeaderVisible(false);
+          } else { // Scrolling up
+             setIsHeaderVisible(true);
+          }
         } else {
-          setIsHeaderVisible(false);
+           setIsHeaderVisible(false);
         }
       }
+      lastScrollY.current = currentScrollY;
     };
     
     window.addEventListener('scroll', handleScroll, { passive: true });
