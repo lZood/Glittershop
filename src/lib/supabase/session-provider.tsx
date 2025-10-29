@@ -9,6 +9,7 @@ type Profile = {
   last_name: string;
   email: string;
   dob: string;
+  role: 'user' | 'admin';
 };
 
 type SessionContext = {
@@ -32,7 +33,7 @@ export default function SessionProvider({ children }: { children: React.ReactNod
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name, email, dob')
+          .select('first_name, last_name, email, dob, role')
           .eq('id', session.user.id)
           .single();
         
@@ -48,7 +49,7 @@ export default function SessionProvider({ children }: { children: React.ReactNod
        if (session?.user) {
          const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name, email, dob')
+          .select('first_name, last_name, email, dob, role')
           .eq('id', session.user.id)
           .single();
 
