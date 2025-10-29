@@ -124,6 +124,9 @@ export default function ShopPage() {
   const stickyRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
+  const PRODUCTS_PER_PAGE = 16;
+  const [visibleProductsCount, setVisibleProductsCount] = useState(PRODUCTS_PER_PAGE);
+
   const shopProducts = products;
   
   useEffect(() => {
@@ -135,19 +138,15 @@ export default function ShopPage() {
 
       const stickyOffsetTop = stickyElement.offsetTop;
       
-      const isCurrentlySticky = currentScrollY > stickyOffsetTop - 64; // 64px is header height
-      setIsSticky(isCurrentlySticky);
-
-      if (isCurrentlySticky) {
+      if (currentScrollY > stickyOffsetTop - 64) {
+        setIsSticky(true);
         if (currentScrollY > lastScrollY.current) {
-          // Scrolling down
           setIsHeaderVisible(false);
         } else {
-          // Scrolling up
           setIsHeaderVisible(true);
         }
       } else {
-        setIsHeaderVisible(true);
+        setIsSticky(false);
       }
       
       lastScrollY.current = currentScrollY;
@@ -161,6 +160,7 @@ export default function ShopPage() {
   }, []);
 
   const tags = ['Ver Todo', 'Los Más Vendidos', 'Anillos', 'Collares', 'Pulseras'];
+  const visibleProducts = shopProducts.slice(0, visibleProductsCount);
 
   return (
     <div className="bg-background">
@@ -181,27 +181,45 @@ export default function ShopPage() {
         </div>
 
         <div ref={stickyRef} className={cn('mb-8', isSticky ? 'h-[53px]' : '')}>
-            <div className={cn(
-                'w-full z-30',
-                isSticky ? 'fixed top-16 left-0 right-0' : 'relative',
-                isSticky && !isHeaderVisible ? 'hidden' : 'block',
-                isSticky ? 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-background'
-            )}>
-                 <FilterButtons 
-                    sortOption={sortOption}
-                    setSortOption={setSortOption}
-                    isSortMenuOpen={isSortMenuOpen}
-                    setIsSortMenuOpen={setIsSortMenuOpen}
-                />
-            </div>
+          <div
+            className={cn(
+              'w-full z-30',
+              isSticky ? 'fixed top-16 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'relative bg-background',
+              !isHeaderVisible && 'hidden'
+            )}
+          >
+              <FilterButtons 
+                  sortOption={sortOption}
+                  setSortOption={setSortOption}
+                  isSortMenuOpen={isSortMenuOpen}
+                  setIsSortMenuOpen={setIsSortMenuOpen}
+              />
+          </div>
         </div>
 
         {/* Products Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-x-2 gap-y-6 md:gap-x-4 md:gap-y-8">
-          {shopProducts.map((product: Product) => (
+          {visibleProducts.map((product: Product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
+        
+        {/* Load More Section */}
+        {shopProducts.length > visibleProductsCount && (
+            <div className="text-center mt-12">
+                <p className="text-muted-foreground mb-4">
+                    Mostrando {visibleProductsCount} de {shopProducts.length} productos
+                </p>
+                <Button 
+                    variant="outline" 
+                    className="rounded-none border-black hover:bg-black hover:text-white uppercase tracking-wider h-11 px-8"
+                    onClick={() => setVisibleProductsCount(prev => prev + PRODUCTS_PER_PAGE)}
+                >
+                    Cargar más
+                </Button>
+            </div>
+        )}
+
       </section>
     </div>
   );
