@@ -32,7 +32,7 @@ type FilterButtonsProps = {
 };
 
 const FilterButtons = ({ sortOption, setSortOption, isSortMenuOpen, setIsSortMenuOpen }: FilterButtonsProps) => (
-  <div className="border-t border-b grid grid-cols-2 divide-x bg-inherit">
+  <div className="border-t border-b grid grid-cols-2 divide-x bg-transparent">
     <DropdownMenu open={isSortMenuOpen} onOpenChange={setIsSortMenuOpen}>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none w-full">
@@ -135,7 +135,7 @@ export default function ShopPage() {
 
       const stickyOffsetTop = stickyElement.offsetTop;
       
-      const isCurrentlySticky = currentScrollY > stickyOffsetTop - 64;
+      const isCurrentlySticky = currentScrollY > stickyOffsetTop - 64; // 64px is header height
       setIsSticky(isCurrentlySticky);
 
       if (isCurrentlySticky) {
