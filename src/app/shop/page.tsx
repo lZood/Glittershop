@@ -33,7 +33,7 @@ type FilterButtonsProps = {
 };
 
 const FilterButtons = ({ sortOption, setSortOption, isSortMenuOpen, setIsSortMenuOpen }: FilterButtonsProps) => (
-  <div className="border-t border-b grid grid-cols-2 divide-x">
+  <div className="border-t border-b grid grid-cols-2 divide-x bg-background">
     <DropdownMenu open={isSortMenuOpen} onOpenChange={setIsSortMenuOpen}>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none w-full">
@@ -116,30 +116,28 @@ const FilterButtons = ({ sortOption, setSortOption, isSortMenuOpen, setIsSortMen
 export default function ShopPage() {
   const [activeTag, setActiveTag] = useState('Ver Todo');
   const [sortOption, setSortOption] = useState('recomendado');
-  const shopProducts = products;
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
-  const [isHeaderSortMenuOpen, setIsHeaderSortMenuOpen] = useState(false);
-
-  const [isHeaderVisible, setIsHeaderVisible] = useState(false);
-  const filterBarRef = useRef<HTMLDivElement>(null);
+  
+  const [isSticky, setIsSticky] = useState(false);
+  const stickyRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
+
+  const shopProducts = products;
   
   useEffect(() => {
     const handleScroll = () => {
+      if (!stickyRef.current) return;
       const currentScrollY = window.scrollY;
-      const filterBarOffset = filterBarRef.current?.offsetTop ?? 0;
-
-      if (currentScrollY > filterBarOffset) {
-        if (currentScrollY > lastScrollY.current) {
-          // Scrolling down
-          setIsHeaderVisible(false);
-        } else {
-          // Scrolling up
-          setIsHeaderVisible(true);
-        }
+      const stickyOffsetTop = stickyRef.current.offsetTop;
+      
+      // The `top-16` on the sticky element corresponds to the header height (h-16 -> 4rem -> 64px)
+      // We check if the scroll position is past the top of the original element's position
+      if (currentScrollY > stickyOffsetTop - 64) {
+        setIsSticky(true);
       } else {
-        setIsHeaderVisible(false);
+        setIsSticky(false);
       }
+      
       lastScrollY.current = currentScrollY;
     };
 
@@ -154,21 +152,6 @@ export default function ShopPage() {
 
   return (
     <div className="bg-background">
-       <div 
-        className={cn(
-            "sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-            isHeaderVisible ? "block border-b" : "hidden"
-        )}
-      >
-        <div className="container mx-auto px-4">
-            <FilterButtons 
-              sortOption={sortOption}
-              setSortOption={setSortOption}
-              isSortMenuOpen={isHeaderSortMenuOpen}
-              setIsSortMenuOpen={setIsHeaderSortMenuOpen}
-            />
-        </div>
-      </div>
       <section className="container mx-auto px-4 md:px-10 py-8">
         <h1 className="text-4xl font-bold text-left mb-6 uppercase">Ver Todo</h1>
         
@@ -185,15 +168,19 @@ export default function ShopPage() {
           ))}
         </div>
 
-        <div ref={filterBarRef} className="mb-8">
-           <FilterButtons 
+        {/* Sticky Wrapper Logic */}
+        <div ref={stickyRef} className={cn('mb-8', isSticky ? 'h-[53px]' : '')}>
+          <div className={cn(
+            isSticky ? 'fixed top-16 left-0 right-0 z-30 w-full' : 'relative'
+          )}>
+            <FilterButtons 
               sortOption={sortOption}
               setSortOption={setSortOption}
               isSortMenuOpen={isSortMenuOpen}
               setIsSortMenuOpen={setIsSortMenuOpen}
             />
+          </div>
         </div>
-
 
         {/* Products Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-8">
