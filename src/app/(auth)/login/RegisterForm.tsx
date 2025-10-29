@@ -93,6 +93,13 @@ export default function RegisterForm({ email }: RegisterFormProps) {
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password: values.password,
+      options: {
+        data: {
+          first_name: values.firstName,
+          last_name: values.lastName,
+          dob: dob,
+        }
+      }
     });
 
     if (signUpError) {
@@ -103,32 +110,30 @@ export default function RegisterForm({ email }: RegisterFormProps) {
       });
       return;
     }
+    
+    // After a successful sign-up, Supabase sends a confirmation email.
+    // The user's profile is created by a trigger in the backend.
+    // We now just need to log the user in to create a session and redirect.
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: values.password,
+    });
 
-    if (signUpData.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({ 
-            id: signUpData.user.id,
-            first_name: values.firstName,
-            last_name: values.lastName,
-            email: email,
-            dob: dob,
-         });
-        
-       if (profileError) {
-            toast({
-                title: 'Error al crear el perfil',
-                description: profileError.message,
-                variant: 'destructive',
-            });
-       } else {
-            toast({
-                title: '¡Cuenta Creada!',
-                description: 'Hemos creado tu cuenta exitosamente.',
-            });
-            router.push('/profile');
-            router.refresh();
-       }
+    if (signInError) {
+        toast({
+            title: 'Error al iniciar sesión después del registro',
+            description: signInError.message,
+            variant: 'destructive',
+        });
+        // Redirect to login even if auto sign-in fails, so they can log in manually.
+        router.push('/login');
+    } else {
+        toast({
+            title: '¡Cuenta Creada!',
+            description: 'Hemos creado tu cuenta exitosamente y te hemos conectado.',
+        });
+        router.push('/profile');
+        router.refresh();
     }
   };
 
