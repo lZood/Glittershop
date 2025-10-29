@@ -124,7 +124,7 @@ export default function ShopPage() {
   const stickyRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
-  const PRODUCTS_PER_PAGE = 16;
+  const PRODUCTS_PER_PAGE = 32;
   const [visibleProductsCount, setVisibleProductsCount] = useState(PRODUCTS_PER_PAGE);
 
   const shopProducts = products;
@@ -133,31 +133,40 @@ export default function ShopPage() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const stickyElement = stickyRef.current;
-
+  
       if (!stickyElement) return;
-
+  
       const stickyOffsetTop = stickyElement.offsetTop;
       
-      if (currentScrollY > stickyOffsetTop - 64) {
+      // Toggle sticky state based on scroll position relative to the filter bar's original position
+      if (currentScrollY > stickyOffsetTop - 64) { // 64 is the header height
         setIsSticky(true);
-        if (currentScrollY > lastScrollY.current) {
-          setIsHeaderVisible(false);
-        } else {
-          setIsHeaderVisible(true);
-        }
       } else {
         setIsSticky(false);
       }
       
+      // Toggle visibility based on scroll direction only when it's sticky
+      if (isSticky) {
+        if (currentScrollY > lastScrollY.current) {
+          // Scrolling down
+          setIsHeaderVisible(false);
+        } else {
+          // Scrolling up
+          setIsHeaderVisible(true);
+        }
+      } else {
+        setIsHeaderVisible(true);
+      }
+      
       lastScrollY.current = currentScrollY;
     };
-
+  
     window.addEventListener('scroll', handleScroll, { passive: true });
-
+  
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [isSticky]); // Re-run effect when isSticky changes to apply the correct logic
 
   const tags = ['Ver Todo', 'Los Más Vendidos', 'Anillos', 'Collares', 'Pulseras'];
   const visibleProducts = shopProducts.slice(0, visibleProductsCount);
