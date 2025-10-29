@@ -1,28 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import {
-  Bell,
-  CircleUser,
-  Home,
-  LineChart,
   Menu,
-  Package,
   Package2,
-  BookCopy,
-  Search,
-  ShoppingCart,
-  Tag,
-  Users,
-  Shield,
+  CircleUser,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,35 +15,37 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import AdminNav from '@/components/layout/admin-nav';
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+import { useSession } from '@/lib/supabase/session-provider';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-export default async function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createClient();
+  const { session, profile, isLoading } = useSession();
+  const router = useRouter();
 
-  const { data: { user }, } = await supabase.auth.getUser();
+  useEffect(() => {
+    if (!isLoading) {
+      if (!session) {
+        router.replace('/login?message=No autenticado');
+      } else if (profile?.role !== 'admin') {
+        router.replace('/?message=No autorizado');
+      }
+    }
+  }, [session, profile, isLoading, router]);
 
-  if (!user) {
-    return redirect('/login?message=No autenticado');
+  if (isLoading || !session || profile?.role !== 'admin') {
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-background">
+            <p>Cargando...</p>
+        </div>
+    );
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || profile.role !== 'admin') {
-    return redirect('/?message=No autorizado');
-  }
-
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
