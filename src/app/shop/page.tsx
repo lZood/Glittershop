@@ -25,6 +25,94 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
+type FilterButtonsProps = {
+  sortOption: string;
+  setSortOption: (value: string) => void;
+  isSortMenuOpen: boolean;
+  setIsSortMenuOpen: (isOpen: boolean) => void;
+};
+
+const FilterButtons = ({ sortOption, setSortOption, isSortMenuOpen, setIsSortMenuOpen }: FilterButtonsProps) => (
+  <div className="border-t border-b grid grid-cols-2 divide-x">
+    <DropdownMenu open={isSortMenuOpen} onOpenChange={setIsSortMenuOpen}>
+      <DropdownMenuTrigger asChild>
+        <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none w-full">
+          <span>CLASIFICAR POR</span>
+          {isSortMenuOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56">
+        <DropdownMenuRadioGroup
+          className="p-2"
+          value={sortOption}
+          onValueChange={setSortOption}>
+          <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="precio-alto">El precio más alto</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+
+    <Sheet>
+      <SheetTrigger asChild>
+        <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none">
+          <span>FILTRO</span>
+          <ListFilter className="w-4 h-4" />
+        </button>
+      </SheetTrigger>
+      <SheetContent side="left">
+        <SheetHeader>
+          <SheetTitle>Filtrar Productos</SheetTitle>
+        </SheetHeader>
+        <div className="py-4 space-y-6">
+          <div>
+            <h3 className="font-semibold mb-3">Categoría</h3>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox id="cat-anillos-page" />
+                <Label htmlFor="cat-anillos-page">Anillos</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="cat-collares-page" />
+                <Label htmlFor="cat-collares-page">Collares</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="cat-pulseras-page" />
+                <Label htmlFor="cat-pulseras-page">Pulseras</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="cat-aretes-page" />
+                <Label htmlFor="cat-aretes-page">Aretes</Label>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3">Precio</h3>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox id="price-1-page" />
+                <Label htmlFor="price-1-page">Menos de $1000</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="price-2-page" />
+                <Label htmlFor="price-2-page">$1000 - $2000</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="price-3-page" />
+                <Label htmlFor="price-3-page">Más de $2000</Label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <SheetClose asChild>
+          <Button className="w-full">Aplicar Filtros</Button>
+        </SheetClose>
+      </SheetContent>
+    </Sheet>
+  </div>
+);
+
 export default function ShopPage() {
   const [activeTag, setActiveTag] = useState('Ver Todo');
   const [sortOption, setSortOption] = useState('recomendado');
@@ -34,27 +122,18 @@ export default function ShopPage() {
 
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const filterBarRef = useRef<HTMLDivElement>(null);
-  const lastScrollY = useRef(0);
-
+  
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
       if (filterBarRef.current) {
-        if (currentScrollY > filterBarRef.current.offsetTop) {
-           if (currentScrollY > lastScrollY.current) {
-             // Scrolling down
-             setIsHeaderVisible(false);
-           } else {
-             // Scrolling up
-             setIsHeaderVisible(true);
-           }
+        const { top } = filterBarRef.current.getBoundingClientRect();
+        const headerHeight = 64; // Assuming header height is 64px (h-16)
+        if (top <= headerHeight) {
+          setIsHeaderVisible(true);
         } else {
           setIsHeaderVisible(false);
         }
       }
-
-      lastScrollY.current = currentScrollY;
     };
     
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -66,178 +145,21 @@ export default function ShopPage() {
 
   const tags = ['Ver Todo', 'Los Más Vendidos', 'Anillos', 'Collares', 'Pulseras'];
 
-  const HeaderFilterButtons = () => (
-    <div className="border-t border-b grid grid-cols-2 divide-x">
-      <DropdownMenu open={isHeaderSortMenuOpen} onOpenChange={setIsHeaderSortMenuOpen}>
-        <DropdownMenuTrigger asChild>
-          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none w-full">
-            <span>CLASIFICAR POR</span>
-            {isHeaderSortMenuOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56">
-          <DropdownMenuRadioGroup
-            className="p-2"
-            value={sortOption}
-            onValueChange={setSortOption}>
-            <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="precio-alto">El precio más alto</DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <Sheet>
-        <SheetTrigger asChild>
-          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none">
-            <span>FILTRO</span>
-            <ListFilter className="w-4 h-4" />
-          </button>
-        </SheetTrigger>
-        <SheetContent side="left">
-          <SheetHeader>
-            <SheetTitle>Filtrar Productos</SheetTitle>
-          </SheetHeader>
-          <div className="py-4 space-y-6">
-            <div>
-              <h3 className="font-semibold mb-3">Categoría</h3>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="cat-anillos" />
-                  <Label htmlFor="cat-anillos">Anillos</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="cat-collares" />
-                  <Label htmlFor="cat-collares">Collares</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="cat-pulseras" />
-                  <Label htmlFor="cat-pulseras">Pulseras</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="cat-aretes" />
-                  <Label htmlFor="cat-aretes">Aretes</Label>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-3">Precio</h3>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="price-1" />
-                  <Label htmlFor="price-1">Menos de $1000</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="price-2" />
-                  <Label htmlFor="price-2">$1000 - $2000</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="price-3" />
-                  <Label htmlFor="price-3">Más de $2000</Label>
-                </div>
-              </div>
-            </div>
-          </div>
-          <SheetClose asChild>
-            <Button className="w-full">Aplicar Filtros</Button>
-          </SheetClose>
-        </SheetContent>
-      </Sheet>
-    </div>
-  );
-
-  const PageFilterButtons = () => (
-    <div className="border-t border-b grid grid-cols-2 divide-x">
-      <DropdownMenu open={isSortMenuOpen} onOpenChange={setIsSortMenuOpen}>
-        <DropdownMenuTrigger asChild>
-          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none w-full">
-            <span>CLASIFICAR POR</span>
-            {isSortMenuOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56">
-          <DropdownMenuRadioGroup
-            className="p-2"
-            value={sortOption}
-            onValueChange={setSortOption}>
-            <DropdownMenuRadioItem value="recomendado">Recomendado</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="reciente">Más reciente</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="precio-bajo">El precio más bajo</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="precio-alto">El precio más alto</DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <Sheet>
-        <SheetTrigger asChild>
-          <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none">
-            <span>FILTRO</span>
-            <ListFilter className="w-4 h-4" />
-          </button>
-        </SheetTrigger>
-        <SheetContent side="left">
-          <SheetHeader>
-            <SheetTitle>Filtrar Productos</SheetTitle>
-          </SheetHeader>
-          <div className="py-4 space-y-6">
-            <div>
-              <h3 className="font-semibold mb-3">Categoría</h3>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="cat-anillos-page" />
-                  <Label htmlFor="cat-anillos-page">Anillos</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="cat-collares-page" />
-                  <Label htmlFor="cat-collares-page">Collares</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="cat-pulseras-page" />
-                  <Label htmlFor="cat-pulseras-page">Pulseras</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="cat-aretes-page" />
-                  <Label htmlFor="cat-aretes-page">Aretes</Label>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-3">Precio</h3>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="price-1-page" />
-                  <Label htmlFor="price-1-page">Menos de $1000</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="price-2-page" />
-                  <Label htmlFor="price-2-page">$1000 - $2000</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="price-3-page" />
-                  <Label htmlFor="price-3-page">Más de $2000</Label>
-                </div>
-              </div>
-            </div>
-          </div>
-          <SheetClose asChild>
-            <Button className="w-full">Aplicar Filtros</Button>
-          </SheetClose>
-        </SheetContent>
-      </Sheet>
-    </div>
-  );
-
   return (
     <div className="bg-background">
        <div 
         className={cn(
-            "sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b",
-            isHeaderVisible ? "block" : "hidden"
+            "sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+            isHeaderVisible ? "block border-b" : "hidden"
         )}
       >
         <div className="container mx-auto px-4">
-            <HeaderFilterButtons />
+            <FilterButtons 
+              sortOption={sortOption}
+              setSortOption={setSortOption}
+              isSortMenuOpen={isHeaderSortMenuOpen}
+              setIsSortMenuOpen={setIsHeaderSortMenuOpen}
+            />
         </div>
       </div>
       <section className="container mx-auto px-4 md:px-10 py-8">
@@ -257,7 +179,12 @@ export default function ShopPage() {
         </div>
 
         <div ref={filterBarRef} className="mb-8">
-          <PageFilterButtons />
+           <FilterButtons 
+              sortOption={sortOption}
+              setSortOption={setSortOption}
+              isSortMenuOpen={isSortMenuOpen}
+              setIsSortMenuOpen={setIsSortMenuOpen}
+            />
         </div>
 
 
