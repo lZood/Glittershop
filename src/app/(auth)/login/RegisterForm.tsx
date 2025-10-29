@@ -17,11 +17,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const passwordSchema = z.string()
   .min(8, 'Debe tener al menos 8 caracteres')
@@ -34,11 +36,20 @@ const passwordSchema = z.string()
 const formSchema = z.object({
   firstName: z.string().min(1, 'El nombre es requerido.'),
   lastName: z.string().min(1, 'El apellido es requerido.'),
-  dob: z.date({
-    required_error: 'La fecha de nacimiento es requerida.',
-  }),
+  dob_day: z.string().min(1, 'Día requerido'),
+  dob_month: z.string().min(1, 'Mes requerido'),
+  dob_year: z.string().min(1, 'Año requerido'),
   password: passwordSchema,
   receivePromotions: z.boolean().default(false),
+}).refine(data => {
+    const day = parseInt(data.dob_day, 10);
+    const month = parseInt(data.dob_month, 10) - 1; // JS months are 0-indexed
+    const year = parseInt(data.dob_year, 10);
+    const date = new Date(year, month, day);
+    return date.getFullYear() === year && date.getMonth() === month && date.getDate() === day;
+}, {
+    message: 'La fecha de nacimiento no es válida.',
+    path: ['dob_day'], // Path to show the error on
 });
 
 type RegisterFormValues = z.infer<typeof formSchema>;
@@ -46,6 +57,17 @@ type RegisterFormValues = z.infer<typeof formSchema>;
 interface RegisterFormProps {
   email: string;
 }
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
+const months = [
+    { value: '1', label: 'Enero' }, { value: '2', label: 'Febrero' }, { value: '3', label: 'Marzo' },
+    { value: '4', label: 'Abril' }, { value: '5', label: 'Mayo' }, { value: '6', label: 'Junio' },
+    { value: '7', label: 'Julio' }, { value: '8', label: 'Agosto' }, { value: '9', label: 'Septiembre' },
+    { value: '10', label: 'Octubre' }, { value: '11', label: 'Noviembre' }, { value: '12', label: 'Diciembre' },
+];
+const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
+
 
 export default function RegisterForm({ email }: RegisterFormProps) {
   const router = useRouter();
@@ -57,19 +79,20 @@ export default function RegisterForm({ email }: RegisterFormProps) {
       lastName: '',
       password: '',
       receivePromotions: false,
+      dob_day: '',
+      dob_month: '',
+      dob_year: '',
     },
   });
 
   const handleRegister = async (values: RegisterFormValues) => {
     const supabase = createClient();
     
-    // SignUp automatically signs in the user because "Confirm Email" is disabled in Supabase settings
+    const dob = new Date(parseInt(values.dob_year), parseInt(values.dob_month) - 1, parseInt(values.dob_day)).toISOString();
+
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password: values.password,
-      options: {
-        // We will insert this data into the profiles table manually after signup
-      },
     });
 
     if (signUpError) {
@@ -82,15 +105,14 @@ export default function RegisterForm({ email }: RegisterFormProps) {
     }
 
     if (signUpData.user) {
-      // The user is created, now insert into the public.profiles table
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({ 
             id: signUpData.user.id,
             first_name: values.firstName,
             last_name: values.lastName,
-            email: email, // Save the email
-            dob: values.dob.toISOString(), // Save date of birth
+            email: email,
+            dob: dob,
          });
         
        if (profileError) {
@@ -99,16 +121,13 @@ export default function RegisterForm({ email }: RegisterFormProps) {
                 description: profileError.message,
                 variant: 'destructive',
             });
-            // Optional: consider deleting the auth user if profile creation fails
-            // await supabase.auth.admin.deleteUser(signUpData.user.id)
        } else {
             toast({
                 title: '¡Cuenta Creada!',
                 description: 'Hemos creado tu cuenta exitosamente.',
             });
-            // Since sign up now logs the user in, redirect to profile and refresh state
             router.push('/profile');
-router.refresh();
+            router.refresh();
        }
     }
   };
@@ -145,47 +164,73 @@ router.refresh();
           />
         </div>
         
-        <FormField
-            control={form.control}
-            name="dob"
-            render={({ field }) => (
-                <FormItem className="flex flex-col">
-                <FormLabel>Fecha de nacimiento</FormLabel>
-                <Popover>
-                    <PopoverTrigger asChild>
-                    <FormControl>
-                        <Button
-                        variant={"outline"}
-                        className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                        )}
-                        >
-                        {field.value ? (
-                            format(field.value, "PPP")
-                        ) : (
-                            <span>Elige una fecha</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                    </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                    />
-                    </PopoverContent>
-                </Popover>
-                <FormMessage />
-                </FormItem>
+        <div>
+            <FormLabel>Fecha de nacimiento</FormLabel>
+            <div className="grid grid-cols-3 gap-2 mt-1.5">
+                 <FormField
+                    control={form.control}
+                    name="dob_day"
+                    render={({ field }) => (
+                        <FormItem>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Día" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {days.map(day => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="dob_month"
+                    render={({ field }) => (
+                        <FormItem>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Mes" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {months.map(month => <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="dob_year"
+                    render={({ field }) => (
+                        <FormItem>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Año" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {years.map(year => <SelectItem key={year} value={year.toString()}>{year}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+            {/* A single message for the combined date field */}
+            {form.formState.errors.dob_day?.message && !form.formState.errors.dob_month && !form.formState.errors.dob_year && (
+                <p className="text-sm font-medium text-destructive mt-2">{form.formState.errors.dob_day.message}</p>
             )}
-        />
+        </div>
+
 
         <FormField
           control={form.control}
