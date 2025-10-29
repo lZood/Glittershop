@@ -128,27 +128,27 @@ export default function ShopPage() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const filterBarOffset = filterBarRef.current?.offsetTop ?? 0;
-  
+
       if (currentScrollY > filterBarOffset) {
         if (currentScrollY > lastScrollY.current) {
           // Scrolling down
-          if (isHeaderVisible) setIsHeaderVisible(false);
+          setIsHeaderVisible(false);
         } else {
           // Scrolling up
-          if (!isHeaderVisible) setIsHeaderVisible(true);
+          setIsHeaderVisible(true);
         }
       } else {
-        if (isHeaderVisible) setIsHeaderVisible(false);
+        setIsHeaderVisible(false);
       }
       lastScrollY.current = currentScrollY;
     };
-  
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-  
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [isHeaderVisible]); // Depend only on isHeaderVisible
+  }, []);
 
   const tags = ['Ver Todo', 'Los Más Vendidos', 'Anillos', 'Collares', 'Pulseras'];
 
