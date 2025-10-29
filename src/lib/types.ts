@@ -11,3 +11,10 @@ export type Product = {
   rating?: number;
   reviews?: number;
 };
+
+export type Category = {
+  id: number;
+  name: string;
+  description: string | null;
+  created_at: string;
+}

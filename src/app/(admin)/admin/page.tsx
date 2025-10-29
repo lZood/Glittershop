@@ -64,7 +64,7 @@ export default function Dashboard() {
               Categorías definidas
             </p>
             <Button className="mt-4" size="sm" asChild>
-                <Link href="#">Ver Categorías</Link>
+                <Link href="/admin/categories">Ver Categorías</Link>
             </Button>
           </CardContent>
         </Card>
