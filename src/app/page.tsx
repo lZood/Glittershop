@@ -133,7 +133,7 @@ export default function Home() {
               </DropdownMenu>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-x-2 gap-y-6 md:gap-x-4 md:gap-y-8">
             {filteredProducts.map((product: Product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -165,7 +165,7 @@ export default function Home() {
             </Button>
           </div>
           <h3 className="text-2xl font-bold text-left mb-6">Nuestros más vendidos</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-8 text-left">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-6 md:gap-x-4 md:gap-y-8 text-left">
             {bestSellers.map((product: Product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -263,14 +263,14 @@ export default function Home() {
               <TabsTrigger value="recently-viewed" className="rounded-full">Vistos Recientemente</TabsTrigger>
             </TabsList>
             <TabsContent value="recommendations" className="mt-8">
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-2 gap-y-6 md:gap-x-4 md:gap-y-8">
                 {recommendations.map((product: Product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             </TabsContent>
             <TabsContent value="recently-viewed" className="mt-8">
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-2 gap-y-6 md:gap-x-4 md:gap-y-8">
                     {recentlyViewed.map((product: Product) => (
                     <ProductCard key={product.id} product={product} />
                     ))}

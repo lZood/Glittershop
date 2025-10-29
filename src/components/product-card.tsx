@@ -19,14 +19,14 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="group relative">
         <Link href={`/products/${product.id}`} className="group">
-            <div className="aspect-[3/4] relative bg-secondary rounded-lg overflow-hidden">
+            <div className="aspect-[3/4] relative overflow-hidden">
                 {product.image && (
                     <Image
                     src={product.image.imageUrl}
                     alt={product.description}
                     data-ai-hint={product.image.imageHint}
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300 rounded-lg"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                 )}
