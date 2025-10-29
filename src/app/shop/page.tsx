@@ -23,7 +23,6 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type FilterButtonsProps = {
   sortOption: string;
@@ -33,7 +32,7 @@ type FilterButtonsProps = {
 };
 
 const FilterButtons = ({ sortOption, setSortOption, isSortMenuOpen, setIsSortMenuOpen }: FilterButtonsProps) => (
-  <div className="border-t border-b grid grid-cols-2 divide-x bg-background">
+  <div className="border-t border-b grid grid-cols-2 divide-x bg-inherit">
     <DropdownMenu open={isSortMenuOpen} onOpenChange={setIsSortMenuOpen}>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center justify-center gap-2 py-3 px-4 font-medium text-sm focus:outline-none w-full">
@@ -113,12 +112,15 @@ const FilterButtons = ({ sortOption, setSortOption, isSortMenuOpen, setIsSortMen
   </div>
 );
 
+
 export default function ShopPage() {
   const [activeTag, setActiveTag] = useState('Ver Todo');
   const [sortOption, setSortOption] = useState('recomendado');
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   
   const [isSticky, setIsSticky] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  
   const stickyRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
@@ -130,12 +132,19 @@ export default function ShopPage() {
       const currentScrollY = window.scrollY;
       const stickyOffsetTop = stickyRef.current.offsetTop;
       
-      // The `top-16` on the sticky element corresponds to the header height (h-16 -> 4rem -> 64px)
-      // We check if the scroll position is past the top of the original element's position
-      if (currentScrollY > stickyOffsetTop - 64) {
-        setIsSticky(true);
+      const isCurrentlySticky = currentScrollY > stickyOffsetTop - 64;
+      setIsSticky(isCurrentlySticky);
+
+      if (isCurrentlySticky) {
+        if (currentScrollY > lastScrollY.current) {
+          // Scrolling down
+          setIsHeaderVisible(false);
+        } else {
+          // Scrolling up
+          setIsHeaderVisible(true);
+        }
       } else {
-        setIsSticky(false);
+        setIsHeaderVisible(true);
       }
       
       lastScrollY.current = currentScrollY;
@@ -168,18 +177,21 @@ export default function ShopPage() {
           ))}
         </div>
 
-        {/* Sticky Wrapper Logic */}
+        {/* This div acts as a placeholder to prevent content jump */}
         <div ref={stickyRef} className={cn('mb-8', isSticky ? 'h-[53px]' : '')}>
-          <div className={cn(
-            isSticky ? 'fixed top-16 left-0 right-0 z-30 w-full' : 'relative'
-          )}>
-            <FilterButtons 
-              sortOption={sortOption}
-              setSortOption={setSortOption}
-              isSortMenuOpen={isSortMenuOpen}
-              setIsSortMenuOpen={setIsSortMenuOpen}
-            />
-          </div>
+            <div className={cn(
+                'w-full z-30 transition-transform duration-300',
+                isSticky ? 'fixed top-16 left-0 right-0' : 'relative',
+                isSticky && !isHeaderVisible ? '-translate-y-full' : 'translate-y-0',
+                isSticky ? 'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-background'
+            )}>
+                 <FilterButtons 
+                    sortOption={sortOption}
+                    setSortOption={setSortOption}
+                    isSortMenuOpen={isSortMenuOpen}
+                    setIsSortMenuOpen={setIsSortMenuOpen}
+                />
+            </div>
         </div>
 
         {/* Products Grid */}
