@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, ShoppingCart, User, Menu, X, Heart, Instagram, Share2, AlertCircle } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Heart, Instagram, Share2, AlertCircle, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -14,6 +14,9 @@ import {
 import SearchBar from '../search-bar';
 import { useSession } from '@/lib/supabase/session-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 const tiendaLinks = [
   { href: '/shop', label: 'Ver Todo' },
@@ -33,7 +36,15 @@ const mainLinks: { href: string, label: string }[] = [
 ];
 
 export default function Header() {
-  const { session } = useSession();
+  const { session, profile } = useSession();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -73,11 +84,50 @@ export default function Header() {
                  </div>
               </SheetContent>
             </Sheet>
-          <Button variant="ghost" size="icon" aria-label="User Profile" asChild>
-            <Link href={session ? "/profile" : "/login"}>
-              <User className="h-5 w-5" />
-            </Link>
-          </Button>
+          
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="User Profile">
+                <User className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {session ? (
+                <>
+                  <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">Perfil</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/#">Mis Pedidos</Link>
+                  </DropdownMenuItem>
+                  {profile?.role === 'admin' && (
+                     <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin Panel
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    Cerrar Sesión
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/login">Iniciar Sesión</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/login">Registrarse</Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button variant="ghost" size="icon" aria-label="Wishlist" asChild>
             <Link href="/wishlist">
               <Heart className="h-5 w-5" />

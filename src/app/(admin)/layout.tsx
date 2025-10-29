@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   Tag,
   Users,
+  Shield,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import AdminNav from '@/components/layout/admin-nav';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { useSession } from '@/lib/supabase/session-provider';
+import { useRouter } from 'next/navigation';
 
 export default async function AdminLayout({
   children,
@@ -46,7 +49,7 @@ export default async function AdminLayout({
   const { data: { user }, } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    return redirect('/login?message=No autenticado');
   }
 
   const { data: profile } = await supabase
@@ -56,7 +59,7 @@ export default async function AdminLayout({
     .single();
 
   if (!profile || profile.role !== 'admin') {
-    redirect('/');
+    return redirect('/?message=No autorizado');
   }
 
 
@@ -93,16 +96,7 @@ export default async function AdminLayout({
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-            <form>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search products..."
-                  className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                />
-              </div>
-            </form>
+            {/* You can add a search bar here if needed in the future */}
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -112,12 +106,11 @@ export default async function AdminLayout({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/profile">Perfil</Link></DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Logout</DropdownMenuItem>
+              <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
@@ -126,3 +119,5 @@ export default async function AdminLayout({
     </div>
   );
 }
+
+    
