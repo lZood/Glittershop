@@ -151,10 +151,6 @@ export default function Header() {
               <SheetHeader className="p-4 border-b">
                 <SheetTitle className="flex items-center justify-between">
                   <span>Menu</span>
-                  <SheetClose>
-                    <X className="h-5 w-5" />
-                    <span className="sr-only">Close</span>
-                  </SheetClose>
                 </SheetTitle>
               </SheetHeader>
               <div className="p-6 space-y-6 text-sm overflow-y-auto h-full">
