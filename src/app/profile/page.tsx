@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ChevronRight, AlertCircle } from 'lucide-react';
+import { ChevronRight, AlertCircle, Shield } from 'lucide-react';
 import { useSession } from '@/lib/supabase/session-provider';
 import { createClient } from '@/lib/supabase/client';
 
@@ -121,6 +121,17 @@ export default function ProfilePage() {
                 </div>
               </Link>
             ))}
+            {profile?.role === 'admin' && (
+              <Link href="/admin">
+                <div className="flex items-center justify-between p-4 hover:bg-accent cursor-pointer">
+                  <span className="font-medium flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Admin Panel
+                  </span>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+              </Link>
+            )}
              <div onClick={handleLogout} className="flex items-center justify-between p-4 hover:bg-accent cursor-pointer">
                 <span className="font-medium text-red-600">Cerrar Sesión</span>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
