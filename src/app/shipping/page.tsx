@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -6,168 +5,170 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Shield, CreditCard } from 'lucide-react';
+import { Shield, MapPin, Truck, Store } from 'lucide-react';
 import Link from 'next/link';
-
-const subtotal = 250.00;
-const shipping = 0.00;
-const total = subtotal + shipping;
-
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(price);
-}
+import { CheckoutStepper } from '@/components/checkout/checkout-stepper';
+import { OrderSummary } from '@/components/checkout/order-summary';
+import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 export default function ShippingPage() {
-  return (
-    <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-2xl font-bold text-center mb-4">Envío</h1>
+    const [shippingMethod, setShippingMethod] = useState('estandar');
 
-        {/* Progress Stepper */}
-        <div className="flex justify-center items-center mb-8 relative">
-            <div className="flex justify-between items-center w-full max-w-xs">
-                <div className="text-center">
-                    <span className="font-bold" style={{color: '#B87333'}}>Carrito</span>
-                    <div className="w-2 h-2 rounded-full mx-auto mt-1" style={{backgroundColor: '#B87333'}}></div>
-                </div>
-                <div className="text-center">
-                    <span className="font-bold" style={{color: '#FDB813'}}>Envío</span>
-                    <div className="w-3 h-3 rounded-full mx-auto mt-1" style={{backgroundColor: '#FDB813'}}></div>
-                </div>
-                <div className="text-center text-gray-400">
-                    <span>Pago</span>
-                    <div className="w-2 h-2 rounded-full bg-gray-300 mx-auto mt-1"></div>
-                </div>
-            </div>
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs h-0.5 bg-gray-300" style={{zIndex: -1}}>
-                <div className="h-full bg-yellow-400" style={{width: '50%'}}></div>
-            </div>
-        </div>
-        
-        {/* Shipping Information */}
-        <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4">Información de Envío</h2>
-            <div className="space-y-4">
-                <div>
-                    <Label htmlFor="full-name">Nombre completo</Label>
-                    <Input id="full-name" placeholder="Nombre completo" />
-                </div>
-                <div>
-                    <Label htmlFor="address">Dirección</Label>
-                    <Input id="address" placeholder="Calle y número" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="city">Ciudad</Label>
-                        <Input id="city" placeholder="Ciudad" />
-                    </div>
-                    <div>
-                        <Label htmlFor="state">Estado</Label>
-                        <Input id="state" placeholder="Estado" />
-                    </div>
-                </div>
-                <div>
-                    <Label htmlFor="zip-code">Código Postal</Label>
-                    <Input id="zip-code" placeholder="Código Postal" />
-                </div>
-                <div>
-                    <Label htmlFor="phone">Teléfono de contacto</Label>
-                    <Input id="phone" placeholder="Teléfono de contacto" />
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="same-for-billing" defaultChecked />
-                    <Label htmlFor="same-for-billing" className="font-normal">Usar la misma dirección para la facturación</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="save-address" />
-                    <Label htmlFor="save-address" className="font-normal">Guardar esta dirección para futuras compras</Label>
-                </div>
-            </div>
-        </div>
+    const subtotal = 250.00;
+    const shippingCost = shippingMethod === 'expres' ? 15.00 : 0.00;
+    const total = subtotal + shippingCost;
 
-        {/* Shipping Method */}
-        <div className="mb-8">
-            <h2 className="text-xl font-bold mb-4">Elige un método de envío</h2>
-            <RadioGroup defaultValue="estandar" className="space-y-3">
-                <Label className="flex items-center justify-between p-4 border rounded-lg cursor-pointer border-yellow-500">
-                    <div className="flex items-center space-x-3">
-                         <RadioGroupItem value="estandar" id="estandar" />
-                         <div>
-                            <span className="font-semibold">Estándar</span>
-                            <p className="text-sm text-muted-foreground">Envío gratuito (3-5 días hábiles)</p>
-                         </div>
-                    </div>
-                </Label>
-                 <Label className="flex items-center justify-between p-4 border rounded-lg cursor-pointer">
-                    <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="expres" id="expres" />
-                         <div>
-                            <span className="font-semibold">Exprés</span>
-                            <p className="text-sm text-muted-foreground">Envío $15 (1-2 días hábiles)</p>
-                         </div>
-                    </div>
-                </Label>
-                 <Label className="flex items-center justify-between p-4 border rounded-lg cursor-pointer">
-                    <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="tienda" id="tienda" />
-                         <div>
-                            <span className="font-semibold">Recoger en tienda</span>
-                            <p className="text-sm text-muted-foreground">Recogida gratuita (disponible hoy)</p>
-                         </div>
-                    </div>
-                </Label>
-            </RadioGroup>
-        </div>
+    return (
+        <div className="bg-background min-h-screen pb-20">
+            <div className="container mx-auto px-4 py-8 md:py-12">
 
-        {/* Order Summary */}
-        <div className="bg-amber-50 p-4 rounded-lg mb-6">
-            <h2 className="text-xl font-bold mb-4">Resumen del pedido</h2>
-            <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>{formatPrice(subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Envío</span>
-                    <span>{shipping === 0 ? 'Gratis' : formatPrice(shipping)}</span>
-                </div>
-                <div className="border-t my-2"></div>
-                <div className="flex justify-between font-bold text-base">
-                    <span>Total</span>
-                    <span>{formatPrice(total)}</span>
-                </div>
-            </div>
-        </div>
-        
-        <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground mb-6">
-            <div className="flex items-center gap-1">
-                <Shield className="w-4 h-4" />
-                <span>Envío Seguro</span>
-            </div>
-            <div className="flex items-center gap-1">
-                <CreditCard className="w-4 h-4" />
-                <span>Pago Protegido</span>
-            </div>
-        </div>
+                {/* Stepper */}
+                <CheckoutStepper currentStep="shipping" />
 
-        <Button asChild className="w-full h-12 text-lg font-bold" style={{ backgroundColor: '#FDB813', color: 'black' }}>
-          <Link href="/payment">Continuar al Pago</Link>
-        </Button>
-        
-        <div className="text-center mt-4 space-y-2">
-            <Link href="#" className="text-sm text-muted-foreground hover:underline">
-                ¿Necesitas ayuda? Chatea con nosotros
-            </Link>
-            <p>
-                <Link href="#" className="text-sm text-muted-foreground hover:underline">
-                    Política de Devoluciones
-                </Link>
-            </p>
+                <div className="grid lg:grid-cols-12 gap-8 md:gap-12 max-w-7xl mx-auto">
+
+                    {/* Left Column: Shipping Form */}
+                    <div className="lg:col-span-7 space-y-8">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                        >
+                            <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mb-6">Información de Envío</h1>
+
+                            <div className="bg-card/50 backdrop-blur-sm border rounded-xl p-6 shadow-sm space-y-6">
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="firstName">Nombre</Label>
+                                        <Input id="firstName" placeholder="Tu nombre" className="bg-background" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="lastName">Apellidos</Label>
+                                        <Input id="lastName" placeholder="Tus apellidos" className="bg-background" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="address">Dirección</Label>
+                                    <div className="relative">
+                                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                        <Input id="address" placeholder="Calle, número, piso..." className="pl-10 bg-background" />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="city">Ciudad</Label>
+                                        <Input id="city" placeholder="Ciudad" className="bg-background" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="zip">Código Postal</Label>
+                                        <Input id="zip" placeholder="00000" className="bg-background" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone">Teléfono</Label>
+                                    <Input id="phone" placeholder="+52 123 456 7890" className="bg-background" />
+                                </div>
+
+                                <div className="flex items-center space-x-2 pt-2">
+                                    <Checkbox id="save-info" />
+                                    <Label htmlFor="save-info" className="text-sm font-normal text-muted-foreground cursor-pointer">
+                                        Guardar esta información para la próxima vez
+                                    </Label>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 }}
+                        >
+                            <h2 className="text-xl font-bold uppercase tracking-tight mb-4">Método de Envío</h2>
+
+                            <RadioGroup value={shippingMethod} onValueChange={setShippingMethod} className="grid gap-4">
+                                <Label
+                                    className={cn(
+                                        "flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-all duration-200 hover:border-primary/50 hover:bg-secondary/10",
+                                        shippingMethod === 'estandar' ? "border-primary bg-secondary/20 ring-1 ring-primary" : "bg-card/50"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <RadioGroupItem value="estandar" id="estandar" />
+                                        <div className="p-2 bg-background rounded-full border">
+                                            <Truck className="w-5 h-5 text-muted-foreground" />
+                                        </div>
+                                        <div>
+                                            <span className="font-bold block">Envío Estándar</span>
+                                            <span className="text-sm text-muted-foreground">3-5 días hábiles</span>
+                                        </div>
+                                    </div>
+                                    <span className="font-bold text-green-600">Gratis</span>
+                                </Label>
+
+                                <Label
+                                    className={cn(
+                                        "flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-all duration-200 hover:border-primary/50 hover:bg-secondary/10",
+                                        shippingMethod === 'expres' ? "border-primary bg-secondary/20 ring-1 ring-primary" : "bg-card/50"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <RadioGroupItem value="expres" id="expres" />
+                                        <div className="p-2 bg-background rounded-full border">
+                                            <Truck className="w-5 h-5 text-primary" />
+                                        </div>
+                                        <div>
+                                            <span className="font-bold block">Envío Exprés</span>
+                                            <span className="text-sm text-muted-foreground">1-2 días hábiles</span>
+                                        </div>
+                                    </div>
+                                    <span className="font-bold">$15.00</span>
+                                </Label>
+
+                                <Label
+                                    className={cn(
+                                        "flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-all duration-200 hover:border-primary/50 hover:bg-secondary/10",
+                                        shippingMethod === 'tienda' ? "border-primary bg-secondary/20 ring-1 ring-primary" : "bg-card/50"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <RadioGroupItem value="tienda" id="tienda" />
+                                        <div className="p-2 bg-background rounded-full border">
+                                            <Store className="w-5 h-5 text-muted-foreground" />
+                                        </div>
+                                        <div>
+                                            <span className="font-bold block">Recoger en Tienda</span>
+                                            <span className="text-sm text-muted-foreground">Disponible hoy mismo</span>
+                                        </div>
+                                    </div>
+                                    <span className="font-bold text-green-600">Gratis</span>
+                                </Label>
+                            </RadioGroup>
+                        </motion.div>
+                    </div>
+
+                    {/* Right Column: Summary */}
+                    <div className="lg:col-span-5">
+                        <OrderSummary
+                            subtotal={subtotal}
+                            shipping={shippingCost}
+                            total={total}
+                            actionLabel="Continuar al Pago"
+                            actionHref="/payment"
+                        />
+
+                        <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                            <Shield className="w-4 h-4" />
+                            <span>Tus datos están protegidos con encriptación SSL de 256 bits.</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

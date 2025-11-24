@@ -5,147 +5,173 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Shield, CreditCard, Camera, ArrowLeft, ChevronDown } from 'lucide-react';
+import { Shield, CreditCard, Lock, Smartphone, Wallet } from 'lucide-react';
 import Link from 'next/link';
-
-const subtotal = 1150.00;
-const shipping = 50.00;
-const taxes = 50.00;
-const total = subtotal + shipping + taxes;
-
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(price);
-}
-
-const PaypalIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10.4 3.9c-2.4 2.1-3.1 5.5-1.8 8.1 1.3 2.6 4.3 4.1 7.1 3.5.4-.1.8-.2 1.1-.4-1.9 2.5-5.6 3.4-8.8 2.1-3.2-1.3-4.8-4.8-3.5-8.1 1.3-3.2 4.8-4.8 8.1-3.5.3.1.5.2.8.3C12.3 3.5 11.2 3.5 10.4 3.9z"/>
-        <path d="M5.1 15.3c-1.3 2-1.2 4.6.3 6.4 1.5 1.8 4 2.3 6.1 1.3 2.1-1 3.2-3.1 2.7-5.3-.5-2.2-2.4-3.8-4.6-4-2.2-.2-4.3 1.1-5.5 3z"/>
-    </svg>
-);
-
+import { CheckoutStepper } from '@/components/checkout/checkout-stepper';
+import { OrderSummary } from '@/components/checkout/order-summary';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 export default function PaymentPage() {
-  return (
-    <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 py-8 max-w-md">
+    const [paymentMethod, setPaymentMethod] = useState('card');
 
-        {/* Breadcrumbs */}
-        <div className="flex items-center justify-center text-sm text-muted-foreground mb-6">
-            <Link href="/cart" className="text-primary font-medium">Carrito</Link>
-            <span className="mx-2">{'>'}</span>
-            <Link href="/shipping" className="text-primary font-medium">Envío</Link>
-            <span className="mx-2">{'>'}</span>
-            <span className="font-bold text-foreground">Pago</span>
-        </div>
+    const subtotal = 1150.00;
+    const shipping = 50.00;
+    const taxes = 50.00;
+    const total = subtotal + shipping + taxes;
 
-        <h1 className="text-2xl font-bold mb-6">Finaliza tu Compra</h1>
+    return (
+        <div className="bg-background min-h-screen pb-20">
+            <div className="container mx-auto px-4 py-8 md:py-12">
 
-        {/* Order Summary Accordion */}
-        <Accordion type="single" collapsible defaultValue="item-1" className="w-full mb-8 border rounded-lg">
-            <AccordionItem value="item-1">
-                <AccordionTrigger className="px-4 py-3 font-medium">
-                    <div className='flex justify-between w-full pr-4'>
-                        <span>Resumen del pedido</span>
-                        <span className="font-bold">{formatPrice(total)}</span>
+                {/* Stepper */}
+                <CheckoutStepper currentStep="payment" />
+
+                <div className="grid lg:grid-cols-12 gap-8 md:gap-12 max-w-7xl mx-auto">
+
+                    {/* Left Column: Payment Methods */}
+                    <div className="lg:col-span-7 space-y-8">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                        >
+                            <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mb-6">Método de Pago</h1>
+
+                            <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
+
+                                {/* Credit Card */}
+                                <Label
+                                    className={cn(
+                                        "block p-6 border rounded-xl cursor-pointer transition-all duration-300",
+                                        paymentMethod === 'card'
+                                            ? "border-primary bg-secondary/20 ring-1 ring-primary shadow-md"
+                                            : "bg-card/50 hover:border-primary/50 hover:bg-secondary/10"
+                                    )}
+                                >
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <RadioGroupItem value="card" id="card" />
+                                            <div className="p-2 bg-background rounded-full border">
+                                                <CreditCard className="w-5 h-5 text-primary" />
+                                            </div>
+                                            <span className="font-bold text-lg">Tarjeta de Crédito / Débito</span>
+                                        </div>
+                                        <div className="flex gap-1 opacity-70">
+                                            {/* Icons placeholder */}
+                                            <div className="w-8 h-5 bg-foreground/20 rounded"></div>
+                                            <div className="w-8 h-5 bg-foreground/20 rounded"></div>
+                                        </div>
+                                    </div>
+
+                                    <AnimatePresence>
+                                        {paymentMethod === 'card' && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="space-y-4 pt-2">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="cardNumber">Número de tarjeta</Label>
+                                                        <div className="relative">
+                                                            <Input id="cardNumber" placeholder="0000 0000 0000 0000" className="pl-10 bg-background" />
+                                                            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="cardName">Nombre del titular</Label>
+                                                        <Input id="cardName" placeholder="Como aparece en la tarjeta" className="bg-background" />
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="expiry">Vencimiento</Label>
+                                                            <Input id="expiry" placeholder="MM/AA" className="bg-background" />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="cvc">CVC</Label>
+                                                            <div className="relative">
+                                                                <Input id="cvc" placeholder="123" className="pl-10 bg-background" />
+                                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </Label>
+
+                                {/* PayPal */}
+                                <Label
+                                    className={cn(
+                                        "flex items-center justify-between p-6 border rounded-xl cursor-pointer transition-all duration-300",
+                                        paymentMethod === 'paypal'
+                                            ? "border-primary bg-secondary/20 ring-1 ring-primary shadow-md"
+                                            : "bg-card/50 hover:border-primary/50 hover:bg-secondary/10"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <RadioGroupItem value="paypal" id="paypal" />
+                                        <div className="p-2 bg-background rounded-full border">
+                                            <Wallet className="w-5 h-5 text-[#003087]" />
+                                        </div>
+                                        <span className="font-bold text-lg">PayPal</span>
+                                    </div>
+                                </Label>
+
+                                {/* Apple Pay / Google Pay */}
+                                <Label
+                                    className={cn(
+                                        "flex items-center justify-between p-6 border rounded-xl cursor-pointer transition-all duration-300",
+                                        paymentMethod === 'digital'
+                                            ? "border-primary bg-secondary/20 ring-1 ring-primary shadow-md"
+                                            : "bg-card/50 hover:border-primary/50 hover:bg-secondary/10"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <RadioGroupItem value="digital" id="digital" />
+                                        <div className="p-2 bg-background rounded-full border">
+                                            <Smartphone className="w-5 h-5 text-foreground" />
+                                        </div>
+                                        <span className="font-bold text-lg">Apple Pay / Google Pay</span>
+                                    </div>
+                                </Label>
+
+                            </RadioGroup>
+                        </motion.div>
                     </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pt-2 pb-4">
-                    <div className="space-y-2 text-muted-foreground">
-                        <div className="flex justify-between">
-                            <span>Subtotal</span>
-                            <span>{formatPrice(subtotal)}</span>
-                        </div>
-                         <div className="flex justify-between">
-                            <span>Envío</span>
-                            <span>{formatPrice(shipping)}</span>
-                        </div>
-                         <div className="flex justify-between">
-                            <span>Impuestos</span>
-                            <span>{formatPrice(taxes)}</span>
-                        </div>
-                        <div className="border-t my-2"></div>
-                        <div className="flex justify-between font-bold text-foreground">
-                            <span>Total</span>
-                            <span>{formatPrice(total)}</span>
+
+                    {/* Right Column: Summary */}
+                    <div className="lg:col-span-5">
+                        <OrderSummary
+                            subtotal={subtotal}
+                            shipping={shipping}
+                            total={total}
+                            actionLabel={`Pagar ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(total)}`}
+                            actionHref="/confirmation"
+                        />
+
+                        <div className="mt-6 space-y-4">
+                            <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-700 dark:text-green-400">
+                                <Shield className="w-5 h-5 flex-shrink-0" />
+                                <p className="text-xs font-medium">
+                                    Pago procesado de forma segura. No almacenamos tus datos financieros.
+                                </p>
+                            </div>
+
+                            <div className="text-center text-xs text-muted-foreground">
+                                <p>Al confirmar el pedido, aceptas nuestros <Link href="#" className="underline hover:text-primary">Términos y Condiciones</Link>.</p>
+                            </div>
                         </div>
                     </div>
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
 
-        <h2 className="text-xl font-bold mb-4">Elige tu método de pago</h2>
-
-        <RadioGroup defaultValue="card" className="space-y-4">
-            <Label className="block p-4 border-2 rounded-lg cursor-pointer border-yellow-500 bg-yellow-50/50">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <CreditCard className="w-5 h-5"/>
-                        <span className="font-semibold">Tarjeta de crédito/débito</span>
-                    </div>
-                    <RadioGroupItem value="card" id="card" />
                 </div>
-                <div className="space-y-3">
-                    <div className="relative">
-                        <Input id="card-number" placeholder="Número de tarjeta" className="bg-background pr-10" />
-                        <Camera className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground"/>
-                    </div>
-                    <Input id="card-name" placeholder="Nombre en la tarjeta" className="bg-background" />
-                    <div className="grid grid-cols-2 gap-3">
-                        <Input id="card-expiry" placeholder="MM/YY" className="bg-background" />
-                        <Input id="card-cvv" placeholder="CVV" className="bg-background" />
-                    </div>
-                    <div className="flex items-center space-x-2 pt-2">
-                        <Checkbox id="save-card" />
-                        <Label htmlFor="save-card" className="text-sm font-normal text-muted-foreground">Guardar este método de pago</Label>
-                    </div>
-                </div>
-            </Label>
-
-            <Label className="flex items-center justify-between p-4 border rounded-lg cursor-pointer">
-                <div className="flex items-center gap-2">
-                    <PaypalIcon />
-                    <span className="font-semibold">PayPal</span>
-                </div>
-                <RadioGroupItem value="paypal" id="paypal" />
-            </Label>
-
-            <Label className="flex items-center justify-between p-4 border rounded-lg cursor-pointer">
-                <span className="font-semibold">Apple Pay / Google Pay</span>
-                <RadioGroupItem value="apple-google" id="apple-google" />
-            </Label>
-            
-            <Label className="flex items-center justify-between p-4 border rounded-lg cursor-pointer">
-                <span className="font-semibold">Compra ahora, paga después</span>
-                <RadioGroupItem value="klarna" id="klarna" />
-            </Label>
-        </RadioGroup>
-
-        <Button asChild className="w-full h-12 text-lg font-bold mt-8" style={{ backgroundColor: '#FDB813', color: 'black' }}>
-          <Link href="/confirmation">Pagar {formatPrice(total)}</Link>
-        </Button>
-        
-        <div className="text-center text-muted-foreground text-xs mt-4 space-y-2">
-            <div className="flex items-center justify-center gap-2">
-                <Shield className="w-3 h-3"/>
-                <span>Pago Seguro | SSL Encrypted</span>
             </div>
-            <p>
-                ¿Dudas con tu pago?{' '}
-                <Link href="#" className="font-bold text-primary hover:underline">
-                    Chatea con nosotros
-                </Link>
-            </p>
         </div>
-        <div className="flex justify-center gap-4 text-xs text-muted-foreground mt-4">
-             <Link href="#" className="hover:underline">Política de Privacidad</Link>
-             <Link href="#" className="hover:underline">Términos de Servicio</Link>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

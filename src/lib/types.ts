@@ -10,6 +10,7 @@ export type Product = {
   category: string;
   rating?: number;
   reviews?: number;
+  colors?: string[];
 };
 
 export type Category = {

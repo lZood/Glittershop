@@ -117,10 +117,10 @@ export default function ShopPage() {
   const [activeTag, setActiveTag] = useState('Ver Todo');
   const [sortOption, setSortOption] = useState('recomendado');
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
-  
+
   const [isSticky, setIsSticky] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  
+
   const stickyRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
 
@@ -128,23 +128,23 @@ export default function ShopPage() {
   const [visibleProductsCount, setVisibleProductsCount] = useState(PRODUCTS_PER_PAGE);
 
   const shopProducts = products;
-  
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const stickyElement = stickyRef.current;
-  
+
       if (!stickyElement) return;
-  
+
       const stickyOffsetTop = stickyElement.offsetTop;
-      
+
       // Toggle sticky state based on scroll position relative to the filter bar's original position
       if (currentScrollY > stickyOffsetTop - 64) { // 64 is the header height
         setIsSticky(true);
       } else {
         setIsSticky(false);
       }
-      
+
       // Toggle visibility based on scroll direction only when it's sticky
       if (isSticky) {
         if (currentScrollY > lastScrollY.current) {
@@ -157,12 +157,12 @@ export default function ShopPage() {
       } else {
         setIsHeaderVisible(true);
       }
-      
+
       lastScrollY.current = currentScrollY;
     };
-  
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-  
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
@@ -175,13 +175,13 @@ export default function ShopPage() {
     <div className="bg-background">
       <section className="container mx-auto px-4 md:px-10 py-8">
         <h1 className="text-4xl font-bold text-left mb-6 uppercase">Ver Todo</h1>
-        
+
         <div className="flex overflow-x-auto space-x-2 mb-6 pb-2 -mx-4 px-4">
           {tags.map(tag => (
             <Button
               key={tag}
               variant={activeTag === tag ? 'default' : 'outline'}
-              className={`rounded-none flex-shrink-0 ${activeTag === tag ? 'bg-black text-white' : 'bg-white text-black border-gray-400'}`}
+              className={`rounded-none flex-shrink-0 ${activeTag === tag ? 'bg-primary text-primary-foreground' : 'bg-background text-foreground border-border'}`}
               onClick={() => setActiveTag(tag)}
             >
               {tag}
@@ -197,12 +197,12 @@ export default function ShopPage() {
               !isHeaderVisible && 'hidden'
             )}
           >
-              <FilterButtons 
-                  sortOption={sortOption}
-                  setSortOption={setSortOption}
-                  isSortMenuOpen={isSortMenuOpen}
-                  setIsSortMenuOpen={setIsSortMenuOpen}
-              />
+            <FilterButtons
+              sortOption={sortOption}
+              setSortOption={setSortOption}
+              isSortMenuOpen={isSortMenuOpen}
+              setIsSortMenuOpen={setIsSortMenuOpen}
+            />
           </div>
         </div>
 
@@ -212,21 +212,21 @@ export default function ShopPage() {
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
-        
+
         {/* Load More Section */}
         {shopProducts.length > visibleProductsCount && (
-            <div className="text-center mt-12">
-                <p className="text-muted-foreground mb-4">
-                    Mostrando {visibleProductsCount} de {shopProducts.length} productos
-                </p>
-                <Button 
-                    variant="outline" 
-                    className="rounded-none border-black hover:bg-black hover:text-white uppercase tracking-wider h-11 px-8"
-                    onClick={() => setVisibleProductsCount(prev => prev + PRODUCTS_PER_PAGE)}
-                >
-                    Cargar más
-                </Button>
-            </div>
+          <div className="text-center mt-12">
+            <p className="text-muted-foreground mb-4">
+              Mostrando {visibleProductsCount} de {shopProducts.length} productos
+            </p>
+            <Button
+              variant="outline"
+              className="rounded-none border-primary hover:bg-primary hover:text-primary-foreground uppercase tracking-wider h-11 px-8"
+              onClick={() => setVisibleProductsCount(prev => prev + PRODUCTS_PER_PAGE)}
+            >
+              Cargar más
+            </Button>
+          </div>
         )}
 
       </section>

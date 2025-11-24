@@ -11,6 +11,7 @@ export const products: Product[] = [
     category: 'Rings',
     rating: 5,
     reviews: 124,
+    colors: ['#E6C200', '#C0C0C0'],
   },
   {
     id: '2',
@@ -22,6 +23,7 @@ export const products: Product[] = [
     category: 'Rings',
     rating: 5,
     reviews: 89,
+    colors: ['#E6C200', '#B76E79'],
   },
   {
     id: '3',
@@ -52,6 +54,7 @@ export const products: Product[] = [
     category: 'Necklaces',
     rating: 5,
     reviews: 98,
+    colors: ['#C0C0C0'],
   },
   {
     id: '6',
