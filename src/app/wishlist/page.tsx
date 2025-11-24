@@ -1,13 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { products } from '@/lib/products';
-import { X, ShoppingBag, Heart, ArrowRight } from 'lucide-react';
+import { X, ShoppingBag, Heart, ArrowRight, Share2, Trash2, AlertCircle, Check } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Initial mock data
 const initialWishlistItems = [
@@ -25,131 +39,222 @@ function formatPrice(price: number) {
 
 export default function WishlistPage() {
   const [items, setItems] = useState<Product[]>(initialWishlistItems);
+  const { toast } = useToast();
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const footer = document.getElementById('main-footer');
+    if (!footer) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Hide header when footer is intersecting (visible)
+        setIsVisible(!entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, []);
 
   const removeItem = (id: string) => {
     setItems(prev => prev.filter(item => item.id !== id));
+    toast({
+      description: "Producto eliminado de favoritos",
+    });
   };
 
   const clearAll = () => {
     setItems([]);
+    toast({
+      description: "Lista de favoritos vaciada",
+    });
+  };
+
+  const shareWishlist = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "¡Enlace copiado!",
+      description: "Comparte tu lista de deseos con tus amigos.",
+    });
+  };
+
+  // Mock stock status for UI demonstration
+  const getStockStatus = (index: number) => {
+    if (index === 2) return { label: 'Pocas piezas', color: 'text-amber-600 bg-amber-100 border-amber-200' };
+    return { label: 'Disponible', color: 'text-green-600 bg-green-100 border-green-200' };
   };
 
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header Section */}
-      <div className="sticky top-16 z-30 bg-background/80 backdrop-blur-md border-b">
-        <div className="container mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between max-w-5xl">
+      <motion.div
+        initial={{ y: 0 }}
+        animate={{ y: isVisible ? 0 : '-200%' }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="sticky top-16 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      >
+        <div className="container mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between max-w-6xl">
           <div className="flex items-baseline gap-3">
             <h1 className="text-xl md:text-3xl font-black tracking-tighter uppercase text-foreground">
               Favoritos
             </h1>
-            <span className="text-xs md:text-sm text-muted-foreground font-medium">
-              ({items.length})
-            </span>
+            <Badge variant="secondary" className="text-xs font-bold rounded-full px-2.5">
+              {items.length}
+            </Badge>
           </div>
 
-          {items.length > 0 && (
-            <button
-              onClick={clearAll}
-              className="text-xs font-medium text-muted-foreground hover:text-destructive uppercase tracking-wider transition-colors"
-            >
-              Limpiar
-            </button>
-          )}
-        </div>
-      </div>
+          <div className="flex items-center gap-2">
+            {items.length > 0 && (
+              <>
+                <Button variant="ghost" size="sm" onClick={shareWishlist} className="flex">
+                  <Share2 className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Compartir</span>
+                </Button>
 
-      <div className="container mx-auto px-4 md:px-8 py-8 md:py-12 max-w-5xl">
-        {items.length > 0 ? (
-          <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-8">
-            {items.map((item, index) => (
-              <div
-                key={item.id}
-                className="group relative bg-card md:bg-transparent rounded-xl md:rounded-none border md:border-0 p-3 md:p-0 flex md:flex-col gap-4 md:gap-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                {/* Image Section */}
-                <div className="relative w-24 h-24 md:w-full md:aspect-[3/4] flex-shrink-0 rounded-lg md:rounded-xl overflow-hidden bg-secondary/20">
-                  {item.image && (
-                    <Image
-                      src={item.image.imageUrl}
-                      alt={item.name}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  )}
-
-                  {/* Desktop Overlay Actions */}
-                  <div className="hidden md:flex absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 items-center justify-center opacity-0 group-hover:opacity-100">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="rounded-full font-semibold shadow-lg translate-y-4 group-hover:translate-y-0 transition-all duration-300"
-                    >
-                      Ver Detalles
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                      <Trash2 className="w-4 h-4 md:mr-2" />
+                      <span className="hidden md:inline">Limpiar Lista</span>
                     </Button>
-                  </div>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción eliminará todos los artículos de tu lista de deseos.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={clearAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Sí, eliminar todo
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            )}
+          </div>
+        </div>
+      </motion.div>
 
-                  {/* Desktop Remove Button */}
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="hidden md:flex absolute top-3 right-3 z-20 bg-white/80 backdrop-blur hover:bg-white text-black rounded-full p-2 shadow-sm transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110"
-                    title="Eliminar"
+      <div className="container mx-auto px-4 md:px-8 py-8 md:py-12 max-w-6xl">
+        {items.length > 0 ? (
+          <motion.div
+            layout
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+          >
+            <AnimatePresence mode='popLayout'>
+              {items.map((item, index) => {
+                const stock = getStockStatus(index);
+                return (
+                  <motion.div
+                    layout
+                    key={item.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="group relative bg-card rounded-xl border shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden"
                   >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                    {/* Image Section */}
+                    <div className="relative aspect-[4/5] overflow-hidden bg-secondary/20">
+                      {item.image && (
+                        <Image
+                          src={item.image.imageUrl}
+                          alt={item.name}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                      )}
 
-                {/* Content Section */}
-                <div className="flex-1 flex flex-col md:mt-4">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <Link href={`/products/${item.id}`} className="font-medium text-sm md:text-base text-foreground hover:text-primary transition-colors line-clamp-2 md:line-clamp-1">
-                        {item.name}
-                      </Link>
-                      <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
+                      {/* Badges */}
+                      <div className="absolute top-3 left-3 flex flex-col gap-2">
+                        <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${stock.color}`}>
+                          {stock.label}
+                        </Badge>
+                      </div>
+
+                      {/* Remove Button (Desktop Overlay) */}
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur text-black rounded-full p-2.5 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-50 hover:text-red-600 transform translate-y-[-10px] group-hover:translate-y-0"
+                        title="Eliminar"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
+                      {/* Quick Add Overlay */}
+                      <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center pb-6">
+                        <Button className="w-full rounded-full font-bold shadow-lg bg-white text-black hover:bg-white/90">
+                          <ShoppingBag className="w-4 h-4 mr-2" />
+                          Agregar al Carrito
+                        </Button>
+                      </div>
                     </div>
 
-                    {/* Mobile Remove Button */}
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="md:hidden -mt-1 -mr-1 p-2 text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
+                    {/* Content Section */}
+                    <div className="p-5">
+                      <div className="mb-3">
+                        <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold mb-1">{item.category}</p>
+                        <Link href={`/products/${item.id}`} className="block">
+                          <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-1">
+                            {item.name}
+                          </h3>
+                        </Link>
+                      </div>
 
-                  <div className="mt-auto pt-3 flex items-center justify-between">
-                    <p className="font-bold text-sm md:text-lg">
-                      {formatPrice(item.price)}
-                    </p>
+                      <div className="flex items-center justify-between">
+                        <p className="font-black text-xl">
+                          {formatPrice(item.price)}
+                        </p>
+                        {/* Mobile Remove (Visible only on mobile) */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="md:hidden text-muted-foreground hover:text-destructive -mr-2"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </Button>
+                      </div>
 
-                    <Button size="sm" className="rounded-full h-8 px-4 text-xs font-bold uppercase tracking-wide md:w-full md:mt-4 md:h-10">
-                      <ShoppingBag className="w-3 h-3 mr-2 md:w-4 md:h-4" />
-                      <span className="md:hidden">Agregar</span>
-                      <span className="hidden md:inline">Agregar al Carrito</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                      {/* Mobile Add to Cart */}
+                      <Button className="w-full mt-4 rounded-full md:hidden" variant="secondary">
+                        Agregar al Carrito
+                      </Button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </motion.div>
         ) : (
           /* Empty State */
-          <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center animate-in fade-in zoom-in-95 duration-500 px-4">
-            <div className="w-16 h-16 md:w-20 md:h-20 bg-secondary/30 rounded-full flex items-center justify-center mb-6">
-              <Heart className="w-8 h-8 md:w-10 md:h-10 text-muted-foreground/50" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4"
+          >
+            <div className="relative mb-8">
+              <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full"></div>
+              <div className="relative w-24 h-24 bg-background border-2 border-dashed border-primary/30 rounded-full flex items-center justify-center">
+                <Heart className="w-10 h-10 text-primary/50" />
+              </div>
             </div>
-            <h2 className="text-xl md:text-3xl font-bold mb-2 md:mb-3 tracking-tight">Tu lista de deseos está vacía</h2>
-            <p className="text-muted-foreground mb-8 max-w-md text-sm md:text-base leading-relaxed">
-              Explora nuestras colecciones y guarda tus piezas favoritas.
+            <h2 className="text-2xl md:text-4xl font-black mb-3 tracking-tight uppercase">Tu lista está vacía</h2>
+            <p className="text-muted-foreground mb-8 max-w-md text-base md:text-lg leading-relaxed">
+              Aún no has guardado ninguna joya. Explora nuestras colecciones exclusivas y encuentra tu próxima pieza favorita.
             </p>
-            <Button asChild size="lg" className="rounded-full px-8 font-bold tracking-wide uppercase shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
-              <Link href="/">
-                Explorar Joyas
+            <Button asChild size="lg" className="rounded-full px-10 h-12 font-bold tracking-wide uppercase shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 bg-primary text-primary-foreground">
+              <Link href="/shop">
+                Explorar Colección
               </Link>
             </Button>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

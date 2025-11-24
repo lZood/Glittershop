@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Mock Data Structure
+// Mock Data Structure - Preserved exactly as requested
 const menuData = [
     {
         id: 'novedades',
@@ -212,8 +212,8 @@ export default function MegaMenu() {
                     key={item.id}
                     className={cn(
                         "fixed left-0 top-16 w-full border-b transition-all duration-300 ease-in-out z-30",
-                        // Increased opacity to match Header intensity
-                        "bg-background/98 backdrop-blur supports-[backdrop-filter]:bg-background/80",
+                        // EXACT same blur classes as Header and Wishlist Sub-header
+                        "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
                         activeId === item.id
                             ? "opacity-100 visible"
                             : "opacity-0 invisible pointer-events-none"

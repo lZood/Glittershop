@@ -15,6 +15,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   User,
   Package,
   Heart,
@@ -260,7 +266,9 @@ export default function ProfilePage() {
                         </div>
                         <div className="flex items-center justify-between w-full sm:w-auto gap-6">
                           <p className="font-bold">{order.total}</p>
-                          <Button variant="outline" size="sm">Ver Detalles</Button>
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/profile/orders/${order.id}`}>Ver Detalles</Link>
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -270,139 +278,172 @@ export default function ProfilePage() {
 
               <TabsContent value="settings" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
 
-                {/* Personal Information */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <User className="w-5 h-5 text-primary" />
-                      <CardTitle>Información Personal</CardTitle>
-                    </div>
-                    <CardDescription>Actualiza tus datos de contacto.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Nombre Completo</Label>
-                        <Input id="name" defaultValue={displayName} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" defaultValue={user?.email || ''} readOnly className="bg-muted" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Teléfono</Label>
-                        <Input id="phone" placeholder="+52 (55) 1234 5678" />
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <Button>Guardar Cambios</Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Accordion type="single" collapsible className="w-full space-y-4">
 
-                {/* Addresses */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-primary" />
-                      <CardTitle>Direcciones</CardTitle>
-                    </div>
-                    <CardDescription>Gestiona tus direcciones de envío.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="p-4 border rounded-lg flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-sm">Casa</span>
-                          <Badge className="text-[10px]">Principal</Badge>
+                  {/* Personal Information */}
+                  <AccordionItem value="personal-info" className="border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <User className="w-4 h-4" />
                         </div>
-                        <p className="text-sm text-muted-foreground">Av. Reforma 222, Col. Juárez</p>
-                        <p className="text-sm text-muted-foreground">CDMX, México, 06600</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8"><Edit2 className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="w-4 h-4" /></Button>
-                      </div>
-                    </div>
-                    <Button variant="outline" className="w-full border-dashed">
-                      <Plus className="w-4 h-4 mr-2" /> Agregar Nueva Dirección
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Payment Methods */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-5 h-5 text-primary" />
-                      <CardTitle>Métodos de Pago</CardTitle>
-                    </div>
-                    <CardDescription>Administra tus tarjetas guardadas.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="p-4 border rounded-lg flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-6 bg-zinc-800 rounded flex items-center justify-center text-[8px] font-bold text-white">VISA</div>
-                        <div>
-                          <p className="font-bold text-sm">•••• •••• •••• 4242</p>
-                          <p className="text-xs text-muted-foreground">Expira 12/28</p>
+                        <div className="text-left">
+                          <p className="font-bold text-sm">Información Personal</p>
+                          <p className="text-xs text-muted-foreground font-normal">Nombre, Email, Teléfono</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="w-4 h-4" /></Button>
-                    </div>
-                    <Button variant="outline" className="w-full border-dashed">
-                      <Plus className="w-4 h-4 mr-2" /> Agregar Método de Pago
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Notifications */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <Bell className="w-5 h-5 text-primary" />
-                      <CardTitle>Notificaciones</CardTitle>
-                    </div>
-                    <CardDescription>Elige cómo quieres que te contactemos.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Correos de Marketing</Label>
-                        <p className="text-sm text-muted-foreground">Recibe noticias sobre nuevas colecciones y ofertas.</p>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Nombre Completo</Label>
+                          <Input id="name" defaultValue={displayName} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input id="email" defaultValue={user?.email || ''} readOnly className="bg-muted" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">Teléfono</Label>
+                          <Input id="phone" placeholder="+52 (55) 1234 5678" />
+                        </div>
                       </div>
-                      <Switch defaultChecked />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Notificaciones de Pedidos</Label>
-                        <p className="text-sm text-muted-foreground">Actualizaciones sobre el estado de tus compras.</p>
+                      <div className="flex justify-end mt-4">
+                        <Button>Guardar Cambios</Button>
                       </div>
-                      <Switch defaultChecked disabled />
-                    </div>
-                  </CardContent>
-                </Card>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                {/* Contact Preferences */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-5 h-5 text-primary" />
-                      <CardTitle>Preferencias de Contacto</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="whatsapp" />
-                      <Label htmlFor="whatsapp">Contactarme por WhatsApp para soporte</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="sms" />
-                      <Label htmlFor="sms">Recibir alertas SMS de entrega</Label>
-                    </div>
-                  </CardContent>
-                </Card>
+                  {/* Addresses */}
+                  <AccordionItem value="addresses" className="border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <MapPin className="w-4 h-4" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-bold text-sm">Direcciones</p>
+                          <p className="text-xs text-muted-foreground font-normal">Gestiona tus direcciones de envío</p>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-6">
+                      <div className="space-y-4">
+                        <div className="p-4 border rounded-lg flex items-start justify-between bg-background">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-bold text-sm">Casa</span>
+                              <Badge className="text-[10px]">Principal</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">Av. Reforma 222, Col. Juárez</p>
+                            <p className="text-sm text-muted-foreground">CDMX, México, 06600</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="icon" className="h-8 w-8"><Edit2 className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                          </div>
+                        </div>
+                        <Button variant="outline" className="w-full border-dashed">
+                          <Plus className="w-4 h-4 mr-2" /> Agregar Nueva Dirección
+                        </Button>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Payment Methods */}
+                  <AccordionItem value="payment" className="border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <CreditCard className="w-4 h-4" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-bold text-sm">Métodos de Pago</p>
+                          <p className="text-xs text-muted-foreground font-normal">Administra tus tarjetas guardadas</p>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-6">
+                      <div className="space-y-4">
+                        <div className="p-4 border rounded-lg flex items-center justify-between bg-background">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-6 bg-zinc-800 rounded flex items-center justify-center text-[8px] font-bold text-white">VISA</div>
+                            <div>
+                              <p className="font-bold text-sm">•••• •••• •••• 4242</p>
+                              <p className="text-xs text-muted-foreground">Expira 12/28</p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                        <Button variant="outline" className="w-full border-dashed">
+                          <Plus className="w-4 h-4 mr-2" /> Agregar Método de Pago
+                        </Button>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Notifications */}
+                  <AccordionItem value="notifications" className="border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <Bell className="w-4 h-4" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-bold text-sm">Notificaciones</p>
+                          <p className="text-xs text-muted-foreground font-normal">Elige cómo quieres que te contactemos</p>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-6">
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label className="text-base">Correos de Marketing</Label>
+                            <p className="text-sm text-muted-foreground">Recibe noticias sobre nuevas colecciones y ofertas.</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                        <Separator />
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label className="text-base">Notificaciones de Pedidos</Label>
+                            <p className="text-sm text-muted-foreground">Actualizaciones sobre el estado de tus compras.</p>
+                          </div>
+                          <Switch defaultChecked disabled />
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* Contact Preferences */}
+                  <AccordionItem value="contact" className="border rounded-lg px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <Mail className="w-4 h-4" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-bold text-sm">Preferencias de Contacto</p>
+                          <p className="text-xs text-muted-foreground font-normal">Opciones de mensajería</p>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="whatsapp" />
+                          <Label htmlFor="whatsapp">Contactarme por WhatsApp para soporte</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="sms" />
+                          <Label htmlFor="sms">Recibir alertas SMS de entrega</Label>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                </Accordion>
 
               </TabsContent>
             </div>
