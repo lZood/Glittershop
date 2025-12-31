@@ -107,7 +107,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h3 className="font-bold text-lg">{item.name || 'Producto'}</h3>
+                                                    <h3 className="font-bold text-lg">{item.description || 'Producto'}</h3>
                                                     <p className="text-sm text-muted-foreground">{item.attributes}</p>
                                                 </div>
                                                 <p className="font-bold text-lg">{item.price}</p>

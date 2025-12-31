@@ -40,29 +40,37 @@ export default function SessionProvider({ children }: { children: React.ReactNod
       console.error("Error fetching profile:", error);
       return null;
     }
-    
+
     return profile as Profile | null;
   }, [supabase]);
 
 
   useEffect(() => {
     const getInitialSession = async () => {
-       const { data: { session: initialSession } } = await supabase.auth.getSession();
-       if (initialSession?.user) {
-         const profile = await fetchProfile(initialSession.user);
-         setSession({ ...initialSession, profile });
-       }
-       setIsLoading(false);
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      if (initialSession?.user) {
+        const profile = await fetchProfile(initialSession.user);
+        setSession({ ...initialSession, profile });
+      }
+      setIsLoading(false);
     };
 
     getInitialSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-      setIsLoading(true);
+    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log('SessionProvider: Auth state changed:', event, newSession?.user?.id);
+
       if (newSession?.user) {
+        // Optimistically set session so UI can react immediately (e.g. redirect)
+        // We cast to any because profile is missing initially
+        setSession({ ...newSession, profile: null } as any);
+
+        console.log('SessionProvider: Fetching profile...');
         const profile = await fetchProfile(newSession.user);
+        console.log('SessionProvider: Profile fetched:', profile ? 'Found' : 'Not found');
+
         setSession({ ...newSession, profile });
       } else {
         setSession(null);
@@ -81,7 +89,7 @@ export default function SessionProvider({ children }: { children: React.ReactNod
     profile: session?.profile ?? null,
     isLoading,
   };
-  
+
   return (
     <Context.Provider value={value}>
       {children}

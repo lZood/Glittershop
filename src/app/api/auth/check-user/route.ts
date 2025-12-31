@@ -8,8 +8,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Email is required' }, { status: 400 });
   }
 
-  const supabase = createClient();
-  
+  const supabase = await createClient();
+
   try {
     const { data, error, count } = await supabase
       .from('profiles')
@@ -19,9 +19,9 @@ export async function POST(request: Request) {
     // If there's an error but it's not the "missing rows" error, it's a real error.
     // PGRST116 means "The result contains 0 rows". This is expected if the user doesn't exist.
     if (error && error.code !== 'PGRST116') {
-        throw error;
+      throw error;
     }
-    
+
     // If count is greater than 0, the user exists.
     const exists = count !== null && count > 0;
     return NextResponse.json({ exists });

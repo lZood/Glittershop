@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer';
 import SessionProvider from '@/lib/supabase/session-provider';
 import { ThemeProvider } from "@/components/theme-provider";
+import { MainLayoutWrapper } from '@/components/layout/main-layout-wrapper';
 
 export const metadata: Metadata = {
   title: 'GlittersShop',
@@ -31,11 +30,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SessionProvider>
-            <Header />
-            <main className="flex-grow">
+            <MainLayoutWrapper>
               {children}
-            </main>
-            <Footer />
+            </MainLayoutWrapper>
           </SessionProvider>
           <Toaster />
         </ThemeProvider>

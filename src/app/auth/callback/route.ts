@@ -7,12 +7,12 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/profile';
 
   if (code) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && session) {
       const user = session.user;
-      
+
       // On successful OAuth login, check if a profile exists and create one if not.
       // This handles both new user sign-ups and existing user logins via OAuth.
       const { error: profileError } = await supabase
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       if (!profileError) {
         return NextResponse.redirect(`${origin}${next}`);
       }
-      
+
       console.error('Profile creation/update error:', profileError);
       // Redirect to an error page or show a message even if profile creation fails
       return NextResponse.redirect(`${origin}/login?error=Could not create user profile`);
