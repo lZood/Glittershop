@@ -19,7 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 
 const tiendaLinks = [
   { href: '/shop', label: 'Ver Todo' },
@@ -86,7 +86,9 @@ export default function Header() {
 
         {/* Right-side Icons and Mobile Menu*/}
         <div className="flex items-center justify-end md:gap-x-1">
-          <SearchOverlay />
+          <Suspense fallback={<Button variant="ghost" size="icon"><Search className="h-5 w-5" /></Button>}>
+            <SearchOverlay />
+          </Suspense>
 
           <Button variant="ghost" size="icon" aria-label="User Profile" asChild>
             <Link href={session ? "/profile" : "/login"}>
