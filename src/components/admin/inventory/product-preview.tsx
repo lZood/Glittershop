@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, ShoppingCart } from "lucide-react";
+import { Heart, ShoppingCart, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProductPreviewProps {
@@ -10,11 +10,12 @@ interface ProductPreviewProps {
     category: string;
     price: number;
     salePrice?: number;
-    images: Record<string, string[]>; // Map color -> urls
+    images: Record<string, (string | { url: string; croppedArea?: { x: number; y: number; width: number; height: number } })[]>; // Map color -> metadata
     description?: string;
     colors: { name: string; hex: string }[];
     sizes: string[];
     tags: string[]; // Added tags prop
+    video?: File | null; // Added video prop
 }
 
 export function ProductPreview({
@@ -26,7 +27,8 @@ export function ProductPreview({
     description,
     colors,
     sizes,
-    tags = [] // Default value
+    tags = [],
+    video // Destructure video prop
 }: ProductPreviewProps) {
     const [selectedColor, setSelectedColor] = useState<string>(colors[0]?.name || 'default');
     const [selectedSize, setSelectedSize] = useState<string>(sizes[0] || '');
@@ -45,15 +47,17 @@ export function ProductPreview({
         }
     }, [sizes, selectedSize]);
 
-    const currentImages = images[selectedColor] || images['default'] || [];
-    const displayImage = currentImages[currentImageIndex] || null;
+    const currentImageData = images[selectedColor] || images['default'] || [];
+    const displayImageItem = currentImageData[currentImageIndex] || null;
+
+    const displayImage = typeof displayImageItem === 'string' ? displayImageItem : displayImageItem?.url;
+    const croppedArea = typeof displayImageItem === 'object' ? displayImageItem?.croppedArea : null;
+
     const hasDiscount = salePrice && salePrice < price;
     const discountPercent = hasDiscount ? Math.round(((price - salePrice) / price) * 100) : 0;
 
     // Helper to get tag label
     const getTagLabel = (tagId: string) => {
-        // You might want to export MARKETING_TAGS from product-form or duplicate/define here
-        // For now, I'll map common IDs or just display the ID formatted
         const labels: Record<string, string> = {
             'new': 'Nuevo',
             'bestseller': 'Más Vendido',
@@ -74,7 +78,16 @@ export function ProductPreview({
                         <img
                             src={displayImage}
                             alt={title}
-                            className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
+                            className="block object-cover w-full h-full max-w-none transition-transform duration-700"
+                            style={croppedArea ? {
+                                position: 'absolute',
+                                top: '0',
+                                left: '0',
+                                width: `${10000 / croppedArea.width}%`,
+                                height: `${10000 / croppedArea.height}%`,
+                                transform: `translate(-${croppedArea.x}%, -${croppedArea.y}%)`,
+                                transformOrigin: '0 0'
+                            } : {}}
                         />
                     ) : (
                         <div className="text-muted-foreground text-sm flex flex-col items-center">
@@ -104,21 +117,28 @@ export function ProductPreview({
                         </Button>
                     </div>
 
-                    {/* Image Dots (if multiple) */}
-                    {currentImages.length > 1 && (
-                        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-                            {currentImages.map((_, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(idx); }}
-                                    className={cn(
-                                        "w-2 h-2 rounded-full transition-all shadow-sm",
-                                        idx === currentImageIndex ? "bg-white scale-110" : "bg-white/50 hover:bg-white/80"
-                                    )}
-                                />
-                            ))}
-                        </div>
-                    )}
+                    {/* Indicators */}
+                    <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1.5">
+                        {currentImageData.map((_, i) => (
+                            <button
+                                key={i}
+                                type="button"
+                                className={cn(
+                                    "w-1.5 h-1.5 rounded-full transition-all shadow-sm",
+                                    i === currentImageIndex ? "bg-white w-3" : "bg-white/50 hover:bg-white/80"
+                                )}
+                                onClick={() => setCurrentImageIndex(i)}
+                            />
+                        ))}
+                        {video && (
+                            <button
+                                type="button"
+                                className="w-1.5 h-1.5 rounded-full bg-red-500/80 hover:bg-red-500 transition-all shadow-sm flex items-center justify-center p-[2px]"
+                            >
+                                <PlayCircle className="w-full h-full text-white" />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Content */}

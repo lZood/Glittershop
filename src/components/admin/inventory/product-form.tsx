@@ -1,11 +1,41 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { Loader2, Plus, Trash2, UploadCloud, X, ArrowLeft, ArrowRight, Palette, User, Shield, Package, Calculator, Sparkles, Ruler, MinusCircle } from 'lucide-react';
+import { createCategory, type Category } from '@/lib/actions/categories';
+import { Loader2, Plus, Trash2, UploadCloud, X, ArrowLeft, ArrowRight, Palette, User, Shield, Package, Calculator, Sparkles, Ruler, MinusCircle, MessageSquare } from 'lucide-react';
+import { AdminReviewsList } from "./admin-reviews-list";
+
+const COLOR_MAP: Record<string, string> = {
+    "Oro": "#FFD700",
+    "Oro Blanco": "#E1E1E1",
+    "Oro Rosa": "#B76E79",
+    "Plata": "#C0C0C0",
+    "Negro": "#000000",
+    "Rojo": "#FF0000",
+    "Azul": "#0000FF",
+    "Verde": "#008000",
+    "Amarillo": "#FFFF00",
+    "Blanco": "#FFFFFF",
+};
+
+const NUMERIC_COLOR_MAP: Record<string, string> = {
+    "Oro": "01",
+    "Plata": "02",
+    "Oro Rosa": "03",
+    "Oro Blanco": "04",
+    "Negro": "05",
+    "Rojo": "06",
+    "Azul": "07",
+    "Verde": "08",
+    "Amarillo": "09",
+    "Blanco": "10",
+};
+
+
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -18,6 +48,17 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
+import { Point, Area } from 'react-easy-crop';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -35,6 +76,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from '@/hooks/use-toast';
 import { ProductPreview } from './product-preview';
+import { ImageFramer } from './image-framer';
+import { createClient } from '@/lib/supabase/client';
+import { createProduct, updateProduct } from '@/lib/actions/products';
 
 // --- Schema Definition ---
 const productSchema = z.object({
@@ -50,6 +94,7 @@ const productSchema = z.object({
     tags: z.array(z.string()).default([]),
     size_guide_type: z.enum(['none', 'ring', 'bracelet', 'necklace']).default('none'),
     care_instructions: z.string().optional(),
+    video: z.string().optional(),
     variants: z.array(z.object({
         sku: z.string().min(1, "SKU requerido"),
         material: z.string().optional(),
@@ -64,7 +109,7 @@ type ProductFormValues = z.infer<typeof productSchema>;
 
 // --- Constants ---
 const SIZES = ['5', '6', '7', '8', '9', '10', 'Ajustable'];
-const INITIAL_CATEGORIES = ['Anillos', 'Collares', 'Pulseras', 'Aretes'];
+// const INITIAL_CATEGORIES = ['Anillos', 'Collares', 'Pulseras', 'Aretes']; // Removed in favor of DB
 const MARKETING_TAGS = [
     { id: 'new', label: 'Nuevo' },
     { id: 'bestseller', label: 'Más Vendido' },
@@ -73,10 +118,79 @@ const MARKETING_TAGS = [
     { id: 'exclusive', label: 'Exclusivo' },
 ];
 
-export function ProductForm() {
+
+interface ProductFormProps {
+    initialData?: any;
+    availableCategories: Category[];
+}
+
+// --- Helper: Crop Image ---
+const createImage = (url: string): Promise<HTMLImageElement> =>
+    new Promise((resolve, reject) => {
+        const image = new Image();
+        image.addEventListener('load', () => resolve(image));
+        image.addEventListener('error', (error) => reject(error));
+        image.setAttribute('crossOrigin', 'anonymous');
+        image.src = url;
+    });
+
+async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+    const image = await createImage(imageSrc);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) throw new Error('No 2d context');
+
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
+
+    ctx.drawImage(
+        image,
+        pixelCrop.x,
+        pixelCrop.y,
+        pixelCrop.width,
+        pixelCrop.height,
+        0,
+        0,
+        pixelCrop.width,
+        pixelCrop.height
+    );
+
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (!blob) {
+                reject(new Error('Canvas is empty'));
+                return;
+            }
+            resolve(blob);
+        }, 'image/jpeg', 0.95);
+    });
+}
+
+export function ProductForm({ initialData, availableCategories = [] }: ProductFormProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Progress Dialog State
+    const [progressOpen, setProgressOpen] = useState(false);
+    const [progressLogs, setProgressLogs] = useState<{ step: string, status: 'pending' | 'loading' | 'success' | 'error', message?: string }[]>([]);
+
+    // Helper to add/update logs
+    const addLog = (step: string, status: 'pending' | 'loading' | 'success' | 'error', message?: string) => {
+        setProgressLogs(prev => [...prev, { step, status, message }]);
+    };
+
+    const updateLastLog = (status: 'pending' | 'loading' | 'success' | 'error', message?: string) => {
+        setProgressLogs(prev => {
+            const newLogs = [...prev];
+            if (newLogs.length > 0) {
+                newLogs[newLogs.length - 1] = { ...newLogs[newLogs.length - 1], status, message };
+            }
+            return newLogs;
+        });
+    };
 
     // Advanced State
     const [colors, setColors] = useState<{ name: string; hex: string }[]>([
@@ -87,33 +201,84 @@ export function ProductForm() {
     const [newColorHex, setNewColorHex] = useState('#000000');
 
     // Images grouped by color key (or 'default')
+    // For editing, we need to handle existing URLs differently than new Files
+    // Maybe we just initialize previewUrls with existing data?
     const [images, setImages] = useState<Record<string, File[]>>({ 'default': [] });
-    const [previewUrls, setPreviewUrls] = useState<Record<string, string[]>>({ 'default': [] });
+    // Stores: url, and react-easy-crop state (crop/zoom) + output (pixelCrop)
+    const [previewUrls, setPreviewUrls] = useState<Record<string, {
+        url: string;
+        isExisting?: boolean; // Flag for existing images
+        storagePath?: string; // Needed for existing images to preserve valid object structure
+        crop?: Point;
+        zoom?: number;
+        pixelCrop?: Area // CHANGED: Renamed from croppedArea to pixelCrop for clarity
+    }[]>>({});
+
+    const [videoFile, setVideoFile] = useState<File | null>(null);
+    const [videoPreview, setVideoPreview] = useState<string | null>(initialData?.video || null);
+
     const [activeImageTab, setActiveImageTab] = useState('default');
 
-    // Dynamic lists
-    const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+    // Image Framer State
+    const [framerConfig, setFramerConfig] = useState<{ isOpen: boolean; colorKey: string; index: number } | null>(null);
+
+    // Categories now objects
+    const [categories, setCategories] = useState<Category[]>(availableCategories);
     const [newCategory, setNewCategory] = useState('');
     const [isAddingCategory, setIsAddingCategory] = useState(false);
-    const [selectedSizes, setSelectedSizes] = useState<string[]>(['6', '7', '8']); // Default selected sizes
+    const [selectedSizes, setSelectedSizes] = useState<string[]>(
+        initialData && initialData.product_variants
+            ? Array.from(new Set(initialData.product_variants.map((v: any) => v.size))).filter(Boolean) as string[]
+            : ['6', '7', '8']
+    ); // Default selected sizes
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
-        defaultValues: {
+        defaultValues: initialData ? {
+            title: initialData.name,
+            slug: initialData.slug,
+            description: initialData.description || "",
+            base_price: initialData.base_price,
+            sale_price: initialData.sale_price || undefined,
+            cost_price: initialData.cost_price || undefined,
+            is_active: initialData.is_active,
+            category: initialData.categories?.name || "",
+            has_variants: true,
+            tags: initialData.tags || [],
+            size_guide_type: initialData.size_guide_type as any || 'none',
+            care_instructions: initialData.care_instructions || "",
+            video: initialData.video || "",
+            variants: initialData.product_variants?.map((v: any) => ({
+                sku: v.sku,
+                material: "Oro 10k", // Default or extract if stored
+                color: v.color || "Oro",
+                size: v.size || "Adjustable",
+                stock: v.stock,
+                price_adjustment: v.price_adjustment || 0
+            })) || []
+        } : {
             title: "",
             slug: "",
             description: "",
             base_price: 0,
-            sale_price: 0,
-            cost_price: 0,
+            sale_price: undefined,
+            cost_price: undefined,
             is_active: false,
             category: "",
             has_variants: true,
             tags: [],
             size_guide_type: 'none',
             care_instructions: "",
-            variants: [],
-        },
+            video: "",
+            variants: [{
+                sku: "",
+                material: "Oro 10k",
+                color: "Oro",
+                size: "Adjustable",
+                stock: 0,
+                price_adjustment: 0
+            }]
+        }
     });
 
     const { fields, append, remove, replace } = useFieldArray({
@@ -121,13 +286,61 @@ export function ProductForm() {
         name: "variants",
     });
 
+    // Initialize state from initialData
+    useEffect(() => {
+        if (initialData) {
+            // Populate Images
+            const newPreviewUrls: Record<string, any[]> = { 'default': [] };
+
+            initialData.product_images?.forEach((img: any) => {
+                const key = img.color || 'default';
+                if (!newPreviewUrls[key]) newPreviewUrls[key] = [];
+                newPreviewUrls[key].push({
+                    url: img.image_url,
+                    isExisting: true,
+                    storagePath: img.storage_path,
+                    isPrimary: img.is_primary
+                });
+            });
+
+            // Sort by primary locally if needed, but DB order usually suffices or is_primary flag
+            setPreviewUrls(newPreviewUrls);
+
+            // Populate Colors from Variants
+            const distinctColors = new Set<string>();
+            initialData.product_variants?.forEach((v: any) => {
+                if (v.color) distinctColors.add(v.color);
+            });
+            // If we have custom colors, we might need to update the `colors` state to include them
+            // For now assuming standard or existing logic covers it
+        }
+    }, [initialData]);
     // Watch values for preview
     const watchedTitle = form.watch('title');
     const watchedPrice = form.watch('base_price');
+    const hasVariants = form.watch('has_variants');
+    const watchedVariants = form.watch('variants');
+
+    // Filter colors based on generated SKUs
+    const visibleColors = useMemo(() => {
+        if (!hasVariants) return [];
+        const activeColorNames = new Set((watchedVariants || []).map((v: any) => v.color).filter(Boolean));
+        return colors.filter(c => activeColorNames.has(c.name));
+    }, [hasVariants, watchedVariants, colors]);
+
+    // Auto-switch image tab based on mode and visible colors
+    useEffect(() => {
+        if (hasVariants && visibleColors.length > 0) {
+            if (activeImageTab === 'default' || !visibleColors.find(c => c.name === activeImageTab)) {
+                setActiveImageTab(visibleColors[0].name);
+            }
+        } else {
+            setActiveImageTab('default');
+        }
+    }, [hasVariants, visibleColors, activeImageTab]);
     const watchedSalePrice = form.watch('sale_price');
     const watchedCategory = form.watch('category');
     const watchedDescription = form.watch('description');
-    const hasVariants = form.watch('has_variants');
     const watchedCostPrice = form.watch('cost_price') || 0;
     const watchedTags = form.watch('tags');
 
@@ -194,7 +407,10 @@ export function ProductForm() {
                 [colorKey]: [...(prev[colorKey] || []), ...newFiles]
             }));
 
-            const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+            const newPreviews = newFiles.map(file => ({
+                url: URL.createObjectURL(file),
+                // No default crop needed, renders as 'cover' by default
+            }));
             setPreviewUrls(prev => ({
                 ...prev,
                 [colorKey]: [...(prev[colorKey] || []), ...newPreviews]
@@ -236,13 +452,56 @@ export function ProductForm() {
         setPreviewUrls(prev => ({ ...prev, [colorKey]: newPreviews }));
     };
 
+
+
+
+    const handleFramerSave = (crop: Point, zoom: number, pixelCrop: Area) => {
+        if (!framerConfig) return;
+        setPreviewUrls(prev => {
+            const newList = [...(prev[framerConfig.colorKey] || [])];
+            if (newList[framerConfig.index]) {
+                newList[framerConfig.index] = {
+                    ...newList[framerConfig.index],
+                    crop,
+                    zoom,
+                    pixelCrop // Store pixels!
+                };
+            }
+            return { ...prev, [framerConfig.colorKey]: newList };
+        });
+        setFramerConfig(null);
+    };
+
     // --- Category Handler ---
-    const handleAddCategory = () => {
+    const handleAddCategory = async () => {
         if (newCategory.trim()) {
-            setCategories([...categories, newCategory.trim()]);
-            form.setValue('category', newCategory.trim());
-            setNewCategory('');
-            setIsAddingCategory(false);
+            try {
+                const res = await createCategory(newCategory.trim());
+                if (res.success && res.data) {
+                    setCategories([...categories, res.data]);
+                    form.setValue('category', res.data.name);
+                    setNewCategory('');
+                    setIsAddingCategory(false);
+                    toast({ title: "Categoría creada", description: `Se ha creado "${res.data.name}" con código ${res.data.id}` });
+                } else {
+                    toast({ variant: "destructive", title: "Error", description: res.error || "Error al crear categoría" });
+                }
+            } catch (err) {
+                toast({ variant: "destructive", title: "Error", description: "Error al comunicar con el servidor" });
+            }
+        }
+    };
+
+    // --- Video Handler ---
+    const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 50 * 1024 * 1024) { // 50MB limit
+                toast({ title: "Archivo muy grande", description: "El video debe pesar menos de 50MB", variant: "destructive" });
+                return;
+            }
+            setVideoFile(file);
+            setVideoPreview(URL.createObjectURL(file));
         }
     };
 
@@ -265,14 +524,40 @@ export function ProductForm() {
         }
 
         setIsGenerating(true);
-        const baseSlug = form.getValues('slug') || 'p';
+
+        // Get slug from form, fallback to a safe default if empty, but prefer slug
+        // Remove 'slug' from dependency array to avoid unnecessary re-renders if we were using it in useEffect,
+        // but here we just read it on click.
+        // We really want to enforce the slug is present for good SKUs.
+        const currentSlug = form.getValues('slug');
+        const currentCategoryName = form.getValues('category');
+
+        if (!currentSlug) {
+            toast({ title: "Falta el Slug", description: "Define primero la URL Amigable en la pestaña INFO", variant: "destructive" });
+            setIsGenerating(false);
+            return;
+        }
+
+        // 1. Get Numeric Category Prefix (from DB ID)
+        const matchedCat = categories.find(c => c.name === currentCategoryName);
+        // Format ID to 2 digits (e.g. 1 -> 01, 12 -> 12)
+        const catPrefix = matchedCat ? matchedCat.id.toString().padStart(2, '0') : '90';
+
+        // 2. Generate Random Model ID (4 digits)
+        const modelId = Math.floor(1000 + Math.random() * 9000).toString();
+
         const newVariants: any[] = [];
 
-        // Generate combinations
+        // Clear existing variants? Or append? usually replace for smart gen
+
         colors.forEach(color => {
             selectedSizes.forEach(size => {
+                const colorCode = NUMERIC_COLOR_MAP[color.name] || '99';
+                // SKU Logic: CAT(2digits)-MODEL(4digits)-COL-SIZ (e.g. 01-5932-01-7)
+                const generatedSku = `${catPrefix}-${modelId}-${colorCode}-${size}`;
+
                 newVariants.push({
-                    sku: `${baseSlug}-${color.name.substring(0, 3).toUpperCase()}-${size}`,
+                    sku: generatedSku,
                     color: color.name,
                     size: size,
                     stock: 5,
@@ -290,20 +575,261 @@ export function ProductForm() {
     };
 
     async function onSubmit(data: ProductFormValues) {
-        toast({ title: "💎 Procesando...", description: "Estamos guardando tu nueva creación..." });
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        console.log({ ...data, images, colors });
-        toast({
-            title: "✨ Producto Guardado",
-            description: "La pieza se ha registrado correctamente en el inventario.",
-            className: "bg-primary text-white font-bold"
-        });
-        router.push('/admin/inventory');
+        if (isSubmitting) return;
+        console.log("🚨 [DEBUG CLIENT] SUBMIT STARTED at", new Date().toISOString());
+        console.log("📦 [DEBUG CLIENT] Form Data:", JSON.stringify(data, null, 2));
+        setIsSubmitting(true);
+        setProgressOpen(true);
+        setProgressLogs([]); // Reset logs
+
+        try {
+            addLog("Iniciando validación...", 'loading');
+            console.log("🔹 Fase 0: Validación Previa");
+
+            const supabase = createClient();
+
+            // 0. Pre-check: Validar Slug
+            // 0. Pre-check: Validar Slug
+            // Removed client-side check to prevent timeouts. 
+            // We rely on Server Action (code 23505) to return "slug taken" error.
+            console.log("🔍 Slug será validado en servidor:", data.slug);
+            updateLastLog('success', "Iniciando proceso...");
+
+            // Verify Connectivity & Env Vars
+            console.log("🔍 Checking Env Vars:", {
+                url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "Defined" : "MISSING",
+                key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Defined" : "MISSING"
+            });
+
+            const pingResult = await supabase.from('products').select('id').limit(1).maybeSingle();
+            if (pingResult.error) {
+                console.error("❌ Connectivity Check Failed:", pingResult.error);
+                updateLastLog('error', "Error de conectividad con Supabase. Revisa tu conexión.");
+                throw new Error("Connectivity check failed");
+            }
+            console.log("✅ Supabase Connectivity OK");
+
+            // Verify Authentication first (Non-blocking attempt)
+            console.log("🔐 Buscando sesión (con timeout 5s)...");
+
+            // Timeout wrapper
+            const getSessionWithTimeout = () => new Promise<any>((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error("Timeout obteniendo sesión")), 5000); // Reduced to 5s
+                supabase.auth.getSession().then((res) => { // Reverted to getSession for speed
+                    clearTimeout(timer);
+                    resolve(res);
+                }).catch((err) => {
+                    clearTimeout(timer);
+                    resolve({ data: { session: null }, error: err }); // Resolve with null instead of reject
+                });
+            });
+
+            let sessionUser = null;
+            try {
+                const { data: { session }, error: authError } = await getSessionWithTimeout();
+                sessionUser = session?.user;
+
+                if (authError) {
+                    console.warn("⚠️ Auth Check Warning (Client-side):", authError);
+                    updateLastLog('loading', "Verificación de sesión lenta... intentando guardar de todos modos.");
+                } else if (!sessionUser) {
+                    console.warn("⚠️ No active session found on client (might exist on server).");
+                    updateLastLog('loading', "No se detectó sesión activa en navegador. Intentando envío...");
+                } else {
+                    console.log("🔐 Auth Check: Valid Session Found", sessionUser.id);
+                }
+            } catch (e) {
+                console.warn("⚠️ Auth Check Skipped due to timeout/error", e);
+                updateLastLog('loading', "Saltando verificación de sesión local...");
+            }
+
+            // Proceed regardless of client-side auth check result. 
+            // Server action will handle the final authority check.
+
+            // 1. Upload Images
+            console.log("🔹 Fase 1: Procesando Imágenes");
+            addLog("Procesando imágenes...", 'loading');
+
+            const imageUrls: { url: string, color?: string, isPrimary: boolean, storagePath: string }[] = [];
+            let processedCount = 0;
+
+            // Flatten all previewUrls to process them in order
+            // We trust previewUrls as the Source of Truth for what should be on the product.
+            const allItemsToProcess: { colorKey: string, item: any, index: number }[] = [];
+            Object.entries(previewUrls).forEach(([colorKey, items]) => {
+                items.forEach((item, index) => {
+                    allItemsToProcess.push({ colorKey, item, index });
+                });
+            });
+
+            console.log(`📸 Total items to process: ${allItemsToProcess.length}`);
+
+            for (const { colorKey, item, index } of allItemsToProcess) {
+                processedCount++;
+                const isPrimary = allItemsToProcess.length > 0 && processedCount === 1; // First image overall is primary? Or first per color? Usually first overall or explicitly set.
+                // Assuming simple logic: First image of Default or first valid image is primary if not set.
+                // Actually, let's keep logic simple: strict order.
+
+                try {
+                    // CASE A: Existing Image with NO modification
+                    if (item.isExisting && !item.pixelCrop) {
+                        imageUrls.push({
+                            url: item.url,
+                            color: colorKey === 'default' ? undefined : colorKey,
+                            isPrimary: index === 0 && colorKey === 'default', // Legacy logic
+                            storagePath: item.storagePath || ""
+                        });
+                        continue;
+                    }
+
+                    // CASE B: New Image OR Existing Image Modified (Need to upload/re-upload)
+                    let blobToUpload: Blob;
+
+                    if (item.pixelCrop) {
+                        // Crop required
+                        addLog(`Recortando imagen ${processedCount}...`, 'loading');
+                        blobToUpload = await getCroppedImg(item.url, item.pixelCrop);
+                    } else {
+                        // No crop, just fetch the current blob (for new images) or download existing (edge case)
+                        // For new images, item.url is blob:http... so fetch is fast.
+                        const res = await fetch(item.url);
+                        blobToUpload = await res.blob();
+                    }
+
+                    // Upload
+                    const fileExt = "jpg"; // We force JPEG in getCroppedImg, or detect mime
+                    const fileName = `${data.slug}/${colorKey}-${index}-${Date.now()}.${fileExt}`;
+
+                    addLog(`Subiendo imagen ${processedCount}...`, 'loading');
+
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from('products')
+                        .upload(fileName, blobToUpload, { cacheControl: '3600', upsert: true });
+
+                    if (uploadError) throw uploadError;
+
+                    const publicUrl = supabase.storage.from('products').getPublicUrl(fileName).data.publicUrl;
+
+                    imageUrls.push({
+                        url: publicUrl,
+                        color: colorKey === 'default' ? undefined : colorKey,
+                        isPrimary: index === 0 && colorKey === 'default',
+                        storagePath: fileName
+                    });
+
+                } catch (err: any) {
+                    console.error("Error processing image:", err);
+                    updateLastLog('error', `Error al procesar imagen ${processedCount}: ${err.message}`);
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+
+            updateLastLog('success', `Imágenes procesadas.`);
+
+            // 2. Upload Video
+            let videoUrl = "";
+            if (videoFile) {
+                console.log("🔹 Fase 2: Subiendo Video");
+                addLog("Subiendo video...", 'loading');
+                const fileExt = videoFile.name.split('.').pop();
+                const fileName = `${data.slug}/video-${Date.now()}.${fileExt}`;
+
+                const { error: videoUploadError } = await supabase.storage
+                    .from('products')
+                    .upload(fileName, videoFile);
+
+                if (videoUploadError) {
+                    console.error("❌ Error video:", videoUploadError);
+                    updateLastLog('error', "Error subiendo video");
+                    throw videoUploadError;
+                }
+
+                const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+                videoUrl = publicUrl;
+                updateLastLog('success', "Video subido.");
+                console.log("✅ Video subido:", videoUrl);
+            }
+
+            // 3. Server Action
+            console.log("🔹 Fase 3: Server Action - PREPARING PAYLOAD");
+            addLog("Guardando en base de datos...", 'loading');
+
+            // Prepared variants with color metadata
+            const variantsData = data.variants.map(v => ({
+                ...v,
+                color_metadata: v.color ? { hex: COLOR_MAP[v.color] || '#CCCCCC', name: v.color } : undefined
+            }));
+
+            const serverPayload = {
+                ...data,
+                video: videoUrl || initialData?.video,
+                imageUrls,
+                variants: variantsData
+            };
+
+            console.log("🚀 [DEBUG CLIENT] Sending Payload to Server Action:", JSON.stringify(serverPayload, null, 2));
+
+            let result;
+            if (initialData?.id) {
+                console.log("🔄 Calling updateProduct with ID:", initialData.id);
+                result = await updateProduct(initialData.id, serverPayload);
+            } else {
+                console.log("✨ Calling createProduct");
+                result = await createProduct(serverPayload);
+            }
+
+            console.log("📡 Respuesta Server Action:", result);
+
+            if (!result.success) {
+                console.error("❌ Error Server Action:", result.error);
+                updateLastLog('error', result.error);
+                throw new Error(result.error);
+            }
+
+            updateLastLog('success', "Producto guardado correctamente.");
+            addLog("¡Listo! Redirigiendo...", 'success');
+            console.log("🏁 Éxito Total");
+
+            setTimeout(() => {
+                router.push('/admin/inventory');
+            }, 1000);
+
+        } catch (error: any) {
+            console.error("🚨 CATCH GENERAL:", error);
+            // Error is already logged in the last step mostly, but let's ensure
+            if (progressLogs[progressLogs.length - 1]?.status !== 'error') {
+                addLog("Error Fatal", 'error', error.message || "Error desconocido");
+            }
+        } finally {
+            setIsSubmitting(false);
+            // Don't close modal automatically on error so user can read
+        }
     }
+
+    const setDraftAndSubmit = () => {
+        form.setValue('is_active', false);
+        // We need to trigger submit programmatically or let the button be type="submit"
+        // Since the button is inside the form, type="submit" works.
+    };
+
+    const setPublishAndSubmit = () => {
+        form.setValue('is_active', true);
+    }
+
+    const onInvalid = (errors: any) => {
+        console.error("❌ [DEBUG] FORMULARIO INVÁLIDO:", errors);
+        console.warn("⚠️ Errores de validación en el formulario:", errors);
+        toast({
+            title: "Revisa el formulario",
+            description: "Hay campos obligatorios vacíos o con errores.",
+            variant: "destructive"
+        });
+    };
 
     return (
         <Form {...form}>
-            <form id="product-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form id="product-form" onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
                 <Tabs defaultValue="basic" className="w-full">
                     {/* Sticky Section Navigation for Mobile */}
                     <div className="sticky top-16 z-20 bg-background/95 backdrop-blur shadow-sm -mx-4 px-4 py-2 border-b md:relative md:top-0 md:bg-transparent md:shadow-none md:border-none md:px-0 md:mx-0 mb-6">
@@ -317,6 +843,11 @@ export function ProductForm() {
                             <TabsTrigger value="media" className="rounded-full text-xs uppercase font-bold tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                                 <UploadCloud className="w-3 h-3 mr-1.5 hidden sm:block" /> Fotos
                             </TabsTrigger>
+                            {initialData?.id && (
+                                <TabsTrigger value="reviews" className="rounded-full text-xs uppercase font-bold tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                                    <MessageSquare className="w-3 h-3 mr-1.5 hidden sm:block" /> Reseñas
+                                </TabsTrigger>
+                            )}
                             <TabsTrigger value="preview" className="rounded-full text-xs uppercase font-bold tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:hidden">
                                 <Shield className="w-3 h-3 mr-1.5 hidden sm:block" /> Preview
                             </TabsTrigger>
@@ -405,7 +936,7 @@ export function ProductForm() {
                                                                 </FormControl>
                                                                 <SelectContent>
                                                                     {categories.map(cat => (
-                                                                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                                                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                                                                     ))}
                                                                     <Separator className="my-1" />
                                                                     <SelectItem value="new_category_action" className="font-bold text-primary focus:bg-primary/10">
@@ -630,185 +1161,256 @@ export function ProductForm() {
                             </TabsContent>
 
                             <TabsContent value="variants" className="space-y-6 mt-0 animate-in fade-in duration-500">
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                                    {/* CONTROLS (Left/Top) */}
-                                    <div className="lg:col-span-4 space-y-6">
-                                        <Card className="border-none shadow-md overflow-hidden bg-card/50">
+                                <div className="flex flex-col gap-6">
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {/* 1. VARIANT CONFIGURATION */}
+                                        <Card className="border-none shadow-md bg-card/50">
                                             <CardHeader className="pb-3 bg-primary/5 border-b border-primary/10">
                                                 <CardTitle className="text-lg font-black uppercase tracking-wide flex items-center gap-2">
                                                     <Palette className="w-4 h-4 text-primary" />
-                                                    1. Definir Opciones
+                                                    Configuración de Variantes
                                                 </CardTitle>
+                                                <CardDescription className="text-xs">Define los atributos para generar tu inventario</CardDescription>
                                             </CardHeader>
-                                            <CardContent className="space-y-6 p-5">
-                                                {/* Colors */}
-                                                <div className="space-y-3">
-                                                    <Label className="text-xs uppercase font-black tracking-widest opacity-70">Colores / Acabados</Label>
-                                                    <div className="flex flex-wrap gap-2 mb-3">
-                                                        {colors.map((color) => (
-                                                            <div key={color.name} className="flex items-center gap-2 bg-background border px-2 py-1.5 rounded-full shadow-sm">
-                                                                <div className="w-4 h-4 rounded-full border shadow-inner" style={{ backgroundColor: color.hex }} />
-                                                                <span className="text-xs font-bold uppercase">{color.name}</span>
-                                                                <button type="button" onClick={() => removeColor(color.name)} className="hover:text-destructive transition-colors ml-1">
-                                                                    <X className="h-3 w-3" />
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <Input
-                                                            placeholder="Nombre (ej. Oro)"
-                                                            value={newColorName}
-                                                            onChange={(e) => setNewColorName(e.target.value)}
-                                                            className="h-9 text-sm flex-1"
-                                                        />
-                                                        <div className="relative w-9 h-9 shrink-0 overflow-hidden rounded-full border shadow-sm cursor-pointer group">
-                                                            <Input
-                                                                type="color"
-                                                                value={newColorHex}
-                                                                onChange={(e) => setNewColorHex(e.target.value)}
-                                                                className="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-none cursor-pointer opacity-0 group-hover:opacity-100"
-                                                            />
-                                                            <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: newColorHex }} />
+                                            <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                {/* Left: Attributes */}
+                                                <div className="space-y-6">
+                                                    {/* Colors */}
+                                                    <div className="space-y-3">
+                                                        <Label className="text-xs uppercase font-black tracking-widest opacity-70">1. Colores / Acabados</Label>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {colors.map((color) => (
+                                                                <div key={color.name} className="flex items-center gap-2 bg-background border px-3 py-1.5 rounded-full shadow-sm">
+                                                                    <div className="w-4 h-4 rounded-full border shadow-inner" style={{ backgroundColor: color.hex }} />
+                                                                    <span className="text-xs font-bold uppercase">{color.name}</span>
+                                                                    <button type="button" onClick={() => removeColor(color.name)} className="hover:text-destructive transition-colors ml-1">
+                                                                        <X className="h-3 w-3" />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                        <Button type="button" size="icon" onClick={addColor} disabled={!newColorName} className="h-9 w-9 shrink-0 bg-primary text-primary-foreground">
-                                                            <Plus className="h-4 w-4" />
+                                                        <div className="flex gap-2 max-w-sm">
+                                                            <Input
+                                                                placeholder="Nombre (ej. Oro)"
+                                                                value={newColorName}
+                                                                onChange={(e) => setNewColorName(e.target.value)}
+                                                                className="h-9 text-sm"
+                                                            />
+                                                            <div className="relative w-9 h-9 shrink-0 overflow-hidden rounded-full border shadow-sm cursor-pointer group">
+                                                                <Input
+                                                                    type="color"
+                                                                    value={newColorHex}
+                                                                    onChange={(e) => setNewColorHex(e.target.value)}
+                                                                    className="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-none cursor-pointer opacity-0 group-hover:opacity-100"
+                                                                />
+                                                                <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: newColorHex }} />
+                                                            </div>
+                                                            <Button type="button" size="icon" onClick={addColor} disabled={!newColorName} className="h-9 w-9 shrink-0 bg-primary text-primary-foreground">
+                                                                <Plus className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+
+                                                    <Separator />
+
+                                                    {/* Sizes */}
+                                                    <div className="space-y-3">
+                                                        <Label className="text-xs uppercase font-black tracking-widest opacity-70">2. Tallas Disponibles</Label>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {SIZES.map(size => (
+                                                                <Button
+                                                                    key={size}
+                                                                    type="button"
+                                                                    variant={selectedSizes.includes(size) ? "default" : "outline"}
+                                                                    size="sm"
+                                                                    onClick={() => toggleSize(size)}
+                                                                    className={`h-8 px-4 text-xs font-bold rounded-full transition-all ${selectedSizes.includes(size) ? 'shadow-md scale-105' : 'opacity-70 hover:opacity-100'}`}
+                                                                >
+                                                                    {size}
+                                                                </Button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right: Generator Action */}
+                                                <div className="flex flex-col justify-end">
+                                                    <div className="bg-primary/5 rounded-xl p-5 border border-primary/10 space-y-4">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="bg-primary/20 p-2 rounded-lg">
+                                                                <Sparkles className="w-5 h-5 text-primary" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-sm font-black uppercase tracking-wide text-primary">Generador Inteligente de SKUs</h4>
+                                                                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                                                                    Crea automáticamente todas las combinaciones posibles usando el <strong>Slug</strong> del producto.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="bg-background rounded-lg border border-dashed border-primary/20 p-3 flex flex-col items-center justify-center gap-1">
+                                                            <span className="text-[10px] uppercase font-bold text-muted-foreground">Formato de SKU</span>
+                                                            <code className="text-sm font-mono font-black text-primary tracking-wider">
+                                                                {(() => {
+                                                                    const slg = form.getValues('slug');
+                                                                    const catName = form.getValues('category');
+                                                                    if (!slg) return '00-0000-00-0';
+
+                                                                    const matched = categories.find(c => c.name === catName);
+                                                                    const pfx = matched ? matched.id.toString().padStart(2, '0') : '00';
+
+                                                                    const mdl = 'XXXX';
+                                                                    return `${pfx}-${mdl}-01-TALLA`;
+                                                                })()}
+                                                            </code>
+                                                        </div>
+
+                                                        <Button
+                                                            type="button"
+                                                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase text-xs tracking-widest shadow-lg h-10"
+                                                            onClick={generateVariants}
+                                                            disabled={isGenerating}
+                                                        >
+                                                            {isGenerating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                                                            Generar {colors.length * selectedSizes.length} Combinaciones
                                                         </Button>
                                                     </div>
                                                 </div>
-
-                                                <Separator />
-
-                                                {/* Sizes */}
-                                                <div className="space-y-3">
-                                                    <Label className="text-xs uppercase font-black tracking-widest opacity-70">Tallas Disponibles</Label>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {SIZES.map(size => (
-                                                            <Button
-                                                                key={size}
-                                                                type="button"
-                                                                variant={selectedSizes.includes(size) ? "default" : "outline"}
-                                                                size="sm"
-                                                                onClick={() => toggleSize(size)}
-                                                                className={`h-8 px-3 text-xs font-bold rounded-full transition-all ${selectedSizes.includes(size) ? 'shadow-md scale-105' : 'opacity-70 hover:opacity-100'}`}
-                                                            >
-                                                                {size}
-                                                            </Button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                <Button
-                                                    type="button"
-                                                    className="w-full bg-primary text-primary-foreground font-black uppercase text-sm tracking-widest shadow-lg hover:scale-[1.02] transition-transform"
-                                                    onClick={generateVariants}
-                                                >
-                                                    <Sparkles className="w-4 h-4 mr-2" />
-                                                    Generar Combinaciones
-                                                </Button>
                                             </CardContent>
                                         </Card>
-                                    </div>
 
-                                    {/* LIST (Right/Bottom) */}
-                                    <div className="lg:col-span-8">
-                                        <Card className="border-none shadow-md overflow-hidden h-full flex flex-col">
-                                            <div className="bg-secondary/20 px-4 py-3 border-b flex justify-between items-center">
-                                                <div className="flex items-center gap-2">
-                                                    <Package className="w-5 h-5 text-primary" />
-                                                    <span className="text-lg font-black uppercase tracking-wide">2. Inventario ({fields.length})</span>
+                                        {/* 2. INVENTORY TABLE */}
+                                        <Card className="border-none shadow-md overflow-hidden flex flex-col h-full bg-white dark:bg-zinc-900 ring-1 ring-border/50">
+                                            <div className="bg-secondary/20 px-6 py-4 border-b flex flex-col sm:flex-row justify-between items-center gap-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-background p-2 rounded-md shadow-sm">
+                                                        <Package className="w-5 h-5 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-lg font-black uppercase tracking-wide leading-none">Inventario Actual</h3>
+                                                        <p className="text-xs text-muted-foreground mt-1">{fields.length} variantes generadas</p>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Label className="text-xs uppercase font-bold mr-2 opacity-60">Modo Simple</Label>
+                                                <div className="flex items-center gap-3 bg-background/50 px-3 py-1.5 rounded-full border border-border/50">
+                                                    <Label className="text-xs uppercase font-bold opacity-60 cursor-pointer" htmlFor="simple-mode">Modo Simple</Label>
                                                     <FormField
                                                         control={form.control}
                                                         name="has_variants"
                                                         render={({ field }) => (
-                                                            <Switch checked={!field.value} onCheckedChange={(c) => field.onChange(!c)} />
+                                                            <Switch
+                                                                id="simple-mode"
+                                                                checked={!field.value}
+                                                                onCheckedChange={(c) => field.onChange(!c)}
+                                                                className="scale-75 data-[state=checked]:bg-primary"
+                                                            />
                                                         )}
                                                     />
                                                 </div>
                                             </div>
 
-                                            <CardContent className="p-0 flex-1 overflow-y-auto max-h-[500px]">
+                                            <CardContent className="p-0">
                                                 {hasVariants ? (
-                                                    <Table>
-                                                        <TableHeader className="bg-background/50 sticky top-0 z-10 backdrop-blur-sm">
-                                                            <TableRow className="hover:bg-transparent border-b border-border/50">
-                                                                <TableHead className="w-[100px] text-xs font-black uppercase">Color</TableHead>
-                                                                <TableHead className="w-[80px] text-xs font-black uppercase">Talla</TableHead>
-                                                                <TableHead className="text-xs font-black uppercase">SKU</TableHead>
-                                                                <TableHead className="w-[80px] text-xs font-black uppercase text-center">Stock</TableHead>
-                                                                <TableHead className="w-[50px]"></TableHead>
-                                                            </TableRow>
-                                                        </TableHeader>
-                                                        <TableBody>
-                                                            {fields.length === 0 && (
-                                                                <TableRow>
-                                                                    <TableCell colSpan={5} className="h-32 text-center">
-                                                                        <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50">
-                                                                            <Package className="w-8 h-8 mb-2" />
-                                                                            <p className="text-sm font-medium">Sin variantes generadas</p>
-                                                                            <p className="text-xs">Usa el panel de la izquierda para comenzar</p>
-                                                                        </div>
-                                                                    </TableCell>
+                                                    <div className="relative w-full overflow-auto">
+                                                        <Table>
+                                                            <TableHeader className="bg-muted/30 sticky top-0 z-10">
+                                                                <TableRow className="hover:bg-transparent border-b border-border/50">
+                                                                    <TableHead className="w-[15%] text-xs font-black uppercase pl-6">Color</TableHead>
+                                                                    <TableHead className="w-[15%] text-xs font-black uppercase text-center">Talla</TableHead>
+                                                                    <TableHead className="w-[40%] text-xs font-black uppercase">SKU</TableHead>
+                                                                    <TableHead className="w-[20%] text-xs font-black uppercase text-center">Stock</TableHead>
+                                                                    <TableHead className="w-[10%]"></TableHead>
                                                                 </TableRow>
-                                                            )}
-                                                            {fields.map((field, index) => (
-                                                                <TableRow key={field.id} className="group hover:bg-muted/30 transition-colors">
-                                                                    <TableCell className="font-medium text-sm py-2">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <div className="w-3 h-3 rounded-full border shadow-sm" style={{ backgroundColor: colors.find(c => c.name === form.watch(`variants.${index}.color`))?.hex || '#ccc' }} />
-                                                                            {form.watch(`variants.${index}.color`)}
-                                                                        </div>
-                                                                    </TableCell>
-                                                                    <TableCell className="text-sm py-2 font-mono bg-muted/20 text-center rounded-sm mx-1">
-                                                                        {form.watch(`variants.${index}.size`)}
-                                                                    </TableCell>
-                                                                    <TableCell className="py-2">
-                                                                        <FormField
-                                                                            control={form.control}
-                                                                            name={`variants.${index}.sku`}
-                                                                            render={({ field }) => (
-                                                                                <Input {...field} className="h-7 text-xs font-mono border-transparent bg-transparent hover:bg-background hover:border-input focus:bg-background focus:border-primary transition-all px-2" />
-                                                                            )}
-                                                                        />
-                                                                    </TableCell>
-                                                                    <TableCell className="py-2">
-                                                                        <FormField
-                                                                            control={form.control}
-                                                                            name={`variants.${index}.stock`}
-                                                                            render={({ field }) => (
-                                                                                <Input type="number" {...field} className="h-8 text-center font-bold text-sm" />
-                                                                            )}
-                                                                        />
-                                                                    </TableCell>
-                                                                    <TableCell className="py-2 text-right">
-                                                                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all" onClick={() => remove(index)}>
-                                                                            <MinusCircle className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                            ))}
-                                                        </TableBody>
-                                                    </Table>
+                                                            </TableHeader>
+                                                            <TableBody>
+                                                                {fields.length === 0 && (
+                                                                    <TableRow>
+                                                                        <TableCell colSpan={5} className="h-48 text-center bg-muted/5">
+                                                                            <div className="flex flex-col items-center justify-center text-muted-foreground opacity-50 space-y-2">
+                                                                                <Package className="w-10 h-10 mb-2 opacity-20" />
+                                                                                <p className="text-sm font-bold uppercase tracking-wide">Inventario Vacío</p>
+                                                                                <p className="text-xs max-w-xs mx-auto">Utiliza el generador de arriba para crear tus variantes automáticamente.</p>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                )}
+                                                                {fields.map((field, index) => (
+                                                                    <TableRow key={field.id} className="group hover:bg-muted/30 transition-colors border-b border-border/40 last:border-0">
+                                                                        <TableCell className="font-medium text-sm py-3 pl-6">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className="w-4 h-4 rounded-full border shadow-sm ring-1 ring-inset ring-black/10" style={{ backgroundColor: colors.find(c => c.name === form.watch(`variants.${index}.color`))?.hex || '#ccc' }} />
+                                                                                <span className="font-semibold">{form.watch(`variants.${index}.color`)}</span>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell className="py-3 text-center">
+                                                                            <Badge variant="outline" className="font-mono bg-background/50">
+                                                                                {form.watch(`variants.${index}.size`)}
+                                                                            </Badge>
+                                                                        </TableCell>
+                                                                        <TableCell className="py-3">
+                                                                            <FormField
+                                                                                control={form.control}
+                                                                                name={`variants.${index}.sku`}
+                                                                                render={({ field }) => (
+                                                                                    <Input
+                                                                                        {...field}
+                                                                                        className="h-9 font-mono text-xs border-transparent bg-muted/30 focus:bg-background focus:border-primary transition-all px-3 rounded-md w-full"
+                                                                                        placeholder="SKU-CODE"
+                                                                                    />
+                                                                                )}
+                                                                            />
+                                                                        </TableCell>
+                                                                        <TableCell className="py-3">
+                                                                            <FormField
+                                                                                control={form.control}
+                                                                                name={`variants.${index}.stock`}
+                                                                                render={({ field }) => (
+                                                                                    <div className="flex justify-center">
+                                                                                        <Input
+                                                                                            type="number"
+                                                                                            {...field}
+                                                                                            className="h-9 w-20 text-center font-bold text-sm bg-background border-border"
+                                                                                        />
+                                                                                    </div>
+                                                                                )}
+                                                                            />
+                                                                        </TableCell>
+                                                                        <TableCell className="py-3 text-right pr-4">
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-50 group-hover:opacity-100 transition-all rounded-full"
+                                                                                onClick={() => remove(index)}
+                                                                            >
+                                                                                <MinusCircle className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                ))}
+                                                            </TableBody>
+                                                        </Table>
+                                                    </div>
                                                 ) : (
-                                                    <div className="p-8 flex flex-col items-center justify-center space-y-4 text-center">
-                                                        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                                            <Package className="w-8 h-8 text-primary" />
+                                                    <div className="p-12 flex flex-col items-center justify-center space-y-6 text-center bg-muted/10">
+                                                        <div className="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center ring-4 ring-background shadow-sm">
+                                                            <Package className="w-10 h-10 text-primary opacity-80" />
                                                         </div>
-                                                        <div>
-                                                            <h3 className="font-bold text-lg">Producto Único</h3>
-                                                            <p className="text-muted-foreground text-sm max-w-xs mx-auto">Este producto no tiene variantes de color o talla. Se maneja como un item único.</p>
+                                                        <div className="space-y-2 max-w-md">
+                                                            <h3 className="font-black text-xl uppercase tracking-tight text-foreground">Producto Único</h3>
+                                                            <p className="text-muted-foreground text-sm leading-relaxed">
+                                                                Este producto se gestiona como una unidad simple, sin variaciones de color o talla. Ideal para piezas únicas o estandarizadas.
+                                                            </p>
                                                         </div>
-                                                        <div className="grid grid-cols-2 gap-4 w-full max-w-sm mt-4">
+                                                        <div className="grid grid-cols-2 gap-5 w-full max-w-lg mt-4 bg-card p-6 rounded-xl border shadow-sm">
                                                             <FormField
                                                                 control={form.control}
                                                                 name={`variants.0.sku`}
                                                                 render={({ field }) => (
                                                                     <FormItem>
-                                                                        <FormLabel className="text-sm">SKU</FormLabel>
-                                                                        <FormControl><Input {...field} /></FormControl>
+                                                                        <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Código SKU</FormLabel>
+                                                                        <FormControl>
+                                                                            <Input {...field} className="font-mono text-center h-11 bg-muted/30" placeholder="Ej: ANILLO-UNICO" />
+                                                                        </FormControl>
                                                                     </FormItem>
                                                                 )}
                                                             />
@@ -817,8 +1419,10 @@ export function ProductForm() {
                                                                 name={`variants.0.stock`}
                                                                 render={({ field }) => (
                                                                     <FormItem>
-                                                                        <FormLabel className="text-sm">Stock</FormLabel>
-                                                                        <FormControl><Input type="number" {...field} /></FormControl>
+                                                                        <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Existencias</FormLabel>
+                                                                        <FormControl>
+                                                                            <Input type="number" {...field} className="text-center font-bold text-lg h-11 bg-muted/30" />
+                                                                        </FormControl>
                                                                     </FormItem>
                                                                 )}
                                                             />
@@ -840,12 +1444,24 @@ export function ProductForm() {
                                         <CardDescription className="text-xs uppercase font-bold opacity-60">Selecciona el color para ver sus fotos específicas</CardDescription>
                                     </CardHeader>
                                     <CardContent className="p-0">
-                                        <Tabs defaultValue="default" value={activeImageTab} onValueChange={setActiveImageTab} className="p-6 pt-0">
+                                        {/* visibleColors computation moved outside JSX and potentially wrapped in useMemo */}
+                                        {/* Assuming `useMemo` is imported and used at the top of the component function */}
+                                        {/*
+                                        const visibleColors = useMemo(() => {
+                                            const currentVariants = form.getValues('variants') || [];
+                                            const activeColorNames = new Set(currentVariants.map(v => v.color).filter(Boolean));
+                                            return colors.filter(c => activeColorNames.has(c.name));
+                                        }, [form.getValues('variants'), colors]);
+                                        */}
+                                        {/* For this example, I'll assume `visibleColors` is already defined in the scope above this snippet. */}
+                                        <Tabs defaultValue={hasVariants && visibleColors.length > 0 ? visibleColors[0].name : 'default'} value={activeImageTab} onValueChange={setActiveImageTab} className="p-6 pt-0">
                                             <TabsList className="flex flex-nowrap overflow-x-auto h-auto gap-2 bg-transparent p-0 mb-6 scrollbar-hide">
-                                                <TabsTrigger value="default" className="rounded-full border px-4 py-2 text-xs uppercase font-black tracking-widest data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                                                    General
-                                                </TabsTrigger>
-                                                {colors.map(color => (
+                                                {(!hasVariants || visibleColors.length === 0) && (
+                                                    <TabsTrigger value="default" className="rounded-full border px-4 py-2 text-xs uppercase font-black tracking-widest data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                                                        General
+                                                    </TabsTrigger>
+                                                )}
+                                                {visibleColors.map(color => (
                                                     <TabsTrigger
                                                         key={color.name}
                                                         value={color.name}
@@ -857,30 +1473,60 @@ export function ProductForm() {
                                                 ))}
                                             </TabsList>
 
-                                            {['default', ...colors.map(c => c.name)].map((tabKey) => (
+                                            {/* Content Loop */}
+                                            {[
+                                                ...((!hasVariants || visibleColors.length === 0) ? ['default'] : []),
+                                                ...visibleColors.map(c => c.name)
+                                            ].map((tabKey) => (
                                                 <TabsContent key={tabKey} value={tabKey} className="mt-0 animate-in zoom-in-95 duration-300">
                                                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                                                        {(previewUrls[tabKey] || []).map((url, index) => (
-                                                            <div key={index} className="relative aspect-[4/5] rounded-2xl overflow-hidden border-2 bg-muted group shadow-sm hover:shadow-lg transition-all">
-                                                                <img src={url} alt={`Preview ${index}`} className="object-cover w-full h-full" />
+                                                        {(previewUrls[tabKey] || []).map((item, index) => (
+                                                            <div key={index} className="relative aspect-[3/4] rounded-2xl overflow-hidden border-2 bg-muted group shadow-sm hover:shadow-lg transition-all">
+                                                                <img
+                                                                    src={item.url}
+                                                                    alt={`Preview ${index}`}
+                                                                    className="w-full h-full object-cover transition-all duration-200"
+                                                                    style={item.croppedArea ? {
+                                                                        position: 'absolute',
+                                                                        top: '0',
+                                                                        left: '0',
+                                                                        width: `${10000 / item.croppedArea.width}%`,
+                                                                        height: `${10000 / item.croppedArea.height}%`,
+                                                                        transform: `translate(-${item.croppedArea.x}%, -${item.croppedArea.y}%)`,
+                                                                        transformOrigin: '0 0'
+                                                                    } : {}}
+                                                                />
 
-                                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-[2px]">
-                                                                    <div className="flex gap-2">
-                                                                        <Button type="button" variant="secondary" size="icon" className="h-10 w-10 rounded-full shadow-lg" onClick={() => moveImage(tabKey, index, 'left')} disabled={index === 0}>
-                                                                            <ArrowLeft className="h-5 w-5" />
+                                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-[2px]">
+                                                                    <div className="flex gap-1">
+                                                                        <Button type="button" variant="secondary" size="icon" className="h-8 w-8 rounded-full shadow-lg" onClick={() => moveImage(tabKey, index, 'left')} disabled={index === 0}>
+                                                                            <ArrowLeft className="h-4 w-4" />
                                                                         </Button>
-                                                                        <Button type="button" variant="secondary" size="icon" className="h-10 w-10 rounded-full shadow-lg" onClick={() => moveImage(tabKey, index, 'right')} disabled={index === (previewUrls[tabKey]?.length || 0) - 1}>
-                                                                            <ArrowRight className="h-5 w-5" />
+
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="secondary"
+                                                                            size="icon"
+                                                                            className="h-8 w-8 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90"
+                                                                            onClick={() => setFramerConfig({ isOpen: true, colorKey: tabKey, index: index })}
+                                                                        >
+                                                                            <Sparkles className="h-4 w-4 text-white" />
+                                                                        </Button>
+
+                                                                        <Button type="button" variant="secondary" size="icon" className="h-8 w-8 rounded-full shadow-lg" onClick={() => moveImage(tabKey, index, 'right')} disabled={index === (previewUrls[tabKey]?.length || 0) - 1}>
+                                                                            <ArrowRight className="h-4 w-4" />
                                                                         </Button>
                                                                     </div>
-                                                                    <Button type="button" variant="destructive" size="sm" className="h-9 px-6 rounded-full font-bold uppercase text-xs tracking-widest shadow-lg" onClick={() => removeImage(tabKey, index)}>
-                                                                        <Trash2 className="h-4 w-4 mr-2" /> Borrar
+                                                                    <Button type="button" variant="destructive" size="sm" className="h-7 px-4 rounded-full font-bold uppercase text-[10px] tracking-widest shadow-lg" onClick={() => removeImage(tabKey, index)}>
+                                                                        <Trash2 className="h-3 w-3 mr-1" /> Borrar
                                                                     </Button>
                                                                 </div>
 
                                                                 {index === 0 && (
                                                                     <div className="absolute top-2 left-2">
-                                                                        <Badge className="bg-white/95 text-black hover:bg-white text-xs font-black uppercase tracking-tighter shadow-xl px-3 py-1 border-none rounded-full">Principal</Badge>
+                                                                        <Badge className="bg-white/95 text-black hover:bg-white text-[10px] font-black uppercase tracking-tighter shadow-xl px-2 py-0.5 border-none rounded-full">
+                                                                            Vista {tabKey}
+                                                                        </Badge>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -905,10 +1551,61 @@ export function ProductForm() {
                                                     </div>
                                                 </TabsContent>
                                             ))}
-                                        </Tabs>
+                                        </Tabs >
+
+                                        <Separator className="my-6" />
+
+                                        {/* VIDEO SECTION */}
+                                        <div className="bg-muted/30 rounded-xl p-4 border border-dashed border-primary/20">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <Label className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                                                    <UploadCloud className="w-4 h-4 text-primary" /> Video del Producto (Opcional)
+                                                </Label>
+                                                {videoPreview && (
+                                                    <Button type="button" variant="ghost" size="sm" onClick={() => { setVideoFile(null); setVideoPreview(null); }} className="text-destructive text-xs h-6">
+                                                        <Trash2 className="w-3 h-3 mr-1" /> Eliminar
+                                                    </Button>
+                                                )}
+                                            </div>
+
+                                            {!videoPreview ? (
+                                                <div className="h-24 rounded-lg bg-background/50 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:bg-primary/5 transition-colors relative">
+                                                    <input
+                                                        type="file"
+                                                        accept="video/mp4,video/webm,video/ogg"
+                                                        onChange={handleVideoSelect}
+                                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                                    />
+                                                    <UploadCloud className="h-6 w-6 text-muted-foreground mb-1" />
+                                                    <span className="text-xs text-muted-foreground font-medium">Click para subir video (Max 50MB)</span>
+                                                </div>
+                                            ) : (
+                                                <div className="relative aspect-video rounded-lg overflow-hidden bg-black shadow-inner max-w-sm mx-auto">
+                                                    <video src={videoPreview} controls className="w-full h-full object-contain" />
+                                                </div>
+                                            )}
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </TabsContent>
+
+                            {initialData?.id && (
+                                <TabsContent value="reviews" className="animate-in fade-in zoom-in-95 duration-500">
+                                    <Card className="border-none shadow-sm bg-card/50 backdrop-blur-sm">
+                                        <CardHeader>
+                                            <CardTitle className="text-xl font-bold font-headline flex items-center gap-2">
+                                                <MessageSquare className="w-5 h-5 text-primary" /> Opiniones de Clientes
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Visualiza lo que dicen tus clientes sobre este producto.
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <AdminReviewsList productId={initialData.id} />
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                            )}
                         </div>
 
                         {/* DESKTOP SIDEBAR: Preview & Sticky Save */}
@@ -926,6 +1623,7 @@ export function ProductForm() {
                                     colors={colors}
                                     sizes={selectedSizes}
                                     tags={watchedTags}
+                                    video={videoFile}
                                 />
                             </div>
 
@@ -935,7 +1633,92 @@ export function ProductForm() {
                 </Tabs>
 
 
+                {/* Floating Footer Actions */}
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-md border-t z-50 md:sticky md:bottom-auto flex items-center justify-between gap-4">
+                    <div className="hidden md:flex items-center text-xs text-muted-foreground">
+                        <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
+                        Cambios guardados localmente
+                    </div>
+                    <div className="flex gap-3 w-full md:w-auto">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="flex-1 md:flex-none border-primary/20 hover:bg-primary/5 hover:text-primary"
+                            onClick={() => router.back()}
+                        >
+                            <X className="w-4 h-4 mr-2" /> Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            onClick={setDraftAndSubmit}
+                            variant="secondary"
+                            disabled={isSubmitting}
+                            className="flex-1 md:flex-none bg-secondary/80 hover:bg-secondary font-bold text-secondary-foreground"
+                        >
+                            {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Package className="w-4 h-4 mr-2" />}
+                            Guardar Borrador
+                        </Button>
+                        <Button
+                            type="submit"
+                            onClick={setPublishAndSubmit}
+                            disabled={isSubmitting}
+                            className="flex-[2] md:flex-none bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest shadow-lg shadow-primary/20"
+                        >
+                            {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2 stroke-[3]" />}
+                            Publicar
+                        </Button>
+                    </div>
+                </div>
+
             </form>
+
+            <ImageFramer
+                isOpen={!!framerConfig?.isOpen}
+                onClose={() => setFramerConfig(null)}
+                imageUrl={framerConfig ? previewUrls[framerConfig.colorKey][framerConfig.index]?.url : ''}
+                initialCrop={framerConfig ? previewUrls[framerConfig.colorKey][framerConfig.index]?.crop : undefined}
+                initialZoom={framerConfig ? previewUrls[framerConfig.colorKey][framerConfig.index]?.zoom : undefined}
+                onSave={handleFramerSave}
+                aspectRatio={3 / 4}
+            />
+
+            {/* Progress Dialog */}
+            <Dialog open={progressOpen} onOpenChange={setProgressOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Estado de Publicación</DialogTitle>
+                        <DialogDescription className="text-muted-foreground">
+                            Progreso de la actualización del producto...
+                        </DialogDescription>
+                    </DialogHeader>
+                    <ScrollArea className="h-[300px] w-full rounded-md border p-4 bg-black/5 dark:bg-white/5">
+                        <div className="space-y-4">
+                            {progressLogs.map((log, index) => (
+                                <div key={index} className="flex items-start gap-3 text-sm">
+                                    <div className="mt-0.5">
+                                        {log.status === 'loading' && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+                                        {log.status === 'success' && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                                        {log.status === 'error' && <AlertCircle className="w-4 h-4 text-red-500" />}
+                                        {log.status === 'pending' && <div className="w-4 h-4 rounded-full border-2 border-muted" />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className={cn(
+                                            "font-medium",
+                                            log.status === 'error' ? "text-red-500" :
+                                                log.status === 'success' ? "text-green-600" : "text-foreground"
+                                        )}>
+                                            {log.step}
+                                        </p>
+                                        {log.message && (
+                                            <p className="text-xs text-muted-foreground mt-1">{log.message}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </DialogContent>
+            </Dialog>
         </Form>
     );
 }

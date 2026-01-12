@@ -1,0 +1,428 @@
+'use server';
+
+import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
+
+// Define the input type explicitly or import it if shared
+// Using a simplified version of the Zod schema for the action input
+type ProductActionInput = {
+    title: string;
+    slug: string;
+    description?: string;
+    base_price: number;
+    sale_price?: number;
+    cost_price?: number;
+    is_active: boolean;
+    category: string; // Name of the category
+    tags?: string[];
+    size_guide_type?: string;
+    care_instructions?: string;
+    video?: string;
+    variants: {
+        sku: string;
+        material?: string; // Mapped to color/size usually, or stored in metadata? Schema has color/size columns
+        color?: string;
+        size?: string;
+        stock: number;
+        price_adjustment: number;
+        color_metadata?: Record<string, any>;
+    }[];
+    // Image URLs grouped by color (passed from client after upload)
+    imageUrls: {
+        url: string;
+        color?: string; // 'default' or specific color
+        isPrimary: boolean;
+        storagePath?: string;
+    }[];
+};
+
+export async function createProduct(data: ProductActionInput) {
+    const supabase = await createClient();
+
+    // 1. Auth Check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    // Check if admin (optional, depending on your strictness)
+    // const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    // if (profile?.role !== 'admin') return { success: false, error: 'Forbidden' };
+
+    try {
+        // 2. Resolve Category ID
+        let categoryId: number | null = null;
+
+        // Use .maybeSingle() to avoid error if not found
+        const { data: existingCategory, error: catFetchError } = await supabase
+            .from('categories')
+            .select('id')
+            .ilike('name', data.category)
+            .maybeSingle();
+
+        if (catFetchError) {
+            console.error('Error fetching category:', catFetchError);
+            return { success: false, error: `Error al buscar categoría: ${catFetchError.message}` };
+        }
+
+        if (existingCategory) {
+            categoryId = existingCategory.id;
+        } else {
+            // Create new category if it doesn't exist
+            const { data: newCategory, error: createCatError } = await supabase
+                .from('categories')
+                .insert({ name: data.category })
+                .select('id')
+                .single();
+
+            if (createCatError || !newCategory) {
+                console.error('Error creating category:', createCatError);
+                return {
+                    success: false,
+                    error: `Error al crear categoría "${data.category}": ${createCatError?.message || 'No se recibió el ID de la nueva categoría'}`
+                };
+            }
+            categoryId = newCategory.id;
+        }
+
+        // 3. Insert Product
+        const { data: product, error: productError } = await supabase
+            .from('products')
+            .insert({
+                name: data.title, // Mapping title -> name
+                slug: data.slug,
+                description: data.description,
+                // Support multiple possible schema versions
+                price: data.sale_price && data.sale_price > 0 ? data.sale_price : data.base_price,
+                base_price: data.base_price,
+                sale_price: data.sale_price,
+                original_price: data.sale_price && data.sale_price > 0 ? data.base_price : null,
+                cost_price: data.cost_price,
+                stock: data.variants.reduce((acc, v) => acc + v.stock, 0),
+                category_id: categoryId,
+                is_active: data.is_active,
+                tags: data.tags,
+                size_guide_type: data.size_guide_type,
+                care_instructions: data.care_instructions,
+                video: data.video
+            })
+            .select('id')
+            .single();
+
+        if (productError || !product) {
+            console.error('Error inserting product:', productError);
+            if (productError?.code === '23505') {
+                return { success: false, error: `El slug "${data.slug}" ya está en uso. Por favor elige otro URL.` };
+            }
+            return { success: false, error: `Failed to create product: ${productError.message}` };
+        }
+
+        const productId = product.id;
+
+        // 4. Insert Variants
+        if (data.variants && data.variants.length > 0) {
+            const variantsData = data.variants.map(v => ({
+                product_id: productId,
+                sku: v.sku,
+                color: v.color,
+                size: v.size,
+                stock: v.stock,
+                price_adjustment: v.price_adjustment,
+                color_metadata: v.color_metadata
+            }));
+
+            const { error: variantsError } = await supabase
+                .from('product_variants')
+                .insert(variantsData);
+
+            if (variantsError) {
+                console.error('Error inserting variants:', variantsError);
+                // Ideally rollback product here, but for now just report
+                return { success: false, error: `Failed to create variants: ${variantsError.message}` };
+            }
+        }
+
+        // 5. Insert Images
+        if (data.imageUrls && data.imageUrls.length > 0) {
+            const imagesData = data.imageUrls.map(img => ({
+                product_id: productId,
+                image_url: img.url,
+                is_primary: img.isPrimary,
+                color: img.color === 'default' ? null : img.color,
+                storage_path: img.storagePath
+            }));
+
+            const { error: imagesError } = await supabase
+                .from('product_images')
+                .insert(imagesData);
+
+            if (imagesError) {
+                console.error('Error inserting images:', imagesError);
+                return { success: false, error: `Failed to save images: ${imagesError.message}` };
+            }
+        }
+
+        revalidatePath('/admin/inventory');
+        revalidatePath('/shop');
+        return { success: true, productId };
+
+    } catch (err: any) {
+        console.error('Unexpected error:', err);
+        return { success: false, error: err.message || 'An unexpected error occurred' };
+    }
+}
+
+export async function updateProduct(productId: string, data: ProductActionInput) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const isAdmin = await checkAdmin(supabase, user.id);
+    if (!isAdmin) {
+        console.error("❌ [DEBUG ACTION] USER IS NOT ADMIN", user.id);
+        return { success: false, error: 'Forbidden: Admin access required' };
+    }
+
+    const adminSupabase = createAdminClient();
+    console.log("🔍 [DEBUG ACTION] STARTING UPDATE for Product ID:", productId);
+    console.log("📦 [DEBUG ACTION] PAYLOAD:", JSON.stringify(data, null, 2));
+
+    try {
+        // 1. Resolve Category (Match by name)
+        let categoryId: number | null = null;
+        console.log("🔍 [DEBUG ACTION] RESOLVING CATEGORY:", data.category);
+        const { data: existingCategory } = await adminSupabase
+            .from('categories')
+            .select('id')
+            .ilike('name', data.category)
+            .maybeSingle();
+
+        if (existingCategory) {
+            categoryId = existingCategory.id;
+        } else {
+            const { data: newCategory, error: createCatError } = await adminSupabase
+                .from('categories')
+                .insert({ name: data.category })
+                .select('id')
+                .single();
+            if (createCatError || !newCategory) {
+                console.error("❌ [DEBUG ACTION] ERROR CREATING CATEGORY:", createCatError);
+                throw new Error(`Error creating category: ${createCatError?.message}`);
+            }
+            categoryId = newCategory.id;
+        }
+        console.log("✅ [DEBUG ACTION] CATEGORY RESOLVED ID:", categoryId);
+
+        // 2. Update Product Fields
+        console.log("🔍 [DEBUG ACTION] UPDATING PRODUCT TABLE...");
+        const { error: productError } = await adminSupabase
+            .from('products')
+            .update({
+                name: data.title,
+                slug: data.slug,
+                description: data.description,
+                price: data.sale_price && data.sale_price > 0 ? data.sale_price : data.base_price,
+                base_price: data.base_price,
+                sale_price: data.sale_price,
+                original_price: data.sale_price && data.sale_price > 0 ? data.base_price : null,
+                cost_price: data.cost_price,
+                stock: data.variants.reduce((acc, v) => acc + v.stock, 0),
+                category_id: categoryId,
+                is_active: data.is_active,
+                tags: data.tags,
+                size_guide_type: data.size_guide_type,
+                care_instructions: data.care_instructions,
+                video: data.video,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', productId);
+
+        if (productError) {
+            console.error("❌ [DEBUG ACTION] PRODUCT UPDATE FAILED:", productError);
+            throw new Error(`Failed to update product: ${productError.message}`);
+        }
+        console.log("✅ [DEBUG ACTION] PRODUCT TABLE UPDATED");
+
+        // 3. Handle Variants (Sync)
+        console.log("🔍 [DEBUG ACTION] SYNCING VARIANTS...");
+        // Fetch existing
+        const { data: existingVariants, error: fetchVarError } = await adminSupabase
+            .from('product_variants')
+            .select('id, sku')
+            .eq('product_id', productId);
+
+        if (fetchVarError) throw fetchVarError;
+
+        const incomingSkus = data.variants.map(v => v.sku);
+        const variantsToDelete = existingVariants?.filter(v => !incomingSkus.includes(v.sku)).map(v => v.id) || [];
+
+        // Delete removed
+        if (variantsToDelete.length > 0) {
+            console.log("🗑️ [DEBUG ACTION] DELETING VARIANTS:", variantsToDelete);
+            await adminSupabase.from('product_variants').delete().in('id', variantsToDelete);
+        }
+
+        // Upsert (Update or Insert)
+        console.log("🔍 [DEBUG ACTION] UPSERTING VARIANTS COUNT:", data.variants.length);
+        for (const v of data.variants) {
+            const variantData = {
+                product_id: productId,
+                sku: v.sku,
+                color: v.color,
+                size: v.size,
+                stock: v.stock,
+                price_adjustment: v.price_adjustment,
+                color_metadata: v.color_metadata,
+                updated_at: new Date().toISOString()
+            };
+
+            const existing = existingVariants?.find(ex => ex.sku === v.sku);
+            if (existing) {
+                // console.log("   🔄 Updating Variant:", v.sku);
+                await adminSupabase.from('product_variants').update(variantData).eq('id', existing.id);
+            } else {
+                // console.log("   ✨ Inserting Variant:", v.sku);
+                await adminSupabase.from('product_variants').insert(variantData);
+            }
+        }
+        console.log("✅ [DEBUG ACTION] VARIANTS SYNCED");
+
+        // 4. Handle Images (Sync: Replace Strategy)
+        console.log("🔍 [DEBUG ACTION] SYNCING IMAGES...");
+        // Delete current mapping
+        const { error: delImgError } = await adminSupabase.from('product_images').delete().eq('product_id', productId);
+        if (delImgError) console.error("⚠️ [DEBUG ACTION] ERROR DELETE IMAGES:", delImgError);
+
+        // Insert new mapping
+        if (data.imageUrls && data.imageUrls.length > 0) {
+            console.log("   📸 Inserting Images Count:", data.imageUrls.length);
+            const imagesData = data.imageUrls.map(img => ({
+                product_id: productId,
+                image_url: img.url,
+                is_primary: img.isPrimary,
+                color: img.color === 'default' ? null : img.color,
+                storage_path: img.storagePath
+            }));
+            const { error: insImgError } = await adminSupabase.from('product_images').insert(imagesData);
+            if (insImgError) {
+                console.error("❌ [DEBUG ACTION] ERROR INSERT IMAGES:", insImgError);
+                throw insImgError;
+            }
+        }
+        console.log("✅ [DEBUG ACTION] IMAGES SYNCED");
+
+        revalidatePath('/admin/inventory');
+        revalidatePath(`/admin/inventory/${productId}`);
+        revalidatePath('/shop');
+        revalidatePath(`/products/${data.slug}`);
+
+        return { success: true, productId };
+
+    } catch (err: any) {
+        console.error('🚨 [DEBUG ACTION] CRITICAL UPDATE ERROR:', err);
+        return { success: false, error: err.message || 'Error updating product' };
+    }
+}
+
+import { createAdminClient } from '@/lib/supabase/admin';
+
+const ADMIN_EMAILS = ['jramirezlopez03@gmail.com', 'admin@glittershop.com', 'antigravity@glittershop.com']; // Add your admin emails here
+
+async function checkAdmin(supabase: any, userId: string) {
+    // 1. Check against hardcoded allowed emails (Quickest fix)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email && ADMIN_EMAILS.includes(user.email)) {
+        return true;
+    }
+
+    // 2. Check Role in DB
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+    return profile?.role === 'admin';
+}
+
+export async function deleteProduct(productId: string) {
+    const supabase = await createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const isAdmin = await checkAdmin(supabase, user.id);
+    if (!isAdmin) return { success: false, error: 'Forbidden: Admin access required' };
+
+    const adminSupabase = createAdminClient();
+    const { error } = await adminSupabase.from('products').delete().eq('id', productId);
+
+    if (error) {
+        console.error('Error deleting product:', error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath('/admin/inventory');
+    return { success: true };
+}
+
+export async function updateVariantStock(variantId: number, newStock: number) {
+    const supabase = await createClient(); // Standard client for checking WHO is asking
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const isAdmin = await checkAdmin(supabase, user.id);
+    if (!isAdmin) return { success: false, error: 'Forbidden: Admin access required' };
+
+    // Use Admin Client only AFTER verifying the user is an admin
+    const adminSupabase = createAdminClient();
+    const { error } = await adminSupabase
+        .from('product_variants')
+        .update({ stock: newStock })
+        .eq('id', variantId);
+
+    if (error) return { success: false, error: error.message };
+
+    // Trigger revalidation
+    revalidatePath('/admin/inventory');
+    revalidatePath('/shop'); // Update shop listing if stock affects visibility
+    return { success: true };
+}
+
+export async function toggleProductStatus(productId: string, isActive: boolean) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const isAdmin = await checkAdmin(supabase, user.id);
+    if (!isAdmin) return { success: false, error: 'Forbidden: Admin access required' };
+
+    const adminSupabase = createAdminClient();
+    const { error } = await adminSupabase
+        .from('products')
+        .update({ is_active: isActive })
+        .eq('id', productId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath('/admin/inventory');
+    revalidatePath(`/admin/inventory/${productId}`); // Update the specific page
+    revalidatePath('/shop');
+    return { success: true };
+}
+
+export async function updateProductStock(productId: string, newStock: number) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const { error } = await supabase
+        .from('products')
+        .update({ stock: newStock })
+        .eq('id', productId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath('/admin/inventory');
+    return { success: true };
+}
