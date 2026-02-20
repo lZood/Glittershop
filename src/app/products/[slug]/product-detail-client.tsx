@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { ProductCarousel } from '@/components/product-carousel';
 import { products } from '@/lib/products';
+import { useCart } from '@/lib/cart-context';
 
 function formatPrice(price: number) {
     return new Intl.NumberFormat('es-MX', {
@@ -41,7 +42,7 @@ function renderStars(rating: number) {
     return stars;
 }
 
-export default function ProductDetailClient({ product, children }: { product: Product, children?: React.ReactNode }) {
+export default function ProductDetailClient({ product, relatedProducts = [], children }: { product: Product, relatedProducts?: Product[], children?: React.ReactNode }) {
     // Extract unique colors/metals from variants
     const uniqueColors = Array.from(new Set(product.variants?.map(v => v.color).filter(Boolean))) as string[];
     const dynamicMetals = uniqueColors.map(colorName => {
@@ -57,12 +58,41 @@ export default function ProductDetailClient({ product, children }: { product: Pr
     const uniqueSizes = Array.from(new Set(product.variants?.map(v => v.size).filter(Boolean))).sort() as string[];
 
     const [selectedMetal, setSelectedMetal] = useState(dynamicMetals[0] || null);
-    const [selectedSize, setSelectedSize] = useState<string | null>(null);
+    const [selectedSize, setSelectedSize] = useState<string | null>(uniqueSizes[0] || null);
     const [quantity, setQuantity] = useState(1);
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [[page, direction], setPage] = useState([0, 0]);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    const { addItem } = useCart();
+
+    const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
+
+    useEffect(() => {
+        // Handle Recently Viewed Logic
+        try {
+            const stored = localStorage.getItem('recently_viewed');
+            let viewed: Product[] = stored ? JSON.parse(stored) : [];
+
+            // Remove current product if it exists (to move it to top/front)
+            viewed = viewed.filter(p => p.id !== product.id);
+
+            // Add current product to front
+            viewed.unshift(product);
+
+            // Limit to 10
+            if (viewed.length > 10) viewed = viewed.slice(0, 10);
+
+            // Save back
+            localStorage.setItem('recently_viewed', JSON.stringify(viewed));
+
+            // Set state (excluding current product from the display list)
+            setRecentlyViewed(viewed.filter(p => p.id !== product.id));
+
+        } catch (e) {
+            console.error("Error managing recently viewed", e);
+        }
+    }, [product]);
 
     // Reset image index when color changes
     useEffect(() => {
@@ -357,7 +387,16 @@ export default function ProductDetailClient({ product, children }: { product: Pr
                                         <Plus className="w-4 h-4" />
                                     </button>
                                 </div>
-                                <Button className="flex-1 h-12 rounded-full text-lg font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5" size="lg">
+                                <Button
+                                    className="flex-1 h-12 rounded-full text-lg font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+                                    size="lg"
+                                    onClick={() => addItem({
+                                        product,
+                                        quantity,
+                                        color: selectedMetal?.name,
+                                        size: selectedSize || undefined
+                                    })}
+                                >
                                     Añadir al Carrito
                                 </Button>
                             </div>
@@ -430,14 +469,19 @@ export default function ProductDetailClient({ product, children }: { product: Pr
 
                 {/* Recommendations Sections */}
                 <div className="mt-16 space-y-12">
-                    <ProductCarousel
-                        title="También te podría gustar"
-                        products={products.filter(p => p.id !== product.id).slice(0, 10)}
-                    />
-                    <ProductCarousel
-                        title="Visto recientemente"
-                        products={products.filter(p => p.id !== product.id).reverse().slice(0, 10)}
-                    />
+                    {relatedProducts.length > 0 && (
+                        <ProductCarousel
+                            title="También te podría gustar"
+                            products={relatedProducts}
+                        />
+                    )}
+
+                    {recentlyViewed.length > 0 && (
+                        <ProductCarousel
+                            title="Visto recientemente"
+                            products={recentlyViewed}
+                        />
+                    )}
                 </div>
             </div>
 

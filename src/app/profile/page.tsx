@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -37,7 +37,8 @@ import {
   Phone,
   Plus,
   Trash2,
-  Edit2
+  Edit2,
+  X
 } from 'lucide-react';
 import { useSession } from '@/lib/supabase/session-provider';
 import { createClient } from '@/lib/supabase/client';
@@ -45,18 +46,45 @@ import { Separator } from '@/components/ui/separator';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { session } = useSession();
+  const { session, profile, isLoading } = useSession();
+
+  // Debug logs
+  console.log('ProfilePage: Current State', {
+    hasSession: !!session,
+    hasUser: !!session?.user,
+    hasProfile: !!profile,
+    isLoading,
+    userId: session?.user?.id
+  });
+
   const user = session?.user;
-  const profile = session?.profile;
   const [activeTab, setActiveTab] = useState('overview');
 
-  const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Usuario';
+  const hasEmailInLastName = profile?.last_name && profile.last_name.includes('@');
+  const lastName = profile?.last_name && !hasEmailInLastName ? profile.last_name : '';
+
+  const displayName = profile?.first_name
+    ? `${profile.first_name}${lastName ? ' ' + lastName : ''}`
+    : user?.user_metadata?.first_name
+    || user?.user_metadata?.full_name
+    || user?.user_metadata?.name
+    || user?.email?.split('@')[0]
+    || 'Usuario';
+
   const initials = displayName.substring(0, 2).toUpperCase();
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = '/login';
+    console.log('Profile: Logout initiated');
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      console.log('Profile: Sign out successful');
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Profile: Logout error:', error);
+      // Forced redirect as fallback
+      window.location.href = '/login';
+    }
   };
 
   // Mock Data
@@ -86,11 +114,84 @@ export default function ProfilePage() {
     }
   ];
 
+  const [connectionError, setConnectionError] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      console.log('ProfilePage: No user found, redirecting to login...');
+      router.push('/login');
+    }
+
+    // Si terminó de cargar y no hay sesión ni usuario, y hubo timeout
+    if (!isLoading && !session && !user) {
+      setConnectionError(true);
+    }
+  }, [isLoading, user, session, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-medium text-muted-foreground animate-pulse">Cargando tu perfil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (connectionError && !user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-destructive/50">
+          <CardHeader>
+            <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-4">
+              <Shield className="w-6 h-6" />
+            </div>
+            <CardTitle>Error de Conexión</CardTitle>
+            <CardDescription>
+              No pudimos conectar con el servidor de Supabase. Por favor, verifica que tu conexión a internet sea estable y que el servidor esté activo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-xs bg-muted p-2 rounded font-mono break-all text-muted-foreground">
+              URL: {process.env.NEXT_PUBLIC_SUPABASE_URL}
+            </div>
+            <Button className="w-full" onClick={() => window.location.reload()}>
+              Reintentar conexión
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // El useEffect se encargará de la redirección
+  }
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header / Hero Section */}
-      <div className="bg-secondary/30 border-b pb-8 pt-12 md:pt-16">
-        <div className="container mx-auto px-4 md:px-8 max-w-6xl">
+      <div className="bg-secondary/30 border-b pb-8 pt-8 md:pt-12 relative overflow-hidden">
+        {/* Close Button (X) */}
+        <div className="absolute top-4 right-4 z-20">
+          <Button variant="ghost" size="icon" className="rounded-full bg-background/50 backdrop-blur hover:bg-background/80" asChild>
+            <Link href="/">
+              <X className="w-5 h-5" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="container mx-auto px-4 md:px-8 max-w-6xl relative z-10">
+          <div className="mb-8">
+            <Button variant="ghost" size="sm" className="bg-background/50 backdrop-blur hover:bg-background/80 flex items-center gap-2 group" asChild>
+              <Link href="/">
+                <ChevronRight className="w-4 h-4 rotate-180 transition-transform group-hover:-translate-x-1" />
+                Volver a la Tienda
+              </Link>
+            </Button>
+          </div>
+
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8">
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-purple-600 rounded-full opacity-75 group-hover:opacity-100 blur transition duration-1000 group-hover:duration-200 animate-tilt"></div>
@@ -106,17 +207,22 @@ export default function ProfilePage() {
             </div>
 
             <div className="text-center md:text-left flex-1 space-y-2">
-              <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase">
-                Hola, {displayName}
-              </h1>
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                <Badge variant="secondary" className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-background/50 backdrop-blur border-border/50">
-                  Miembro desde 2024
-                </Badge>
-                <Badge className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-600 text-white border-none shadow-sm">
-                  <Trophy className="w-3 h-3 mr-1.5" />
-                  Oro Member
-                </Badge>
+              <div className="flex flex-col items-center md:items-start">
+                <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase mb-2">
+                  Hola, {displayName}
+                </h1>
+                <p className="text-sm font-medium text-muted-foreground font-sans bg-muted/50 px-3 py-1 rounded-full border border-border/50 mb-4">
+                  {user?.email}
+                </p>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+                  <Badge variant="secondary" className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-background/50 backdrop-blur border-border/50">
+                    Miembro desde {new Date(user?.created_at || Date.now()).getFullYear()}
+                  </Badge>
+                  <Badge className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-600 text-white border-none shadow-sm">
+                    <Trophy className="w-3 h-3 mr-1.5" />
+                    Oro Member
+                  </Badge>
+                </div>
               </div>
             </div>
 
@@ -177,6 +283,7 @@ export default function ProfilePage() {
                             src={recentOrder.items[0].imageUrl}
                             alt="Product"
                             fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover p-1"
                           />
                         )}
@@ -463,7 +570,7 @@ export default function ProfilePage() {
 
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-2">Accesos Rápidos</h4>
-                {profile?.role === 'admin' && (
+                {(profile?.role === 'admin' || user?.user_metadata?.role === 'admin') && (
                   <Link href="/admin">
                     <Button variant="ghost" className="w-full justify-start text-left font-medium hover:bg-secondary/50">
                       <Shield className="w-4 h-4 mr-3" />

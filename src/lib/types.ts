@@ -9,6 +9,7 @@ export type Product = {
   description: string;
   image: ImagePlaceholder; // Keeping for compatibility, but we should use 'images' array
   images: string[];
+  colors?: string[];
   images_metadata?: {
     url: string;
     color?: string;
@@ -47,7 +48,7 @@ export type DbProduct = {
   slug: string;
   description?: string;
   price: number; // Stored as base_price or active price
-  original_price?: number; // Stored as sale_price if active
+  original_price?: number; // The original price before any discount (null if no sale)
   stock: number; // Aggregate or legacy
   sku?: string; // Legacy or primary SKU
   category_id: number;

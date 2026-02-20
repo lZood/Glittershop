@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { stripe } from '@/lib/stripe';
 
 // Define the input type explicitly or import it if shared
 // Using a simplified version of the Zod schema for the action input
@@ -45,16 +46,21 @@ export async function createProduct(data: ProductActionInput) {
         return { success: false, error: 'Unauthorized' };
     }
 
-    // Check if admin (optional, depending on your strictness)
-    // const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    // if (profile?.role !== 'admin') return { success: false, error: 'Forbidden' };
+    const isAdmin = await checkAdmin(supabase, user.id);
+    if (!isAdmin) {
+        console.error('❌ [CREATE] USER IS NOT ADMIN', user.id);
+        return { success: false, error: 'Forbidden: Admin access required' };
+    }
+
+    // Use admin client for DB writes (bypasses RLS)
+    const adminSupabase = createAdminClient();
 
     try {
         // 2. Resolve Category ID
         let categoryId: number | null = null;
 
         // Use .maybeSingle() to avoid error if not found
-        const { data: existingCategory, error: catFetchError } = await supabase
+        const { data: existingCategory, error: catFetchError } = await adminSupabase
             .from('categories')
             .select('id')
             .ilike('name', data.category)
@@ -69,7 +75,7 @@ export async function createProduct(data: ProductActionInput) {
             categoryId = existingCategory.id;
         } else {
             // Create new category if it doesn't exist
-            const { data: newCategory, error: createCatError } = await supabase
+            const { data: newCategory, error: createCatError } = await adminSupabase
                 .from('categories')
                 .insert({ name: data.category })
                 .select('id')
@@ -86,16 +92,13 @@ export async function createProduct(data: ProductActionInput) {
         }
 
         // 3. Insert Product
-        const { data: product, error: productError } = await supabase
+        const { data: product, error: productError } = await adminSupabase
             .from('products')
             .insert({
-                name: data.title, // Mapping title -> name
+                name: data.title,
                 slug: data.slug,
                 description: data.description,
-                // Support multiple possible schema versions
                 price: data.sale_price && data.sale_price > 0 ? data.sale_price : data.base_price,
-                base_price: data.base_price,
-                sale_price: data.sale_price,
                 original_price: data.sale_price && data.sale_price > 0 ? data.base_price : null,
                 cost_price: data.cost_price,
                 stock: data.variants.reduce((acc, v) => acc + v.stock, 0),
@@ -131,13 +134,12 @@ export async function createProduct(data: ProductActionInput) {
                 color_metadata: v.color_metadata
             }));
 
-            const { error: variantsError } = await supabase
+            const { error: variantsError } = await adminSupabase
                 .from('product_variants')
                 .insert(variantsData);
 
             if (variantsError) {
                 console.error('Error inserting variants:', variantsError);
-                // Ideally rollback product here, but for now just report
                 return { success: false, error: `Failed to create variants: ${variantsError.message}` };
             }
         }
@@ -152,7 +154,7 @@ export async function createProduct(data: ProductActionInput) {
                 storage_path: img.storagePath
             }));
 
-            const { error: imagesError } = await supabase
+            const { error: imagesError } = await adminSupabase
                 .from('product_images')
                 .insert(imagesData);
 
@@ -160,6 +162,48 @@ export async function createProduct(data: ProductActionInput) {
                 console.error('Error inserting images:', imagesError);
                 return { success: false, error: `Failed to save images: ${imagesError.message}` };
             }
+        }
+
+        // 6. Stripe Sync — Create Product + Price
+        try {
+            const primaryImage = data.imageUrls?.find(img => img.isPrimary)?.url
+                || data.imageUrls?.[0]?.url;
+
+            const stripeProduct = await stripe.products.create({
+                name: data.title,
+                description: data.description || undefined,
+                active: data.is_active,
+                images: primaryImage ? [primaryImage] : [],
+                metadata: {
+                    supabase_product_id: String(productId),
+                    slug: data.slug,
+                },
+            });
+
+            // Price in centavos (MXN × 100)
+            const basePrice = data.sale_price && data.sale_price > 0
+                ? data.sale_price
+                : data.base_price;
+
+            const stripePrice = await stripe.prices.create({
+                product: stripeProduct.id,
+                unit_amount: Math.round(basePrice * 100),
+                currency: 'mxn',
+            });
+
+            // Save Stripe IDs back to Supabase
+            await adminSupabase
+                .from('products')
+                .update({
+                    stripe_product_id: stripeProduct.id,
+                    stripe_price_id: stripePrice.id,
+                })
+                .eq('id', productId);
+
+            console.log('✅ Stripe sync: Product', stripeProduct.id, 'Price', stripePrice.id);
+        } catch (stripeError: any) {
+            // Log but don't fail the product creation — it's already saved in DB
+            console.error('⚠️ Stripe sync failed (product saved to DB):', stripeError.message);
         }
 
         revalidatePath('/admin/inventory');
@@ -222,8 +266,6 @@ export async function updateProduct(productId: string, data: ProductActionInput)
                 slug: data.slug,
                 description: data.description,
                 price: data.sale_price && data.sale_price > 0 ? data.sale_price : data.base_price,
-                base_price: data.base_price,
-                sale_price: data.sale_price,
                 original_price: data.sale_price && data.sale_price > 0 ? data.base_price : null,
                 cost_price: data.cost_price,
                 stock: data.variants.reduce((acc, v) => acc + v.stock, 0),
@@ -311,6 +353,95 @@ export async function updateProduct(productId: string, data: ProductActionInput)
         }
         console.log("✅ [DEBUG ACTION] IMAGES SYNCED");
 
+        // 5. Stripe Sync — Update Product + Price
+        try {
+            // Fetch existing Stripe IDs
+            const { data: currentProduct } = await adminSupabase
+                .from('products')
+                .select('stripe_product_id, stripe_price_id, price')
+                .eq('id', productId)
+                .single();
+
+            const primaryImage = data.imageUrls?.find(img => img.isPrimary)?.url
+                || data.imageUrls?.[0]?.url;
+
+            const newPrice = data.sale_price && data.sale_price > 0
+                ? data.sale_price
+                : data.base_price;
+
+            if (currentProduct?.stripe_product_id) {
+                // Update existing Stripe product
+                await stripe.products.update(currentProduct.stripe_product_id, {
+                    name: data.title,
+                    description: data.description || '',
+                    active: data.is_active,
+                    images: primaryImage ? [primaryImage] : [],
+                    metadata: {
+                        supabase_product_id: String(productId),
+                        slug: data.slug,
+                    },
+                });
+
+                // Check if price changed — Stripe prices are immutable, create new one
+                const oldPriceAmount = currentProduct.price ? Math.round(Number(currentProduct.price) * 100) : 0;
+                const newPriceAmount = Math.round(newPrice * 100);
+
+                if (oldPriceAmount !== newPriceAmount) {
+                    // Create new price
+                    const stripePrice = await stripe.prices.create({
+                        product: currentProduct.stripe_product_id,
+                        unit_amount: newPriceAmount,
+                        currency: 'mxn',
+                    });
+
+                    // Deactivate old price
+                    if (currentProduct.stripe_price_id) {
+                        await stripe.prices.update(currentProduct.stripe_price_id, { active: false });
+                    }
+
+                    // Update DB with new price ID
+                    await adminSupabase
+                        .from('products')
+                        .update({ stripe_price_id: stripePrice.id })
+                        .eq('id', productId);
+
+                    console.log('✅ Stripe sync: New price', stripePrice.id);
+                }
+
+                console.log('✅ Stripe sync: Product updated', currentProduct.stripe_product_id);
+            } else {
+                // Product exists in DB but not in Stripe — create it
+                const stripeProduct = await stripe.products.create({
+                    name: data.title,
+                    description: data.description || undefined,
+                    active: data.is_active,
+                    images: primaryImage ? [primaryImage] : [],
+                    metadata: {
+                        supabase_product_id: String(productId),
+                        slug: data.slug,
+                    },
+                });
+
+                const stripePrice = await stripe.prices.create({
+                    product: stripeProduct.id,
+                    unit_amount: Math.round(newPrice * 100),
+                    currency: 'mxn',
+                });
+
+                await adminSupabase
+                    .from('products')
+                    .update({
+                        stripe_product_id: stripeProduct.id,
+                        stripe_price_id: stripePrice.id,
+                    })
+                    .eq('id', productId);
+
+                console.log('✅ Stripe sync: Created product', stripeProduct.id, 'price', stripePrice.id);
+            }
+        } catch (stripeError: any) {
+            console.error('⚠️ Stripe sync failed during update:', stripeError.message);
+        }
+
         revalidatePath('/admin/inventory');
         revalidatePath(`/admin/inventory/${productId}`);
         revalidatePath('/shop');
@@ -355,6 +486,28 @@ export async function deleteProduct(productId: string) {
     if (!isAdmin) return { success: false, error: 'Forbidden: Admin access required' };
 
     const adminSupabase = createAdminClient();
+
+    // Archive in Stripe before deleting from DB
+    try {
+        const { data: product } = await adminSupabase
+            .from('products')
+            .select('stripe_product_id, stripe_price_id')
+            .eq('id', productId)
+            .single();
+
+        if (product?.stripe_product_id) {
+            // Deactivate the price first
+            if (product.stripe_price_id) {
+                await stripe.prices.update(product.stripe_price_id, { active: false });
+            }
+            // Archive the product (Stripe doesn't allow hard delete)
+            await stripe.products.update(product.stripe_product_id, { active: false });
+            console.log('✅ Stripe sync: Archived product', product.stripe_product_id);
+        }
+    } catch (stripeError: any) {
+        console.error('⚠️ Stripe archive failed during delete:', stripeError.message);
+    }
+
     const { error } = await adminSupabase.from('products').delete().eq('id', productId);
 
     if (error) {
@@ -405,8 +558,24 @@ export async function toggleProductStatus(productId: string, isActive: boolean) 
 
     if (error) return { success: false, error: error.message };
 
+    // Sync active state to Stripe
+    try {
+        const { data: product } = await adminSupabase
+            .from('products')
+            .select('stripe_product_id')
+            .eq('id', productId)
+            .single();
+
+        if (product?.stripe_product_id) {
+            await stripe.products.update(product.stripe_product_id, { active: isActive });
+            console.log('✅ Stripe sync: toggled active =', isActive);
+        }
+    } catch (stripeError: any) {
+        console.error('⚠️ Stripe toggle sync failed:', stripeError.message);
+    }
+
     revalidatePath('/admin/inventory');
-    revalidatePath(`/admin/inventory/${productId}`); // Update the specific page
+    revalidatePath(`/admin/inventory/${productId}`);
     revalidatePath('/shop');
     return { success: true };
 }

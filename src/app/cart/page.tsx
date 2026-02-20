@@ -4,66 +4,27 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Heart, Trash2, Minus, Plus, ArrowRight } from 'lucide-react';
-import { products } from '@/lib/products';
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { CheckoutStepper } from '@/components/checkout/checkout-stepper';
 import { OrderSummary } from '@/components/checkout/order-summary';
 import { motion, AnimatePresence } from 'framer-motion';
-
-import type { Product } from '@/lib/types';
-
-interface CartItem extends Product {
-  quantity: number;
-  size?: string;
-  material?: string;
-  length?: string;
-  stock?: number;
-}
-
-// Mock Cart Data (In a real app, this would come from a context or API)
-const initialCartItems: CartItem[] = [
-  {
-    ...products.find(p => p.id === '1')!,
-    quantity: 1,
-    size: '7',
-    material: 'Oro Blanco',
-    stock: 2,
-  },
-  {
-    ...products.find(p => p.id === '7')!,
-    quantity: 1,
-    length: '18 pulgadas',
-    stock: 1,
-  }
-];
+import { useCart } from '@/lib/cart-context';
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
+  const { items: cartItems, updateQuantity, removeItem, subtotal } = useCart();
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCartItems(items => items.map(item => {
-      if (item?.id === id) {
-        const newQuantity = Math.max(1, (item.quantity || 1) + delta);
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    }));
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item?.id !== id));
-  };
-
-  const subtotal = cartItems.reduce((acc, item) => acc + (item?.price || 0) * (item?.quantity || 1), 0);
-  const shipping = 0.00;
+  const freeShippingThreshold = 800;
+  const shippingCost = 150;
+  const isFreeShipping = subtotal >= freeShippingThreshold;
+  const shipping = isFreeShipping ? 0 : shippingCost;
   const total = subtotal + shipping;
+  const amountForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'MXN',
     }).format(price);
   };
 
@@ -86,81 +47,92 @@ export default function CartPage() {
             <AnimatePresence mode="popLayout">
               {cartItems.length > 0 ? (
                 cartItems.map((item) => (
-                  item && (
-                    <motion.div
-                      key={item.id}
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -100 }}
-                      transition={{ duration: 0.3 }}
-                      className="group bg-card/50 backdrop-blur-sm border rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all duration-300"
-                    >
-                      <div className="flex gap-4 md:gap-6">
-                        {/* Image */}
-                        <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-secondary/20 flex-shrink-0">
-                          {item.image && (
-                            <Image
-                              src={item.image.imageUrl}
-                              alt={item.name || 'Product Image'}
-                              fill
-                              className="object-cover transition-transform duration-500 group-hover:scale-105"
-                            />
-                          )}
-                        </div>
+                  <motion.div
+                    key={`${item.product.id}-${item.color}-${item.size}`}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ duration: 0.3 }}
+                    className="group bg-card/50 backdrop-blur-sm border rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <div className="flex gap-4 md:gap-6">
+                      {/* Image */}
+                      <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-secondary/20 flex-shrink-0">
+                        {item.product.image ? (
+                          <Image
+                            src={item.product.image.imageUrl}
+                            alt={item.product.name}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200" />
+                        )}
+                      </div>
 
-                        {/* Details */}
-                        <div className="flex-1 flex flex-col justify-between">
-                          <div className="flex justify-between items-start gap-4">
-                            <div>
-                              <Link href={`/products/${item.id}`} className="font-bold text-lg md:text-xl hover:text-primary transition-colors line-clamp-1">
-                                {item.name}
-                              </Link>
-                              <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
-                                {item.size && <p>Talla: <span className="text-foreground font-medium">{item.size}</span></p>}
-                                {item.material && <p>Material: <span className="text-foreground font-medium">{item.material}</span></p>}
-                                {item.length && <p>Largo: <span className="text-foreground font-medium">{item.length}</span></p>}
-                              </div>
-                            </div>
-                            <p className="font-bold text-lg md:text-xl">{formatPrice(item.price || 0)}</p>
-                          </div>
-
-                          <div className="flex items-center justify-between mt-4">
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center border rounded-full bg-background">
-                                <button
-                                  onClick={() => updateQuantity(item.id, -1)}
-                                  className="w-8 h-8 flex items-center justify-center hover:bg-secondary/50 rounded-l-full transition-colors"
-                                  disabled={item.quantity <= 1}
-                                >
-                                  <Minus className="w-3 h-3" />
-                                </button>
-                                <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
-                                <button
-                                  onClick={() => updateQuantity(item.id, 1)}
-                                  className="w-8 h-8 flex items-center justify-center hover:bg-secondary/50 rounded-r-full transition-colors"
-                                >
-                                  <Plus className="w-3 h-3" />
-                                </button>
-                              </div>
-
-                              {item.stock && item.stock < 5 && (
-                                <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full animate-pulse">
-                                  ¡Quedan {item.stock}!
-                                </span>
+                      {/* Details */}
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <Link href={`/products/${item.product.slug || item.product.id}`} className="font-bold text-lg md:text-xl hover:text-primary transition-colors line-clamp-1">
+                              {item.product.name}
+                            </Link>
+                            <div className="text-sm text-muted-foreground mt-2 space-y-1">
+                              {item.size && (
+                                <div className="flex items-center gap-2">
+                                  <span>Talla:</span>
+                                  <span className="text-foreground font-medium px-2 py-0.5 bg-secondary/50 rounded-md text-xs">{item.size}</span>
+                                </div>
+                              )}
+                              {item.color && (
+                                <div className="flex items-center gap-2">
+                                  <span>Color:</span>
+                                  <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-secondary/30 border border-border/50">
+                                    <span
+                                      className="w-3 h-3 rounded-full border border-black/10 shadow-sm"
+                                      style={{
+                                        backgroundColor: item.product.variants?.find(v => v.color === item.color)?.color_metadata?.hex || '#ccc'
+                                      }}
+                                    />
+                                    <span className="text-foreground font-medium text-xs">{item.color}</span>
+                                  </div>
+                                </div>
                               )}
                             </div>
+                          </div>
+                          <p className="font-bold text-lg md:text-xl">{formatPrice(item.product.price)}</p>
+                        </div>
 
-                            <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-                                <Trash2 className="w-4 h-4" onClick={() => removeItem(item.id)} />
-                              </Button>
+                        <div className="flex items-center justify-between mt-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center border rounded-full bg-background">
+                              <button
+                                onClick={() => updateQuantity(item.product.id, item.color, item.size, item.quantity - 1)}
+                                className="w-8 h-8 flex items-center justify-center hover:bg-secondary/50 rounded-l-full transition-colors"
+                                disabled={item.quantity <= 1}
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
+                              <button
+                                onClick={() => updateQuantity(item.product.id, item.color, item.size, item.quantity + 1)}
+                                className="w-8 h-8 flex items-center justify-center hover:bg-secondary/50 rounded-r-full transition-colors"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
                             </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => removeItem(item.product.id, item.color, item.size)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
-                    </motion.div>
-                  )
+                    </div>
+                  </motion.div>
                 ))
               ) : (
                 <motion.div
@@ -176,16 +148,29 @@ export default function CartPage() {
               )}
             </AnimatePresence>
 
-            {/* Additional Info / Upsell could go here */}
+            {/* Additional Info / Upsell */}
             <div className="mt-8 p-4 bg-primary/5 rounded-lg border border-primary/10 flex items-start gap-3">
               <div className="p-2 bg-primary/10 rounded-full text-primary">
-                <ArrowRight className="w-4 h-4" />
+                {isFreeShipping ? <ArrowRight className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                {/* Can customize icon based on state if needed */}
               </div>
               <div>
-                <h3 className="font-bold text-sm">Envío Gratuito</h3>
+                <h3 className="font-bold text-sm">
+                  {isFreeShipping ? '¡Felicidades! Tienes envío gratis' : `Agrega ${formatPrice(amountForFreeShipping)} más para envío gratis`}
+                </h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Todos los pedidos incluyen envío estándar gratuito y seguro de transporte.
+                  {isFreeShipping
+                    ? 'Tu pedido califica para envío estándar gratuito.'
+                    : 'Envío gratis en compras mayores a $800.00 MXN.'}
                 </p>
+                {!isFreeShipping && (
+                  <div className="w-full bg-secondary/50 h-1.5 rounded-full mt-2 overflow-hidden">
+                    <div
+                      className="bg-primary h-full rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, (subtotal / freeShippingThreshold) * 100)}%` }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -196,8 +181,8 @@ export default function CartPage() {
               subtotal={subtotal}
               shipping={shipping}
               total={total}
-              actionLabel="Continuar al Envío"
-              actionHref="/shipping"
+              actionLabel="Continuar al Checkout"
+              actionHref="/checkout"
               disabled={cartItems.length === 0}
             />
 

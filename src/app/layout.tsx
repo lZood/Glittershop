@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import SessionProvider from '@/lib/supabase/session-provider';
 import { ThemeProvider } from "@/components/theme-provider";
 import { MainLayoutWrapper } from '@/components/layout/main-layout-wrapper';
+import { CartProvider } from '@/lib/cart-context';
+import { CartSheet } from '@/components/cart-sheet';
+import { CartSuccessSheet } from '@/components/cart-success-sheet';
 
 export const metadata: Metadata = {
   title: 'GlittersShop',
@@ -30,11 +34,16 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SessionProvider>
-            <MainLayoutWrapper>
-              {children}
-            </MainLayoutWrapper>
+            <CartProvider>
+              <MainLayoutWrapper>
+                {children}
+              </MainLayoutWrapper>
+              <CartSheet />
+              <CartSuccessSheet />
+            </CartProvider>
           </SessionProvider>
           <Toaster />
+          <SonnerToaster />
         </ThemeProvider>
 
       </body>

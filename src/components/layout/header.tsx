@@ -14,12 +14,11 @@ import {
 import SearchOverlay from '../search-overlay';
 import MegaMenu from './mega-menu';
 import { useSession } from '@/lib/supabase/session-provider';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useEffect, useState, Suspense } from 'react';
+import { useCart } from '@/lib/cart-context';
 
 const tiendaLinks = [
   { href: '/shop', label: 'Ver Todo' },
@@ -41,6 +40,7 @@ const mainLinks: { href: string, label: string }[] = [
 export default function Header() {
   const { session, profile } = useSession();
   const router = useRouter();
+  const { cartCount, setIsCartOpen } = useCart();
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function Header() {
         {/* Logo */}
         <div className="flex items-center flex-1 md:flex-none md:justify-start">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl" style={{ color: '#B87333' }}>GlittersShop</span>
+            <span className="font-medium text-sm sm:text-base md:text-xl tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.3em] text-foreground uppercase whitespace-nowrap">Glitters Shop</span>
           </Link>
         </div>
 
@@ -103,7 +103,14 @@ export default function Header() {
           </Button>
           <Button variant="ghost" size="icon" aria-label="Shopping Cart" asChild>
             <Link href="/cart">
-              <ShoppingCart className="h-5 w-5" />
+              <div className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </div>
             </Link>
           </Button>
 

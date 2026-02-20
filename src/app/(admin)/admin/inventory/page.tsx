@@ -11,8 +11,10 @@ export default async function InventoryPage() {
         .from('products')
         .select(`
             *,
+            *,
             categories (name),
-            product_images (image_url, is_primary)
+            product_images (image_url, is_primary),
+            product_variants (id, stock, sku, color, size)
         `)
         .order('created_at', { ascending: false });
 

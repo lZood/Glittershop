@@ -23,7 +23,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
     return (
         <div className="group relative flex flex-col h-full">
-            <Link href={`/products/${product.id}`} className="group flex-1 flex flex-col">
+            <Link href={`/products/${product.slug || product.id}`} className="group flex-1 flex flex-col">
                 <div className="aspect-[3/4] relative overflow-hidden rounded-xl bg-secondary/20">
                     {product.image && (
                         <Image
@@ -47,12 +47,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                         <Star className="w-5 h-5 text-black" />
                     </Button>
 
-                    {/* Quick Add Overlay (Optional, keeps UI clean but interactive) */}
-                    <div className="absolute inset-x-0 bottom-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center">
-                        <Button className="w-full bg-white/90 hover:bg-white text-black backdrop-blur-md shadow-lg font-semibold text-sm h-10 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                            Ver Detalles
-                        </Button>
-                    </div>
+
                 </div>
 
                 <div className="mt-4 space-y-2 flex-1 flex flex-col">

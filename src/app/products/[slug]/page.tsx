@@ -10,7 +10,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     const { slug } = await params;
     const supabase = await createClient();
 
-    const { data: product, error } = await supabase
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+
+    let query = supabase
         .from('products')
         .select(`
             *,
@@ -18,9 +20,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             product_variants (*),
             product_images (*)
         `)
-        .eq('slug', slug)
-        .eq('is_active', true)
-        .single();
+        .eq('is_active', true);
+
+    if (isUUID) {
+        query = query.eq('id', slug);
+    } else {
+        query = query.eq('slug', slug);
+    }
+
+    const { data: product, error } = await query.single();
 
     if (error || !product) {
         notFound();
@@ -41,17 +49,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         color_metadata: v.color_metadata,
         size: v.size,
         stock: v.stock,
-        // Calculate price per variant if needed, or just allow access to base + adjustment
-        price: (product.sale_price || product.base_price) + (v.price_adjustment || 0)
+        // Calculate price per variant: current selling price + variant adjustment
+        price: product.price + (v.price_adjustment || 0)
     })) || [];
 
     // Map to frontend Product type
+    // Determine sale status from DB columns
+    const isOnSale = product.original_price && product.original_price > product.price;
+
     const mappedProduct: Product = {
         id: product.id,
         slug: product.slug,
         name: product.name,
-        price: product.price, // Default/Display price
-        originalPrice: undefined,
+        price: product.price,
+        originalPrice: isOnSale ? product.original_price : undefined,
         description: product.description || '',
         image: {
             id: mainImage?.id?.toString() || 'placeholder',
@@ -74,17 +85,50 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         variants: mappedVariants
     };
 
-    // Correct price mapping logic
-    if (product.sale_price && product.sale_price > 0 && product.sale_price < product.price) {
-        mappedProduct.price = product.sale_price;
-        mappedProduct.originalPrice = product.price;
-    } else {
-        mappedProduct.price = product.price;
-        mappedProduct.originalPrice = undefined;
-    }
+    // Price mapping is already handled above via isOnSale check
+
+    // Fetch Related Products (Same category, exclude current)
+    const { data: relatedDbProducts } = await supabase
+        .from('products')
+        .select(`
+            *,
+            categories (name),
+            product_images (image_url, is_primary),
+            product_variants (color)
+        `)
+        .eq('category_id', product.category_id)
+        .eq('is_active', true)
+        .neq('id', product.id)
+        .limit(8);
+
+    const relatedProducts: Product[] = (relatedDbProducts || []).map((p: any) => {
+        // Re-use simplified mapping logic for card display
+        const mainImageObj = p.product_images?.find((img: any) => img.is_primary) || p.product_images?.[0];
+        const mainImageUrl = mainImageObj?.image_url || '/placeholder.png';
+        const price = p.price || 0;
+        const originalPrice = p.original_price && p.original_price > p.price ? p.original_price : undefined;
+
+        return {
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            price: price,
+            originalPrice: originalPrice,
+            description: p.description || "",
+            image: {
+                imageUrl: mainImageUrl,
+                imageHint: p.description
+            },
+            images: p.product_images?.map((img: any) => img.image_url) || [],
+            category: p.categories?.name || "General",
+            colors: Array.from(new Set(p.product_variants?.map((v: any) => v.color).filter(Boolean))) as string[],
+            variants: [],
+            tags: p.tags || []
+        } as any;
+    });
 
     return (
-        <ProductDetailClient product={mappedProduct}>
+        <ProductDetailClient product={mappedProduct} relatedProducts={relatedProducts}>
             <ReviewsSection
                 productId={product.id}
                 productVariants={mappedVariants.map((v: any) => ({ color: v.color || '', size: v.size || '' }))}

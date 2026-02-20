@@ -117,8 +117,13 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
                             </div>
                             <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Precio</span>
                             <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                                {formatCurrency(product.sale_price || product.price)}
+                                {formatCurrency(product.price)}
                             </span>
+                            {product.original_price && product.original_price > product.price && (
+                                <span className="text-[10px] text-muted-foreground line-through">
+                                    {formatCurrency(product.original_price)}
+                                </span>
+                            )}
                         </div>
 
                         <div className="bg-purple-50 dark:bg-purple-950/20 p-3 rounded-xl border border-purple-100 dark:border-purple-900/50 flex flex-col justify-center items-center text-center space-y-1">

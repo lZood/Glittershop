@@ -30,28 +30,28 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const collectionDetails = {
-    'verano-mediterraneo': {
-        name: 'Colección de Verano',
-        description: 'Descubre piezas que capturan la esencia del sol.',
-        heroImage: PlaceHolderImages.find(p => p.id === 'collection-summer-hero'),
-    },
-    'luz-de-luna': {
-        name: 'Colección Luz de Luna',
-        description: 'Capturando la magia del cielo nocturno.',
-        heroImage: PlaceHolderImages.find(p => p.id === 'collection-moonlight'),
-    },
-    'geometria-urbana': {
-        name: 'Colección Geometría Urbana',
-        description: 'Líneas limpias y diseños audaces para la ciudad.',
-        heroImage: PlaceHolderImages.find(p => p.id === 'collection-urban'),
-    },
+  'verano-mediterraneo': {
+    name: 'Colección de Verano',
+    description: 'Descubre piezas que capturan la esencia del sol.',
+    heroImage: PlaceHolderImages.find(p => p.id === 'collection-summer-hero'),
+  },
+  'luz-de-luna': {
+    name: 'Colección Luz de Luna',
+    description: 'Capturando la magia del cielo nocturno.',
+    heroImage: PlaceHolderImages.find(p => p.id === 'collection-moonlight'),
+  },
+  'geometria-urbana': {
+    name: 'Colección Geometría Urbana',
+    description: 'Líneas limpias y diseños audaces para la ciudad.',
+    heroImage: PlaceHolderImages.find(p => p.id === 'collection-urban'),
+  },
 };
 
 export default function CollectionDetailPage({ params }: { params: { name: string } }) {
   const collectionKey = params.name as keyof typeof collectionDetails;
   const collection = collectionDetails[collectionKey];
   const [sortOption, setSortOption] = useState('recomendado');
-  
+
   const [isHeaderVisible, setIsHeaderVisible] = useState(false);
   const filterBarRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
@@ -62,17 +62,17 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
+
       if (filterBarRef.current) {
         if (currentScrollY > filterBarRef.current.offsetTop) {
           // Scrolling down past the filter bar
           if (currentScrollY > lastScrollY.current) {
-             setIsHeaderVisible(false);
+            setIsHeaderVisible(false);
           } else { // Scrolling up
-             setIsHeaderVisible(true);
+            setIsHeaderVisible(true);
           }
         } else {
-           setIsHeaderVisible(false);
+          setIsHeaderVisible(false);
         }
       }
       lastScrollY.current = currentScrollY;
@@ -81,7 +81,7 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-        window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -212,12 +212,12 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
     <div className="bg-background">
       <div
         className={cn(
-            "sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b",
-            isHeaderVisible ? "block" : "hidden"
+          "sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b",
+          isHeaderVisible ? "block" : "hidden"
         )}
       >
         <div className="container mx-auto px-4">
-            <HeaderFilterButtons />
+          <HeaderFilterButtons />
         </div>
       </div>
       <section className="relative w-full h-[40vh] bg-gray-300 flex flex-col items-center justify-center text-center p-4">
@@ -248,15 +248,15 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
           <div className="grid grid-cols-2 gap-4 md:gap-8 justify-center">
             {socialImages.map((img, index) => (
               <div key={img.id} className="relative aspect-[4/5] max-w-sm mx-auto">
-                 <Image
-                    src={img.imageUrl}
-                    alt={img.description}
-                    data-ai-hint={img.imageHint}
-                    fill
-                    className="object-cover rounded-lg"
-                 />
-                 <div className="absolute inset-0 bg-black/10 rounded-lg"></div>
-                 <p className="absolute bottom-2 left-0 right-0 text-center text-white text-sm font-medium">@{['fashionista', 'jewelrylover'][index]}</p>
+                <Image
+                  src={img.imageUrl}
+                  alt={img.description}
+                  data-ai-hint={img.imageHint}
+                  fill
+                  className="object-cover rounded-lg"
+                />
+                <div className="absolute inset-0 bg-black/10 rounded-lg"></div>
+                <p className="absolute bottom-2 left-0 right-0 text-center text-white text-sm font-medium">@{['fashionista', 'jewelrylover'][index]}</p>
               </div>
             ))}
           </div>
@@ -266,7 +266,7 @@ export default function CollectionDetailPage({ params }: { params: { name: strin
       <section className="container mx-auto px-4 pb-12">
         <h2 className="text-2xl font-bold mb-6">Productos</h2>
         <div ref={filterBarRef} className="mb-8">
-            <PageFilterButtons />
+          <PageFilterButtons />
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-x-2 gap-y-6 md:gap-x-4 md:gap-y-8">

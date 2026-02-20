@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
-import { ProductForm } from '@/components/admin/inventory/product-form';
+import { NewProductWizard } from '@/components/admin/inventory/new-product-wizard';
 import { getCategories } from "@/lib/actions/categories";
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,8 +30,6 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     }
 
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-            <ProductForm initialData={product} availableCategories={categories || []} />
-        </div>
+        <NewProductWizard initialData={product} availableCategories={categories || []} />
     );
 }
