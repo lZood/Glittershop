@@ -3,7 +3,7 @@ const fs = require('fs');
 
 const supabase = createClient(
     'https://aylnczeyemqdnhhqczzi.supabase.co',
-    '***REMOVED***'
+    'process.env.SUPABASE_SERVICE_ROLE_KEY'
 );
 
 async function main() {
