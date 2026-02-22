@@ -1,4 +1,3 @@
-'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,133 +14,173 @@ import {
     MapPin,
     CreditCard,
     HelpCircle,
-    Download
+    Download,
+    ArrowLeft
 } from 'lucide-react';
 
-export default function OrderDetailsPage({ params }: { params: { id: string } }) {
-    // Mock Data based on ID (in a real app, fetch this)
-    const order = {
-        id: params.id,
-        date: '22 Nov 2025',
-        status: 'En camino',
-        total: '$12,450',
-        subtotal: '$10,950',
-        shipping: '$150',
-        tax: '$1,350',
-        items: [
-            {
-                ...PlaceHolderImages.find(p => p.id === 'product-necklace-1'),
-                quantity: 1,
-                price: '$10,950',
-                attributes: 'Oro 18k, 45cm'
-            }
-        ],
-        timeline: [
-            { status: 'Pedido Realizado', date: '22 Nov, 10:30 AM', completed: true },
-            { status: 'Procesando', date: '22 Nov, 02:15 PM', completed: true },
-            { status: 'Enviado', date: '23 Nov, 09:00 AM', completed: true },
-            { status: 'Entregado', date: 'Estimado: 25 Nov', completed: false },
-        ]
-    };
+import { getOrderById } from '@/lib/actions/orders';
+import { notFound } from 'next/navigation';
+
+const translateStatus = (status: string) => {
+    switch (status?.toLowerCase()) {
+        case 'pending': return 'Pendiente';
+        case 'paid': return 'Pagado';
+        case 'shipped': return 'Enviado';
+        case 'delivered': return 'Entregado';
+        case 'cancelled': return 'Cancelado';
+        default: return status || 'Recibido';
+    }
+};
+
+export default async function OrderDetailsPage({ params }: { params: { id: string } }) {
+    // Fetch real order from DB
+    const orderData = await getOrderById(params.id);
+
+    if (!orderData) {
+        notFound();
+    }
+
+    const {
+        id,
+        created_at,
+        status,
+        total_amount,
+        order_items,
+        shipping_address
+    } = orderData;
+
+    const shippingAddressObj = typeof shipping_address === 'string'
+        ? JSON.parse(shipping_address)
+        : (shipping_address || {});
+
+    const date = new Date(created_at).toLocaleDateString();
+
+    const formatMoney = (amount: number) => {
+        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+    }
+
+    const total = formatMoney(total_amount);
+    // Approximate fields for visual structure (Stripe takes care of tax/shipping exactly, but we use order details here)
+    const subtotal = total; // We are tracking total only right now in `orders`
+
+    // Simulate timeline based on status
+    const isCompleted = status === 'delivered' || status === 'Completado' || status === 'Entregado';
+    const isShipped = status === 'shipped' || status === 'Enviado' || isCompleted;
+
+    // Si ya está pagado, asumimos "Procesando" como completado
+    const isPaid = status === 'paid' || status === 'Pagado' || isShipped;
+
+    const timeline = [
+        { status: 'Pedido Realizado', date: date, completed: true },
+        { status: 'Procesando', date: isPaid ? date : '', completed: isPaid },
+        { status: 'Enviado', date: '', completed: isShipped },
+        { status: 'Entregado', date: '', completed: isCompleted },
+    ];
 
     return (
-        <div className="min-h-screen bg-background pb-20 pt-8">
-            <div className="container mx-auto px-4 md:px-8 max-w-6xl">
-
+        <div className="min-h-screen bg-secondary/5 pb-20 pt-8">
+            <div className="container mx-auto px-4 max-w-4xl">
                 {/* Back Button */}
-                <div className="mb-6">
-                    <Button variant="ghost" asChild className="pl-0 hover:pl-2 transition-all">
-                        <Link href="/profile">
-                            <ChevronLeft className="w-4 h-4 mr-2" />
-                            Volver a mi Perfil
-                        </Link>
-                    </Button>
-                </div>
+                <Button variant="ghost" asChild className="mb-6 -ml-4 hover:bg-transparent text-muted-foreground hover:text-foreground">
+                    <Link href="/profile">
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Volver a Pedidos
+                    </Link>
+                </Button>
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <div>
-                        <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-                            Pedido #{order.id}
-                            <Badge className="text-base px-3 py-1 bg-primary text-primary-foreground hover:bg-primary/90">
-                                {order.status}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-card p-6 md:p-8 rounded-3xl border border-border/50 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mx-20 -my-20 pointer-events-none"></div>
+                    <div className="relative z-10">
+                        <h1 className="text-3xl font-black tracking-tight flex items-center gap-4">
+                            Pedido #{id}
+                            <Badge className="text-sm px-4 py-1.5 shadow-sm uppercase tracking-wider font-extrabold bg-gradient-to-r from-green-600 to-green-500 text-white border-none">
+                                {translateStatus(status)}
                             </Badge>
                         </h1>
-                        <p className="text-muted-foreground mt-1">Realizado el {order.date}</p>
+                        <p className="text-muted-foreground mt-2 font-medium">Realizado el <span className="text-foreground">{date}</span></p>
                     </div>
-                    <div className="flex gap-3">
-                        <Button variant="outline">
+                    <div className="flex gap-3 relative z-10">
+                        <Button variant="outline" className="rounded-full shadow-sm hover:border-primary/50 transition-colors">
                             <Download className="w-4 h-4 mr-2" />
                             Factura
                         </Button>
-                        <Button>
-                            <HelpCircle className="w-4 h-4 mr-2" />
-                            Ayuda
+                        <Button className="rounded-full shadow-lg shadow-primary/20" asChild>
+                            <Link href="/contact">Ayuda</Link>
                         </Button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                    {/* Left Column: Items & Timeline */}
-                    <div className="lg:col-span-2 space-y-8">
-
-                        {/* Items List */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Artículos del Pedido</CardTitle>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Main Content (Left) */}
+                    <div className="md:col-span-2 space-y-8">
+                        {/* Order Items */}
+                        <Card className="border-none shadow-md overflow-hidden rounded-3xl">
+                            <CardHeader className="bg-secondary/20 border-b border-border/50">
+                                <CardTitle className="font-extrabold uppercase tracking-widest text-sm opacity-80">Artículos del Pedido</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-6">
-                                {order.items.map((item, index) => (
-                                    <div key={index} className="flex gap-4">
-                                        <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-secondary border flex-shrink-0">
-                                            {item.imageUrl && (
-                                                <Image
-                                                    src={item.imageUrl}
-                                                    alt="Product"
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            )}
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <h3 className="font-bold text-lg">{item.description || 'Producto'}</h3>
-                                                    <p className="text-sm text-muted-foreground">{item.attributes}</p>
+                            <CardContent className="space-y-6 p-6">
+                                {order_items.map((item: any, index: number) => {
+                                    const variantText = [item.variant_color, item.variant_size].filter(Boolean).join(' • ');
+                                    const image = item.product?.product_images?.[0]?.image_url;
+                                    return (
+                                        <div key={index} className="flex gap-6 items-start group">
+                                            <div className="relative w-28 h-28 rounded-2xl overflow-hidden bg-white border shadow-sm flex-shrink-0">
+                                                {image ? (
+                                                    <Image
+                                                        src={image}
+                                                        alt="Product"
+                                                        fill
+                                                        className="object-cover p-1 transition-transform duration-700 group-hover:scale-110"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-secondary/30">
+                                                        <Package className="w-6 h-6 text-muted-foreground/30" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-start gap-4">
+                                                    <div>
+                                                        <h3 className="font-black text-lg md:text-xl text-foreground/90 leading-tight">{item.product?.name || 'Producto'}</h3>
+                                                        <p className="text-sm text-primary font-bold mt-1">{variantText}</p>
+                                                    </div>
+                                                    <p className="font-black text-xl text-foreground">{formatMoney(item.price)}</p>
                                                 </div>
-                                                <p className="font-bold text-lg">{item.price}</p>
-                                            </div>
-                                            <div className="mt-4 flex items-center justify-between">
-                                                <Badge variant="secondary" className="font-normal">
-                                                    Cantidad: {item.quantity}
-                                                </Badge>
-                                                <Button variant="link" className="h-auto p-0 text-primary">
-                                                    Escribir Reseña
-                                                </Button>
+                                                <div className="mt-4 flex items-center justify-between">
+                                                    <Badge variant="secondary" className="font-bold bg-secondary/50 uppercase tracking-widest text-[10px]">
+                                                        CANT: {item.quantity}
+                                                    </Badge>
+                                                    <Button variant="link" className="h-auto p-0 font-bold hover:text-primary/80 transition-colors uppercase text-xs tracking-wider">
+                                                        Escribir Reseña
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </CardContent>
                         </Card>
 
                         {/* Timeline */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Seguimiento del Envío</CardTitle>
-                                <CardDescription>Paquete gestionado por DHL Express</CardDescription>
+                        {/* Tracking Timeline */}
+                        <Card className="border-none shadow-md overflow-hidden rounded-3xl">
+                            <CardHeader className="bg-secondary/20 border-b border-border/50">
+                                <CardTitle className="font-extrabold uppercase tracking-widest text-sm opacity-80 flex items-center gap-2">
+                                    <Truck className="w-4 h-4" />
+                                    Rastreo
+                                </CardTitle>
                             </CardHeader>
-                            <CardContent>
-                                <div className="relative pl-8 space-y-8 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-border">
-                                    {order.timeline.map((step, index) => (
+                            <CardContent className="p-8">
+                                <div className="relative pl-8 space-y-10 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-border/60">
+                                    {timeline.map((step, index) => (
                                         <div key={index} className="relative">
-                                            <div className={`absolute -left-[29px] w-6 h-6 rounded-full border-2 flex items-center justify-center bg-background z-10 ${step.completed ? 'border-primary text-primary' : 'border-muted-foreground text-muted-foreground'}`}>
-                                                {step.completed ? <CheckCircle2 className="w-3 h-3" /> : <div className="w-2 h-2 rounded-full bg-muted-foreground" />}
+                                            <div className={`absolute -left-[33px] w-7 h-7 rounded-full border-[3px] flex items-center justify-center bg-background z-10 transition-colors ${step.completed ? 'border-primary text-primary shadow-[0_0_10px_rgba(var(--primary),0.3)]' : 'border-muted text-muted-foreground'}`}>
+                                                {step.completed ? <CheckCircle2 className="w-3.5 h-3.5" /> : <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />}
                                             </div>
-                                            <div>
-                                                <p className={`font-bold ${step.completed ? 'text-foreground' : 'text-muted-foreground'}`}>{step.status}</p>
-                                                <p className="text-xs text-muted-foreground">{step.date}</p>
+                                            <div className="-mt-1">
+                                                <p className={`font-black uppercase tracking-widest text-sm ${step.completed ? 'text-foreground' : 'text-muted-foreground'}`}>{step.status}</p>
+                                                <p className="text-xs text-muted-foreground font-medium mt-1">{step.date || '...'}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -151,48 +190,39 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
 
                     </div>
 
-                    {/* Right Column: Summary & Info */}
-                    <div className="space-y-6">
-
+                    {/* Sidebar (Right) */}
+                    <div className="space-y-8">
                         {/* Order Summary */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Resumen</CardTitle>
+                        <Card className="border-none shadow-md overflow-hidden rounded-3xl sticky top-24">
+                            <CardHeader className="bg-secondary/20 border-b border-border/50">
+                                <CardTitle className="font-extrabold uppercase tracking-widest text-sm opacity-80">Resumen Financiero</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Subtotal</span>
-                                    <span>{order.subtotal}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Envío</span>
-                                    <span>{order.shipping}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Impuestos</span>
-                                    <span>{order.tax}</span>
-                                </div>
-                                <Separator className="my-2" />
-                                <div className="flex justify-between items-center">
-                                    <span className="font-bold">Total</span>
-                                    <span className="font-black text-xl text-primary">{order.total}</span>
+                            <CardContent className="space-y-4 p-6">
+                                <div className="flex justify-between items-center px-2 py-4 bg-primary/5 rounded-xl border border-primary/10">
+                                    <span className="font-black uppercase tracking-widest text-sm text-primary">Total Pagado</span>
+                                    <span className="font-black text-2xl text-foreground">{total}</span>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Shipping Info */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-primary" />
-                                    Dirección de Envío
+                        {/* Shipping details */}
+                        <Card className="border-none shadow-md overflow-hidden rounded-3xl">
+                            <CardHeader className="bg-secondary/20 border-b border-border/50">
+                                <CardTitle className="font-extrabold uppercase tracking-widest text-sm opacity-80 flex items-center gap-2">
+                                    <MapPin className="w-4 h-4" /> Dirección de Entrega
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="text-sm text-muted-foreground space-y-1">
-                                <p className="font-bold text-foreground">José Carlos</p>
-                                <p>Av. Reforma 222, Col. Juárez</p>
-                                <p>Cuauhtémoc, CDMX</p>
-                                <p>CP 06600, México</p>
+                            <CardContent className="text-sm space-y-2 p-6 leading-relaxed">
+                                {shippingAddressObj?.full_name ? (
+                                    <>
+                                        <p className="font-bold text-foreground">{shippingAddressObj.full_name}</p>
+                                        <p>{shippingAddressObj.street} {shippingAddressObj.exterior_number} {shippingAddressObj.interior_number && `Int ${shippingAddressObj.interior_number}`}</p>
+                                        <p>{shippingAddressObj.neighborhood}, {shippingAddressObj.city}</p>
+                                        <p>CP {shippingAddressObj.postal_code}, {shippingAddressObj.state}</p>
+                                    </>
+                                ) : (
+                                    <p>No se especificó la dirección de envío.</p>
+                                )}
                             </CardContent>
                         </Card>
 

@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MoreHorizontal, Box, Eye, Edit, Trash2, Loader2, ExternalLink } from "lucide-react";
+import { MoreHorizontal, Box, Eye, Edit, Loader2, ArrowUpRight, CheckCircle2, AlertCircle, XCircle, FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteProduct, toggleProductStatus } from "@/lib/actions/products";
 import { useToast } from "@/hooks/use-toast";
+import * as motion from "framer-motion/client";
 
 interface InventoryCardProps {
     product: any;
@@ -47,17 +49,12 @@ export function InventoryCard({ product }: InventoryCardProps) {
         || '/placeholder.png';
 
     // Status logic
-    let statusColor = "bg-green-500";
     let statusText = "Disponible";
-
     if (!isActive) {
-        statusColor = "bg-slate-400";
         statusText = "Borrador";
     } else if (stock === 0) {
-        statusColor = "bg-red-500";
         statusText = "Agotado";
     } else if (stock <= 5) {
-        statusColor = "bg-orange-500";
         statusText = "Stock Bajo";
     }
 
@@ -77,8 +74,8 @@ export function InventoryCard({ product }: InventoryCardProps) {
                 toast({
                     title: newStatus ? "Producto visible" : "Producto oculto",
                     description: newStatus
-                        ? `"${product.name}" ahora es visible en la tienda y en Stripe.`
-                        : `"${product.name}" ya no aparece en la tienda ni en Stripe.`,
+                        ? `"${product.name}" ahora es visible en la tienda.`
+                        : `"${product.name}" ya no aparece en la tienda.`,
                 });
             } else {
                 toast({ title: "Error", description: result.error, variant: "destructive" });
@@ -98,7 +95,7 @@ export function InventoryCard({ product }: InventoryCardProps) {
             if (result.success) {
                 toast({
                     title: "Producto eliminado",
-                    description: `"${product.name}" fue eliminado de la base de datos y archivado en Stripe.`,
+                    description: `"${product.name}" fue eliminado correctamente.`,
                 });
                 router.refresh();
             } else {
@@ -112,168 +109,165 @@ export function InventoryCard({ product }: InventoryCardProps) {
         }
     };
 
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('es-MX', {
+            style: 'currency',
+            currency: 'MXN'
+        }).format(amount);
+    };
+
     return (
         <>
             <Card
                 onClick={() => router.push(`/admin/inventory/${product.id}`)}
-                className="flex items-center p-3 gap-3 border-none shadow-sm rounded-2xl hover:shadow-md transition-all active:scale-[0.99] w-full max-w-full overflow-hidden relative cursor-pointer"
+                className="group border border-border/50 dark:border-white/10 bg-card rounded-none transition-all duration-300 hover:shadow-2xl hover:shadow-brand/20 hover:border-brand/40 overflow-hidden active:scale-[0.98]"
             >
-                {/* Image Container */}
-                <div className="relative w-20 h-20 flex-shrink-0">
-                    <div className="w-full h-full rounded-xl overflow-hidden bg-slate-100 relative">
-                        <Image
-                            src={mainImage}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                        />
-                    </div>
-                    {/* Status Dot */}
-                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${statusColor}`}></div>
-                </div>
+                <div className="flex flex-col">
+                    {/* Header: Sku & Status Indicator (Minimalist) */}
+                    <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/30 dark:border-white/5 bg-secondary/10 dark:bg-white/[0.02]">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none truncate shrink-0 max-w-[100px] sm:max-w-none">
+                                {product.slug?.toUpperCase() || 'S/N'}
+                            </span>
+                            <div className="h-3 w-px bg-border/50 shrink-0"></div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                        <div className="min-w-0 pr-1">
-                            <h3 className="font-bold text-slate-900 truncate text-sm sm:text-base">{product.name}</h3>
-                            <p className="text-[10px] text-slate-400 font-mono truncate">SKU: {product.slug?.toUpperCase() || 'N/A'}</p>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                            {/* Visibility Toggle */}
-                            <div
-                                className="flex items-center"
-                                onClick={(e) => e.stopPropagation()}
-                                title={isActive ? "Visible en tienda" : "Oculto de tienda"}
-                            >
-                                <Switch
-                                    checked={isActive}
-                                    onCheckedChange={() => {
-                                        // We use a synthetic click event wrapper here
-                                        const fakeEvent = { stopPropagation: () => { } } as React.MouseEvent;
-                                        handleToggleVisibility(fakeEvent);
-                                    }}
-                                    disabled={isToggling}
-                                    className="scale-75 data-[state=checked]:bg-green-500"
-                                />
+                            {/* Status Pill - Compact Icon Version */}
+                            <div className={cn(
+                                "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-tight",
+                                !isActive ? "text-slate-500 bg-slate-100" :
+                                    stock === 0 ? "text-red-600 bg-red-100" :
+                                        stock <= 5 ? "text-amber-600 bg-amber-100" :
+                                            "text-green-600 bg-green-100"
+                            )}>
+                                {!isActive ? <FileText className="w-2.5 h-2.5" /> :
+                                    stock === 0 ? <XCircle className="w-2.5 h-2.5" /> :
+                                        stock <= 5 ? <AlertCircle className="w-2.5 h-2.5" /> :
+                                            <CheckCircle2 className="w-2.5 h-2.5" />}
+                                <span className="hidden xs:inline whitespace-nowrap">{statusText}</span>
                             </div>
+                        </div>
 
-                            {/* Dropdown Menu */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-slate-400 -mr-2 flex-shrink-0"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <MoreHorizontal className="w-5 h-5" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/admin/inventory/${product.id}`} className="flex items-center gap-2">
-                                            <Eye className="h-4 w-4" />
-                                            Ver detalles
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/admin/inventory/edit/${product.id}`} className="flex items-center gap-2">
-                                            <Edit className="h-4 w-4" />
-                                            Editar
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/products/${product.slug}`} target="_blank" className="flex items-center gap-2">
-                                            <ExternalLink className="h-4 w-4" />
-                                            Ver en Tienda
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                        className="text-red-600 focus:text-red-600 focus:bg-red-50 flex items-center gap-2"
-                                        onClick={() => setShowDeleteDialog(true)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                        Eliminar
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <Box className="w-3 h-3 text-muted-foreground" strokeWidth={2.5} />
+                            <span className={cn(
+                                "text-[9px] font-bold uppercase tracking-wider whitespace-nowrap",
+                                stock <= 5 ? "text-orange-500" : "text-muted-foreground"
+                            )}>
+                                STK: {stock}
+                            </span>
                         </div>
                     </div>
 
-                    <div className="flex items-end justify-between mt-1.5">
-                        <div className="min-w-0 pr-2">
-                            <div className="flex items-center gap-2 mb-0.5">
-                                <p className={`text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${stock === 0 ? 'text-red-500' : isActive ? 'text-green-600' : 'text-slate-400'}`}>
-                                    {statusText}
-                                </p>
-                                {/* Variant Warning */}
-                                {hasLowStockVariants && stock > 0 && (
-                                    <div className="flex items-center gap-1 bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[9px] font-bold animate-pulse">
-                                        <span>⚠ {lowStockVariants.length} var. bajos</span>
+                    {/* Content Section */}
+                    <div className="p-4 sm:p-6 flex items-start gap-4 sm:gap-6">
+                        {/* Image Container with Hover Effect */}
+                        <div className="relative w-20 h-20 sm:w-28 sm:h-28 flex-shrink-0 bg-secondary/30 dark:bg-white/5 border border-border/50 overflow-hidden group-hover:border-brand/30 transition-colors">
+                            <Image
+                                src={mainImage}
+                                alt={product.name}
+                                fill
+                                className="object-cover transition-transform duration-700 group-hover:scale-110"
+                            />
+                            {/* Overlay icon on hover */}
+                            <div className="absolute inset-0 bg-brand/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <ArrowUpRight className="w-6 h-6 text-white" />
+                            </div>
+                        </div>
+
+                        {/* Product Details - Dinámico para títulos largos */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-between min-h-[5rem] sm:min-h-[7rem]">
+                            <div className="space-y-1 mb-2">
+                                <span className="text-[8px] sm:text-[9px] font-bold text-brand uppercase tracking-[0.2em] block">
+                                    {product.categories?.name || 'General'}
+                                </span>
+                                <h3 className="text-sm sm:text-base font-bold text-foreground uppercase tracking-tight leading-tight group-hover:text-brand transition-colors break-words overflow-hidden">
+                                    {product.name}
+                                </h3>
+                                {product.original_price && product.original_price > product.price && (
+                                    <div className="mt-1">
+                                        <span className="inline-block text-[8px] font-bold text-red-500 bg-red-500/10 px-1 border border-red-500/20 uppercase tracking-widest">
+                                            Oferta -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%
+                                        </span>
                                     </div>
                                 )}
                             </div>
-                            <div className="flex items-center gap-1.5">
-                                <p className="font-bold text-[#b47331] truncate">
-                                    {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(product.price)}
-                                </p>
+
+                            <div className="flex items-baseline gap-2 mt-auto">
+                                <span className="text-lg sm:text-2xl font-bold text-foreground tracking-tighter">
+                                    {formatCurrency(product.price)}
+                                </span>
                                 {product.original_price && product.original_price > product.price && (
-                                    <>
-                                        <span className="text-[10px] text-slate-400 line-through">
-                                            {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(product.original_price)}
-                                        </span>
-                                        <span className="text-[9px] font-bold text-red-500 bg-red-50 px-1 rounded">
-                                            -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%
-                                        </span>
-                                    </>
+                                    <span className="text-[10px] sm:text-xs text-muted-foreground line-through opacity-50">
+                                        {formatCurrency(product.original_price)}
+                                    </span>
                                 )}
                             </div>
                         </div>
+                    </div>
 
-                        {/* Simple Stock Display */}
-                        <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 shrink-0">
-                            <Box className="w-3 h-3 text-slate-400" />
-                            <span className="text-xs font-bold text-slate-700">Stock: {stock}</span>
-                        </div>
+                    {/* Action Bar - COMPACT ON MOBILE */}
+                    <div className="flex border-t border-border/30 dark:border-white/5 h-12 sm:h-14" onClick={(e) => e.stopPropagation()}>
+                        <Link href={`/admin/inventory/${product.id}`} className="flex-1 border-r border-border/30 dark:border-white/5">
+                            <Button variant="ghost" className="w-full h-full rounded-none hover:bg-brand/10 dark:hover:bg-white/5 active:bg-brand/20 text-foreground group/btn transition-all">
+                                <Eye className="w-4 h-4 sm:mr-2 text-brand" />
+                                <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-widest">Detalles</span>
+                            </Button>
+                        </Link>
+
+                        <Link href={`/admin/inventory/edit/${product.id}`} className="flex-1 border-r border-border/30 dark:border-white/5">
+                            <Button variant="ghost" className="w-full h-full rounded-none hover:bg-brand hover:text-white active:bg-brand/90 transition-all">
+                                <Edit className="w-4 h-4 sm:mr-2" />
+                                <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-widest">Editar</span>
+                            </Button>
+                        </Link>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="w-12 sm:w-16 h-full rounded-none hover:bg-secondary/40 dark:hover:bg-white/5 active:bg-secondary/60" onClick={(e) => e.stopPropagation()}>
+                                    <MoreHorizontal className="w-5 h-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="rounded-none font-bold uppercase tracking-widest text-[10px] bg-card border-border/50 shadow-2xl p-1 w-52" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem className="p-3 focus:bg-brand focus:text-white" onClick={handleToggleVisibility}>
+                                    {isToggling ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : isActive ? "Ocultar de la tienda" : "Publicar en tienda"}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild className="p-3 focus:bg-brand focus:text-white">
+                                    <Link href={`/products/${product.slug}`} target="_blank">
+                                        Vista Previa Tienda
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-border/30" />
+                                <DropdownMenuItem
+                                    className="p-3 text-red-600 focus:bg-red-500 focus:text-white"
+                                    onClick={() => setShowDeleteDialog(true)}
+                                >
+                                    Eliminar Producto
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
             </Card>
 
-            {/* Delete Confirmation Dialog */}
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <AlertDialogContent>
+                <AlertDialogContent className="rounded-none bg-card border-border/50 shadow-2xl">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar "{product.name}"?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción eliminará permanentemente el producto de la base de datos.
-                            El producto también será <strong>archivado en Stripe</strong> (marcado como inactivo)
-                            para mantener el historial de pagos y pedidos.
-                            <br /><br />
-                            Esta acción no se puede deshacer.
+                        <AlertDialogTitle className="uppercase tracking-widest font-bold text-lg">¿Confirmar Eliminación?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-xs uppercase tracking-wider leading-relaxed py-4 opacity-70">
+                            Estás a punto de borrar "{product.name}". Esta acción es irreversible y eliminará el producto de la base de datos y de Stripe.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel className="rounded-none uppercase text-[10px] font-bold tracking-widest h-11 border-border/50">Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={(e) => {
                                 e.preventDefault();
                                 handleDelete();
                             }}
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-none uppercase text-[10px] font-bold tracking-widest h-11"
                             disabled={isDeleting}
                         >
-                            {isDeleting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Eliminando...
-                                </>
-                            ) : (
-                                "Sí, eliminar producto"
-                            )}
+                            {isDeleting ? "Eliminando..." : "Eliminar Permanentemente"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

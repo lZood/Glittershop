@@ -211,9 +211,7 @@ export default function MegaMenu() {
                 <div
                     key={item.id}
                     className={cn(
-                        "fixed left-0 top-16 w-full border-b transition-all duration-300 ease-in-out z-30",
-                        // EXACT same blur classes as Header and Wishlist Sub-header
-                        "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                        "fixed left-0 top-16 w-full transition-all duration-300 ease-in-out z-30",
                         activeId === item.id
                             ? "opacity-100 visible"
                             : "opacity-0 invisible pointer-events-none"
@@ -221,7 +219,13 @@ export default function MegaMenu() {
                     onMouseEnter={() => handleMouseEnter(item.id)}
                     onMouseLeave={handleMouseLeave}
                 >
-                    <div className="container mx-auto px-8 py-12">
+                    {/* Isolated Glass Background Layer */}
+                    <div
+                        className="absolute inset-0 z-[-1] backdrop-blur-[25px] backdrop-saturate-[210%] backdrop-brightness-[1.25] bg-white/[0.05] border-b border-white/10"
+                        style={{ isolation: 'isolate' }}
+                    />
+
+                    <div className="container mx-auto px-8 py-12 relative" style={{ isolation: 'isolate' }}>
                         <div className="grid grid-cols-12 gap-8">
 
                             {/* Title Column */}

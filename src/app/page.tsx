@@ -6,7 +6,7 @@ import ProductCard from '@/components/product-card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { createClient } from '@/lib/supabase/server';
 import type { Product } from '@/lib/types';
-import { SearchX, ChevronDown } from 'lucide-react';
+import { SearchX, ChevronDown, ArrowRight, Truck, Percent, ShieldCheck, Undo2 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,18 +14,6 @@ export default async function Home(props: { searchParams: Promise<{ q?: string }
   const searchParams = await props.searchParams;
   const query = searchParams?.q;
   const supabase = await createClient();
-
-  // Fetch Featured Collections for Hero
-  const { data: dbCollections } = await supabase
-    .from('collections')
-    .select('*')
-    .limit(3);
-
-  const featuredCollections = (dbCollections && dbCollections.length > 0) ? dbCollections : [
-    { id: 1, title: 'Luz de Luna', slug: 'luz-de-luna', image_url: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=1000' },
-    { id: 2, title: 'Golden Hour', slug: 'golden-hour', image_url: 'https://images.unsplash.com/photo-1605100804763-ebea4666d813?auto=format&fit=crop&q=80&w=1000' },
-    { id: 3, title: 'Elegancia', slug: 'elegancia', image_url: 'https://images.unsplash.com/photo-1599643478518-17488fbbcd75?auto=format&fit=crop&q=80&w=1000' },
-  ];
 
   // Search Logic
   if (query) {
@@ -69,13 +57,13 @@ export default async function Home(props: { searchParams: Promise<{ q?: string }
     );
   }
 
-  // Fetch Best Sellers (Active Products, limit 4)
+  // Fetch New Arrivals (Active Products, limit 8)
   const { data: dbProducts } = await supabase
     .from('products')
     .select('*, product_images(*), product_variants(*), categories(*)')
     .eq('is_active', true)
-    .order('created_at', { ascending: false }) // Just newest for now as "Best Sellers" proxy
-    .limit(4);
+    .order('created_at', { ascending: false })
+    .limit(8);
 
   const bestSellers = (dbProducts || []).map((p: any) => {
     // Determine price
@@ -110,45 +98,61 @@ export default async function Home(props: { searchParams: Promise<{ q?: string }
     };
   });
 
-  const heroImage = PlaceHolderImages.find(p => p.id === 'hero-image');
+  // Calculate dynamic category counts
+  const { data: allActiveProductCategories } = await supabase
+    .from('products')
+    .select('categories(name)')
+    .eq('is_active', true);
 
-  const categories = [
-    { name: 'Anillos', image: 'https://images.unsplash.com/photo-1605100804763-ebea4666d813?auto=format&fit=crop&q=80&w=600', link: '/shop?activeTag=Anillos' },
-    { name: 'Collares', image: 'https://images.unsplash.com/photo-1599643478518-17488fbbcd75?auto=format&fit=crop&q=80&w=600', link: '/shop?activeTag=Collares' },
-    { name: 'Pulseras', image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&q=80&w=600', link: '/shop?activeTag=Pulseras' },
-    { name: 'Aretes', image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=600', link: '/shop?activeTag=Aretes' }
+  const categoryCounts: Record<string, number> = {};
+  if (allActiveProductCategories) {
+    allActiveProductCategories.forEach((p: any) => {
+      const catName = p.categories?.name;
+      if (catName) {
+        categoryCounts[catName] = (categoryCounts[catName] || 0) + 1;
+      }
+    });
+  }
+
+  const categoryData = [
+    { name: 'Anillos', image: '/images/CatAnillo.png', link: '/shop?category=rings' },
+    { name: 'Collares', image: '/images/CatCollar.png', link: '/shop?category=necklaces' },
+    { name: 'Pulseras', image: '/images/CatPulseras.png', link: '/shop?category=bracelets' },
+    { name: 'Aretes', image: '/images/CatAretes.png', link: '/shop?category=earrings' }
   ];
 
-  const socialImages = [
-    PlaceHolderImages.find(p => p.id === 'social-1'),
-    PlaceHolderImages.find(p => p.id === 'social-2'),
-    PlaceHolderImages.find(p => p.id === 'social-3'),
-  ].filter(Boolean);
+  const categories = categoryData.map(c => ({
+    ...c,
+    count: categoryCounts[c.name] || 0
+  }));
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      {/* 1. Hero Section */}
-      {/* 1. Hero Section */}
-      <section className="relative w-full h-[90vh] flex flex-col justify-end items-center text-center overflow-hidden pb-24 md:pb-32">
-        {heroImage && (
-          <Image
-            src={heroImage.imageUrl}
-            alt="Hero Collection"
-            fill
-            className="object-cover"
-            priority
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/70" />
+    <div className="flex flex-col min-h-screen bg-background">
+      {/* 1. Hero Section with Video Background */}
+      <section className="relative w-full h-[95vh] flex flex-col justify-center items-center text-center overflow-hidden">
+        {/* Video Background - Forced Cover Technique */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto object-cover z-0"
+          style={{ objectFit: 'cover' }}
+        >
+          {/* Your local jewelry video background */}
+          <source src="/videos/Video_Profesional_De_Joyería_Elegante.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-black/40 z-[1]" />
 
-        <div className="relative z-10 px-4 max-w-4xl mx-auto flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
-          <h1 className="text-5xl md:text-7xl font-serif text-white mb-6 drop-shadow-xl font-medium leading-tight">
-            Lujo en cada <br /> <span className="italic font-light">Detalle</span>
+        <div className="relative z-10 px-4 max-w-4xl mx-auto flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-16 md:mt-20">
+          <span className="text-white/90 tracking-[0.3em] uppercase text-xs md:text-sm mb-6 font-medium">Joyería de Lujo</span>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white mb-6 drop-shadow-lg font-light leading-tight">
+            Elegancia Atemporal <br /> <span className="italic">Para Cada Momento</span>
           </h1>
-          <p className="text-xs md:text-sm text-white/90 mb-10 tracking-[0.25em] font-light max-w-lg mx-auto uppercase">
-            Colecciones exclusivas para <br className="hidden md:block" /> momentos inolvidables
+          <p className="text-sm md:text-base text-white/90 mb-10 tracking-widest font-light max-w-xl mx-auto">
+            Descubre obras maestras diseñadas para contar tu historia. Desde el brillo de todos los días hasta grandes celebraciones.
           </p>
-          <Button asChild size="lg" className="bg-[#B87333] hover:bg-[#a0632a] text-white px-12 h-14 text-sm tracking-widest uppercase font-semibold rounded-md transition-all transform hover:scale-105 shadow-2xl border border-white/10">
+          <Button asChild size="lg" className="bg-white hover:bg-white/90 text-black px-12 h-14 text-sm tracking-widest uppercase font-semibold rounded-none transition-all transform shadow-2xl">
             <Link href="/shop">Explorar Colección</Link>
           </Button>
         </div>
@@ -158,70 +162,97 @@ export default async function Home(props: { searchParams: Promise<{ q?: string }
         </div>
       </section>
 
-      {/* 2. Categories (Nuestras Favoritas) */}
-      <section className="py-24 container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-serif text-center mb-16 uppercase tracking-widest text-[#B87333]">Nuestras Favoritas</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+      {/* 2. Shop by Category */}
+      <section className="py-24 container mx-auto px-4 lg:px-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+          <div>
+            <span className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] md:text-xs font-bold mb-2 block">Selecciones Curadas</span>
+            <h2 className="text-2xl md:text-3xl font-medium tracking-[0.1em] uppercase text-foreground">Compra por Categoría</h2>
+          </div>
+          <Link href="/shop" className="group flex items-center text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase hover:text-primary transition-colors">
+            Ver Todo
+            <ArrowRight className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {categories.map((cat) => (
-            <Link href={cat.link} key={cat.name} className="group relative aspect-[3/4] overflow-hidden bg-slate-100">
-              <Image src={cat.image} alt={cat.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
-              <div className="absolute bottom-10 left-0 right-0 text-center">
-                <span className="text-white text-xl md:text-2xl font-serif italic tracking-wider">{cat.name}</span>
+            <Link href={cat.link} key={cat.name} className="group relative aspect-[4/5] overflow-hidden bg-slate-100 block rounded-2xl">
+              <Image src={cat.image} alt={cat.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
+
+              <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-6">
+                <h3 className="text-white text-lg md:text-xl font-medium tracking-[0.1em] uppercase mb-1 relative z-10 transform transition-transform duration-300 group-hover:-translate-y-2">{cat.name}</h3>
+                <span className="text-white/80 text-[10px] md:text-xs tracking-[0.2em] uppercase absolute bottom-4 md:bottom-6 left-5 md:left-6 opacity-0 transform translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 text-white font-medium">
+                  Explora {cat.count} estilos
+                </span>
               </div>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* 3. Best Sellers (Lo Más Vendido) */}
-      <section className="py-24 bg-[#F9F9F9]">
-        <div className="container mx-auto px-4 md:px-10">
-          <h2 className="text-3xl md:text-4xl font-serif text-center mb-16 uppercase tracking-widest text-[#B87333]">Lo Más Vendido</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-10">
+      {/* 3. New Arrivals Horizontal Slider */}
+      <section className="py-24 bg-secondary/30 overflow-hidden">
+        <div className="container mx-auto px-4 lg:px-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+            <div>
+              <span className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] md:text-xs font-bold mb-2 block">Lo Más Nuevo</span>
+              <h2 className="text-2xl md:text-3xl font-medium tracking-[0.1em] uppercase text-foreground">Recién Llegados</h2>
+            </div>
+            <Link href="/shop?sort=newest" className="group flex items-center text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase hover:text-primary transition-colors">
+              Ver Todo
+              <ArrowRight className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="flex overflow-x-auto pb-8 -mx-4 px-4 md:mx-0 md:px-0 gap-4 md:gap-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {bestSellers.map((product: any) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-          <div className="text-center mt-16">
-            <Button asChild variant="outline" className="rounded-none border-[#B87333] text-[#B87333] hover:bg-[#B87333] hover:text-white uppercase tracking-widest px-10 h-12 transition-all">
-              <Link href="/shop">Ver Todo</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. Essence (Nuestra Esencia) */}
-      <section className="py-32 bg-[#B87333] text-white">
-        <div className="container mx-auto px-4 text-center max-w-4xl">
-          <span className="text-white/80 uppercase tracking-[0.2em] text-sm mb-8 block">Sobre Nosotros</span>
-          <h2 className="text-4xl md:text-6xl font-serif mb-10 leading-tight">Nuestra Esencia</h2>
-          <p className="text-lg md:text-2xl font-light leading-relaxed opacity-90 mb-12 italic">
-            "En Glitters Shop, creemos que cada joya es un susurro de elegancia. Diseñamos para la mujer moderna que no teme brillar."
-          </p>
-          <div className="w-24 h-1 bg-white/30 mx-auto"></div>
-        </div>
-      </section>
-
-      {/* 5. Social (#glittersshop) */}
-      <section className="py-24 container mx-auto px-4 md:px-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-serif uppercase tracking-widest mb-3 text-[#B87333]">#Glittersshop</h2>
-          <p className="text-muted-foreground tracking-wide">Síguenos en Instagram @glitters.shop</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {socialImages.map((img: any, i: number) => {
-            const titles = ["Estilo Diario", "Noches de Gala", "Detalles que Enamoran"];
-            return (
-              <div key={i} className="relative aspect-square group overflow-hidden bg-slate-100">
-                {img && <Image src={img.imageUrl} alt="Social" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-6">
-                  <span className="text-white font-serif text-2xl mb-2 italic transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{titles[i]}</span>
-                  <span className="text-white/80 text-sm uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-100">Ver Post</span>
-                </div>
+              <div key={product.id} className="w-[75vw] sm:w-[50vw] md:w-[320px] lg:w-[350px] flex-none snap-start">
+                <ProductCard product={product} />
               </div>
-            )
-          })}
+            ))}
+
+            {/* View More Card */}
+            <div className="w-[75vw] sm:w-[50vw] md:w-[320px] lg:w-[350px] flex-none snap-start flex items-center justify-center bg-background border border-border/50 rounded-lg p-6 group">
+              <Link href="/shop?sort=newest" className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors text-center gap-4 w-full h-full min-h-[300px]">
+                <div className="w-16 h-16 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <ArrowRight className="w-8 h-8" />
+                </div>
+                <span className="font-serif text-xl tracking-wide uppercase">Cargar Más</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Features Section */}
+      <section className="py-24 container mx-auto px-4 lg:px-10 border-t border-border/50 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-12 text-center md:text-left">
+          <div className="flex flex-col items-center md:items-start group">
+            <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mb-6 text-foreground group-hover:scale-110 transition-transform">
+              <Truck className="w-6 h-6 stroke-[1.5]" />
+            </div>
+            <p className="text-foreground text-sm leading-relaxed font-medium">Envío gratis en compras desde $3,300 - Disponible en todo el país</p>
+          </div>
+          <div className="flex flex-col items-center md:items-start group">
+            <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mb-6 text-foreground group-hover:scale-110 transition-transform">
+              <Percent className="w-6 h-6 stroke-[1.5]" />
+            </div>
+            <p className="text-foreground text-sm leading-relaxed font-medium">Regístrate y obtén 10% de descuento en tu primera compra</p>
+          </div>
+          <div className="flex flex-col items-center md:items-start group">
+            <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mb-6 text-foreground group-hover:scale-110 transition-transform">
+              <ShieldCheck className="w-6 h-6 stroke-[1.5]" />
+            </div>
+            <p className="text-foreground text-sm leading-relaxed font-medium">Garantía por 1 año</p>
+          </div>
+          <div className="flex flex-col items-center md:items-start group">
+            <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mb-6 text-foreground group-hover:scale-110 transition-transform">
+              <Undo2 className="w-6 h-6 stroke-[1.5]" />
+            </div>
+            <p className="text-foreground text-sm leading-relaxed font-medium">Devoluciones sin costo</p>
+          </div>
         </div>
       </section>
     </div>

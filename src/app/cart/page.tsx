@@ -181,7 +181,7 @@ export default function CartPage() {
               subtotal={subtotal}
               shipping={shipping}
               total={total}
-              actionLabel="Continuar al Checkout"
+              actionLabel="Continuar con el Envío"
               actionHref="/checkout"
               disabled={cartItems.length === 0}
             />

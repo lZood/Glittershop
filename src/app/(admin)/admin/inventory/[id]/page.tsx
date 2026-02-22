@@ -1,12 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Trash2, Globe, Box, Tag, DollarSign, Image as ImageIcon, Video, Layers, ChevronRight, Share2, Printer, Eye } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Edit, Box, Tag, DollarSign, ChevronRight, Share2, Eye, Layers } from "lucide-react";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { DeleteProductButton } from "./delete-button";
 import { VariantsTable } from "./variants-table";
 
@@ -42,18 +42,18 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
     const otherImages = product.product_images?.filter((img: any) => img.id !== mainImage?.id) || [];
 
     return (
-        <div className="space-y-6 animate-in fade-in-50 pb-20 md:pb-10 p-4 md:p-8 bg-background/50 min-h-screen">
+        <div className="space-y-8 pb-24 max-w-5xl mx-auto px-4 lg:px-0 pt-6">
             {/* Breadcrumb / Nav */}
-            <nav className="flex items-center text-sm text-muted-foreground mb-2">
-                <Link href="/admin/inventory" className="hover:text-primary transition-colors">Inventario</Link>
-                <ChevronRight className="h-3 w-3 mx-2" />
-                <span className="font-medium text-foreground truncate">{product.name}</span>
+            <nav className="flex items-center gap-2">
+                <Link href="/admin/inventory" className="text-muted-foreground hover:text-foreground transition-colors uppercase tracking-[0.2em] text-[10px] font-bold">Inventario</Link>
+                <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                <span className="text-foreground uppercase tracking-[0.2em] text-[10px] font-bold truncate max-w-[200px]">{product.name}</span>
             </nav>
 
-            {/* Header Moderno con Banner de Estado */}
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                <div className="flex items-center md:items-start gap-4">
-                    <div className="relative h-16 w-16 md:h-20 md:w-20 rounded-xl overflow-hidden shadow-sm border bg-muted flex-shrink-0">
+            {/* Header Moderno */}
+            <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 border-b border-border pb-8">
+                <div className="flex items-start gap-6">
+                    <div className="relative h-24 w-24 border border-border/50 bg-secondary/30 flex-shrink-0">
                         {mainImage ? (
                             <Image
                                 src={mainImage.image_url}
@@ -62,214 +62,187 @@ export default async function ProductDetailsPage({ params }: { params: Promise<{
                                 className="object-cover"
                             />
                         ) : (
-                            <div className="flex items-center justify-center h-full w-full text-muted-foreground">
-                                <ImageIcon className="h-8 w-8 opacity-20" />
-                            </div>
+                            <div className="flex items-center justify-center h-full w-full text-muted-foreground uppercase tracking-widest text-[10px] font-bold">S/I</div>
                         )}
                     </div>
-                    <div className="flex-1">
-                        <h1 className="text-xl md:text-3xl font-bold tracking-tight text-foreground line-clamp-1">{product.name}</h1>
-                        <div className="flex items-center gap-2 mt-1">
-                            <Badge variant={product.is_active ? "default" : "secondary"} className="rounded-full px-2 py-0 text-[10px] md:text-xs">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] font-bold">Producto ID: #{product.slug}</span>
+                            <Badge variant="outline" className={cn("rounded-none px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em]",
+                                product.is_active ? "bg-green-500/10 text-green-700 border-green-500/20" : "bg-slate-500/10 text-slate-700 border-slate-500/20"
+                            )}>
                                 {product.is_active ? '● Publicado' : '○ Borrador'}
                             </Badge>
-                            <span className="text-xs text-muted-foreground font-mono">#{product.slug}</span>
                         </div>
+                        <h1 className="text-3xl font-medium tracking-[0.05em] uppercase text-foreground leading-tight">{product.name}</h1>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                    <Button variant="outline" size="sm" className="rounded-full h-8 text-xs flex-shrink-0">
-                        <Share2 className="h-3 w-3 mr-1" />
+                <div className="flex items-center gap-3">
+                    <Button variant="outline" size="sm" className="h-10 rounded-none bg-background hover:bg-secondary text-foreground font-bold uppercase tracking-[0.1em] text-[10px]">
+                        <Share2 className="h-3.5 w-3.5 mr-2" />
                         Compartir
                     </Button>
-                    <Button asChild variant="default" size="sm" className="rounded-full h-8 text-xs shadow-sm flex-shrink-0">
-                        <Link href={`/admin/inventory/edit/${product.id}`}>
-                            <Edit className="mr-1 h-3 w-3" />
+                    <Link href={`/admin/inventory/edit/${product.id}`}>
+                        <Button variant="outline" size="sm" className="h-10 rounded-none bg-background hover:bg-secondary text-foreground font-bold uppercase tracking-[0.1em] text-[10px]">
+                            <Edit className="h-3.5 w-3.5 mr-2" />
                             Editar
-                        </Link>
-                    </Button>
-                    <Button asChild variant="secondary" size="sm" className="rounded-full h-8 text-xs shadow-sm flex-shrink-0">
-                        <Link href={`/products/${product.slug}`} target="_blank">
-                            <Eye className="mr-1 h-3 w-3" />
-                            Ver en Tienda
-                        </Link>
-                    </Button>
-                    <div className="flex-shrink-0">
-                        <DeleteProductButton productId={product.id} productName={product.name} />
-                    </div>
+                        </Button>
+                    </Link>
+                    <Link href={`/products/${product.slug}`} target="_blank">
+                        <Button variant="outline" size="sm" className="h-10 rounded-none bg-background hover:bg-secondary text-foreground font-bold uppercase tracking-[0.1em] text-[10px]">
+                            <Eye className="h-3.5 w-3.5 mr-2" />
+                            Ver Tienda
+                        </Button>
+                    </Link>
+                    <DeleteProductButton productId={product.id} productName={product.name} />
                 </div>
-            </div>
-
-            <Separator className="bg-border/50" />
+            </header>
 
             {/* Grid Principal */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
 
                 {/* Columna Izquierda (Detalles y Stats) - 8 columnas */}
                 <div className="lg:col-span-8 space-y-6">
 
-                    {/* Tarjetas de Estadísticas "Family Friendly" (Coloridas y Redondeadas) */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50 flex flex-col justify-center items-center text-center space-y-1">
-                            <div className="h-7 w-7 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-1">
-                                <DollarSign className="h-3.5 w-3.5" />
-                            </div>
-                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Precio</span>
-                            <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                                {formatCurrency(product.price)}
+                    {/* Tarjetas de Estadísticas Limpias */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-background border border-border/50 p-6 flex flex-col gap-2">
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-[0.2em] flex items-center gap-2">
+                                <DollarSign className="w-3 h-3" /> Precio
                             </span>
-                            {product.original_price && product.original_price > product.price && (
-                                <span className="text-[10px] text-muted-foreground line-through">
-                                    {formatCurrency(product.original_price)}
+                            <div className="space-y-1">
+                                <span className="text-2xl font-medium text-foreground tracking-tight">
+                                    {formatCurrency(product.price)}
                                 </span>
-                            )}
+                                {product.original_price && product.original_price > product.price && (
+                                    <p className="text-[10px] text-red-500 font-bold tracking-widest uppercase">
+                                        -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}% DCTO
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="bg-purple-50 dark:bg-purple-950/20 p-3 rounded-xl border border-purple-100 dark:border-purple-900/50 flex flex-col justify-center items-center text-center space-y-1">
-                            <div className="h-7 w-7 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-1">
-                                <Box className="h-3.5 w-3.5" />
-                            </div>
-                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Stock</span>
-                            <span className="text-lg font-bold text-purple-700 dark:text-purple-300">
-                                {product.stock} <span className="text-[10px] font-normal opacity-70">unid.</span>
+                        <div className="bg-background border border-border/50 p-6 flex flex-col gap-2">
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-[0.2em] flex items-center gap-2">
+                                <Box className="w-3 h-3" /> Stock
+                            </span>
+                            <span className="text-2xl font-medium text-foreground tracking-tight">
+                                {product.stock} <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">UNID</span>
                             </span>
                         </div>
 
-                        <div className="bg-emerald-50 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/50 flex flex-col justify-center items-center text-center space-y-1">
-                            <div className="h-7 w-7 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-1">
-                                <Tag className="h-3.5 w-3.5" />
-                            </div>
-                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Categoría</span>
-                            <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 truncate w-full px-1">
+                        <div className="bg-background border border-border/50 p-6 flex flex-col gap-2">
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-[0.2em] flex items-center gap-2">
+                                <Tag className="w-3 h-3" /> Categoría
+                            </span>
+                            <span className="text-sm font-bold text-foreground uppercase tracking-widest truncate">
                                 {product.categories?.name || "General"}
                             </span>
                         </div>
 
-                        <div className="bg-orange-50 dark:bg-orange-950/20 p-3 rounded-xl border border-orange-100 dark:border-orange-900/50 flex flex-col justify-center items-center text-center space-y-1">
-                            <div className="h-7 w-7 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center text-orange-600 dark:text-orange-400 mb-1">
-                                <Layers className="h-3.5 w-3.5" />
-                            </div>
-                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wide">Variantes</span>
-                            <span className="text-lg font-bold text-orange-700 dark:text-orange-300">
+                        <div className="bg-background border border-border/50 p-6 flex flex-col gap-2">
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-[0.2em] flex items-center gap-2">
+                                <Layers className="w-3 h-3" /> Variantes
+                            </span>
+                            <span className="text-2xl font-medium text-foreground tracking-tight">
                                 {product.product_variants?.length || 0}
                             </span>
                         </div>
                     </div>
 
-                    {/* Descripción con estilo "Papel" */}
-                    <Card className="rounded-2xl border-none shadow-sm bg-muted/30">
-                        <CardHeader className="py-4">
-                            <CardTitle className="text-base flex items-center gap-2">
-                                📄 Sobre el Producto
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pb-4">
-                            <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed text-sm">
-                                {product.description ? (
-                                    <p className="whitespace-pre-line">{product.description}</p>
-                                ) : (
-                                    <span className="italic opacity-50">El vendedor no ha añadido una descripción todavía.</span>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Descripción */}
+                    <div className="border border-border/50 bg-background p-8">
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-[0.2em] block mb-6">Detalles del Producto</span>
+                        <div className="prose prose-sm dark:prose-invert max-w-none text-foreground leading-relaxed text-sm tracking-wide">
+                            {product.description ? (
+                                <p className="whitespace-pre-line">{product.description}</p>
+                            ) : (
+                                <span className="italic opacity-50 uppercase text-[10px] tracking-widest font-bold">Sin descripción del producto.</span>
+                            )}
+                        </div>
+                    </div>
 
                     {/* Tabla de Variantes Interactiva */}
                     <VariantsTable variants={product.product_variants} />
                 </div>
 
                 {/* Columna Derecha (Media y Extras) - 4 columnas */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 space-y-8">
 
-                    {/* Preview de Multimedia */}
-                    <Card className="rounded-2xl border shadow-sm overflow-hidden">
-                        <CardHeader className="bg-muted/10 pb-3 py-3">
-                            <CardTitle className="text-sm font-medium flex items-center justify-between">
-                                Galería Visual
-                                <span className="text-[10px] text-muted-foreground font-normal bg-muted px-2 py-0.5 rounded-full">
-                                    {product.product_images?.length} items
-                                </span>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-3 space-y-3">
-                            <div className="aspect-[3/4] relative rounded-lg overflow-hidden border bg-zinc-100 dark:bg-zinc-900 shadow-inner group">
-                                {mainImage ? (
-                                    <>
+                    {/* Galería Visual */}
+                    <div className="border border-border/50 bg-background p-6 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-[0.2em]">Galería Visual</span>
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-secondary/50 px-2 py-0.5">{product.product_images?.length} Items</span>
+                        </div>
+
+                        <div className="aspect-[3/4] relative border border-border/20 group overflow-hidden">
+                            {mainImage ? (
+                                <>
+                                    <Image
+                                        src={mainImage.image_url}
+                                        alt={product.name}
+                                        fill
+                                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                    />
+                                    <div className="absolute top-4 left-4">
+                                        <Badge className="bg-black/50 backdrop-blur-md border-none text-white text-[10px] rounded-none uppercase tracking-widest font-bold">Principal</Badge>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-muted-foreground uppercase tracking-widest text-[10px] font-bold">Sin imagen</div>
+                            )}
+                        </div>
+
+                        {otherImages.length > 0 && (
+                            <div className="grid grid-cols-4 gap-2">
+                                {otherImages.slice(0, 4).map((img: any) => (
+                                    <div key={img.id} className="relative aspect-square border border-border/20 hover:border-foreground transition-colors cursor-pointer overflow-hidden">
                                         <Image
-                                            src={mainImage.image_url}
-                                            alt={product.name}
+                                            src={img.image_url}
+                                            alt="Thumb"
                                             fill
-                                            className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                            className="object-cover"
+                                            sizes="100px"
                                         />
-                                        <div className="absolute top-2 left-2">
-                                            <Badge className="bg-black/50 hover:bg-black/70 backdrop-blur-sm border-none text-white text-[10px]">Principal</Badge>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Sin imagen</div>
+                                    </div>
+                                ))}
+                                {otherImages.length > 4 && (
+                                    <div className="aspect-square bg-secondary flex items-center justify-center text-[10px] font-bold text-muted-foreground border border-border/20 uppercase tracking-widest">
+                                        +{otherImages.length - 4}
+                                    </div>
                                 )}
                             </div>
-
-                            {otherImages.length > 0 && (
-                                <div className="grid grid-cols-4 gap-2">
-                                    {otherImages.slice(0, 4).map((img: any) => (
-                                        <div key={img.id} className="relative aspect-square rounded-md overflow-hidden border hover:ring-2 ring-primary/50 transition-all cursor-pointer">
-                                            <Image
-                                                src={img.image_url}
-                                                alt="Thumb"
-                                                fill
-                                                className="object-cover"
-                                                sizes="100px"
-                                            />
-                                        </div>
-                                    ))}
-                                    {otherImages.length > 4 && (
-                                        <div className="aspect-square rounded-md bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground border">
-                                            +{otherImages.length - 4}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </CardContent>
-                        <CardFooter className="bg-muted/10 border-t p-2">
-                            <Button asChild variant="ghost" size="sm" className="w-full text-xs text-muted-foreground h-8">
-                                <Link href={`/products/${product.slug}`} target="_blank">
-                                    <Globe className="w-3 h-3 mr-2" />
-                                    Ver en Tienda
-                                </Link>
-                            </Button>
-                        </CardFooter>
-                    </Card>
+                        )}
+                    </div>
 
                     {/* Detalles Técnicos */}
-                    <Card className="rounded-2xl border-none shadow-sm bg-zinc-50 dark:bg-zinc-900/50">
-                        <CardContent className="p-4 space-y-4">
-                            <div>
-                                <h4 className="text-[10px] font-bold uppercase text-muted-foreground mb-2 flex items-center gap-2">
-                                    <Tag className="w-3 h-3" /> Etiquetas
-                                </h4>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {product.tags && product.tags.length > 0 ? product.tags.map((tag: string) => (
-                                        <Badge key={tag} variant="secondary" className="bg-white dark:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-zinc-700 hover:bg-zinc-50 text-[10px]">
-                                            #{tag}
-                                        </Badge>
-                                    )) : (
-                                        <span className="text-xs text-muted-foreground">Sin etiquetas.</span>
-                                    )}
-                                </div>
+                    <div className="border border-border/50 bg-secondary/10 p-6 space-y-6">
+                        <div>
+                            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-[0.2em] mb-4 flex items-center gap-2">
+                                <Tag className="w-3 h-3" /> Etiquetas
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                                {product.tags && product.tags.length > 0 ? product.tags.map((tag: string) => (
+                                    <Badge key={tag} variant="secondary" className="rounded-none bg-background border border-border/50 text-[10px] uppercase tracking-widest font-bold py-1 px-3">
+                                        #{tag}
+                                    </Badge>
+                                )) : (
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sin etiquetas.</span>
+                                )}
                             </div>
+                        </div>
 
-                            <Separator className="bg-border/50" />
+                        <Separator className="bg-border/30" />
 
-                            <div>
-                                <h4 className="text-[10px] font-bold uppercase text-muted-foreground mb-2">Cuidados</h4>
-                                <p className="text-xs text-zinc-600 dark:text-zinc-400 bg-white dark:bg-black/20 p-2.5 rounded-lg border border-border/50">
-                                    {product.care_instructions || "No especificado."}
-                                </p>
+                        <div>
+                            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-[0.2em] mb-4 block">Cuidados</span>
+                            <div className="text-[11px] text-foreground bg-background p-4 border border-border/50 leading-relaxed tracking-wide uppercase font-medium">
+                                {product.care_instructions || "No especificado."}
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

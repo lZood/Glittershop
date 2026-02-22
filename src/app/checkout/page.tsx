@@ -13,22 +13,37 @@ import { CheckoutStepper } from '@/components/checkout/checkout-stepper';
 import { AddressForm } from '@/components/checkout/address-form';
 import { AddressList } from '@/components/checkout/address-list';
 import { getUserAddresses, Address } from '@/lib/actions/address';
+import { createPaymentIntent } from '@/lib/actions/checkout';
+
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { CheckoutForm } from '@/components/checkout/checkout-form';
+import { useToast } from '@/hooks/use-toast';
+
+// Load Stripe outside of component render
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 type CheckoutStep = 'cart' | 'shipping' | 'payment';
 
 export default function CheckoutPage() {
     const { items, subtotal, cartCount } = useCart();
     const { session } = useSession();
+    const { toast } = useToast();
     const [guestEmail, setGuestEmail] = useState('');
 
     // Step State
-    const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
+    const [currentStep, setCurrentStep] = useState<CheckoutStep>('shipping');
 
     // Shipping State
     const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
     const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
     const [isAddingAddress, setIsAddingAddress] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | undefined>(undefined);
+
+    // Payment State
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+    const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
     // Initial Data Fetch
     useEffect(() => {
@@ -39,12 +54,12 @@ export default function CheckoutPage() {
                 if (defaultAddr) setSelectedAddress(defaultAddr);
             });
         }
-    }, [session, currentStep]); // Refetch when entering steps/session changes
+    }, [session, currentStep]);
 
     // Shipping Cost Logic
     const freeShippingThreshold = 800;
     const isFreeShipping = subtotal >= freeShippingThreshold;
-    const shippingCost = isFreeShipping ? 0 : 150; // Standard fixed for now until dynamic
+    const shippingCost = isFreeShipping ? 0 : 150;
     const total = subtotal + shippingCost;
 
     if (cartCount === 0) {
@@ -59,22 +74,42 @@ export default function CheckoutPage() {
         );
     }
 
-    // Auth Gate: Check if user is logged in OR has provided guest email
     if (!session && !guestEmail) {
         return <CheckoutAuthGate onContinueAsGuest={setGuestEmail} />;
     }
+
+    const startPayment = async () => {
+        if (!selectedAddress) {
+            toast({ title: 'Error', description: 'Por favor selecciona o ingresa una dirección de envío', variant: 'destructive' });
+            return;
+        }
+
+        setIsLoadingPayment(true);
+        try {
+            const res = await createPaymentIntent(items, guestEmail);
+            if (res.clientSecret) {
+                setClientSecret(res.clientSecret);
+                setPaymentIntentId(res.paymentIntentId);
+                setCurrentStep('payment');
+            }
+        } catch (e: any) {
+            toast({ title: 'Error', description: e.message || 'Error inicializando el pago', variant: 'destructive' });
+        } finally {
+            setIsLoadingPayment(false);
+        }
+    };
 
     return (
         <div className="bg-background min-h-screen pb-20">
             <div className="container mx-auto px-4 py-8">
                 {/* Header Nav */}
-                {currentStep === 'cart' ? (
+                {currentStep === 'shipping' ? (
                     <Link href="/cart" className="flex items-center text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">
                         <ChevronLeft className="w-4 h-4 mr-1" />
                         Volver al carrito
                     </Link>
                 ) : (
-                    <button onClick={() => setCurrentStep('cart')} className="flex items-center text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">
+                    <button onClick={() => setCurrentStep('shipping')} className="flex items-center text-sm text-muted-foreground hover:text-primary mb-4 transition-colors">
                         <ChevronLeft className="w-4 h-4 mr-1" />
                         Volver al paso anterior
                     </button>
@@ -86,43 +121,7 @@ export default function CheckoutPage() {
                     {/* Left Column: Main Content */}
                     <div className="lg:col-span-7 space-y-8">
 
-                        {/* STEP 1: CART REVIEW */}
-                        {currentStep === 'cart' && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
-                                <h2 className="text-2xl font-bold">Revisa tu Pedido</h2>
-                                <div className="space-y-4">
-                                    {items.map((item) => (
-                                        <div key={`${item.product.id}-${item.color}-${item.size}`} className="flex gap-4 p-4 border rounded-xl bg-card">
-                                            <div className="relative h-20 w-20 rounded-md overflow-hidden bg-white border shrink-0">
-                                                {item.product.image ? (
-                                                    <Image
-                                                        src={item.product.image.imageUrl}
-                                                        alt={item.product.name}
-                                                        fill
-                                                        className="object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="bg-gray-200 w-full h-full" />
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-semibold truncate">{item.product.name}</h4>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {item.color} {item.size && `• ${item.size}`}
-                                                </p>
-                                                <p className="text-sm">Cant: {item.quantity}</p>
-                                            </div>
-                                            <div className="text-right font-bold">
-                                                {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(item.product.price * item.quantity)}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <Button size="lg" className="w-full text-lg h-12" onClick={() => setCurrentStep('shipping')}>
-                                    Continuar a Envío
-                                </Button>
-                            </div>
-                        )}
+
 
                         {/* STEP 2: SHIPPING */}
                         {currentStep === 'shipping' && (
@@ -134,18 +133,18 @@ export default function CheckoutPage() {
                                     <div className="p-6 border rounded-xl bg-card">
                                         <h3 className="font-semibold mb-4 text-base md:text-lg">Ingresa tu dirección de envío</h3>
                                         <AddressForm
-                                            onSuccess={() => { }} // Not used when customSubmit is present
-                                            onCancel={() => { }} // No cancel for guest, main view
+                                            onSuccess={() => { }}
+                                            onCancel={() => { }}
                                             onSubmit={async (data) => {
-                                                // Create a temporary address object for the guest
                                                 const guestAddressWithId: Address = {
                                                     id: 'guest-temp-id',
                                                     user_id: 'guest',
                                                     ...data,
-                                                    address_line2: data.address_line2 || null, // Ensure explicit null if undefined
+                                                    interior_number: data.interior_number || undefined,
                                                 };
                                                 setSelectedAddress(guestAddressWithId);
-                                                setCurrentStep('payment');
+                                                // Ensure state applies before passing to payment
+                                                setTimeout(() => startPayment(), 0);
                                             }}
                                         />
                                     </div>
@@ -162,7 +161,6 @@ export default function CheckoutPage() {
                                                     onSuccess={() => {
                                                         setIsAddingAddress(false);
                                                         setEditingAddress(undefined);
-                                                        // Refresh list
                                                         getUserAddresses().then(setSavedAddresses);
                                                     }}
                                                     onCancel={() => {
@@ -184,10 +182,10 @@ export default function CheckoutPage() {
                                                 <Button
                                                     size="lg"
                                                     className="w-full text-lg h-12 mt-6"
-                                                    disabled={!selectedAddress}
-                                                    onClick={() => setCurrentStep('payment')}
+                                                    disabled={!selectedAddress || isLoadingPayment}
+                                                    onClick={startPayment}
                                                 >
-                                                    Continuar a Pago
+                                                    {isLoadingPayment ? 'Cargando...' : 'Continuar a Pago'}
                                                 </Button>
                                             </>
                                         )}
@@ -197,22 +195,26 @@ export default function CheckoutPage() {
                         )}
 
                         {/* STEP 3: PAYMENT */}
-                        {currentStep === 'payment' && (
+                        {currentStep === 'payment' && clientSecret && paymentIntentId && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
                                 <h2 className="text-2xl font-bold">Pago</h2>
-                                <div className="p-8 border rounded-xl bg-secondary/10 text-center space-y-4">
-                                    <p className="text-muted-foreground">
-                                        Has llegado al final del flujo de demostración.
+
+                                <div className="mb-6 p-4 border rounded-xl bg-secondary/10">
+                                    <p className="font-semibold">Resumen de Envío:</p>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        {selectedAddress?.full_name} <br />
+                                        {selectedAddress?.street} {selectedAddress?.exterior_number} {selectedAddress?.interior_number && `Int ${selectedAddress.interior_number}`}, {selectedAddress?.neighborhood} <br />
+                                        {selectedAddress?.city}, {selectedAddress?.state} {selectedAddress?.postal_code}
                                     </p>
-                                    <p className="font-semibold">
-                                        Enviar a: <br />
-                                        {session ? selectedAddress?.full_name : 'Invitado'} <br />
-                                        {session ? selectedAddress?.address_line1 : '...'}
-                                    </p>
-                                    <Button size="lg" className="w-full md:w-auto mt-4">
-                                        Procesar Pago (Simulado)
-                                    </Button>
                                 </div>
+
+                                <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
+                                    <CheckoutForm
+                                        paymentIntentId={paymentIntentId}
+                                        guestEmail={guestEmail}
+                                        shippingAddress={selectedAddress}
+                                    />
+                                </Elements>
                             </div>
                         )}
 
@@ -243,11 +245,9 @@ export default function CheckoutPage() {
                                 <span>{new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total)}</span>
                             </div>
 
-                            {/* Visual cues for step progress in Summary if desired */}
                             <div className="mt-8 text-xs text-muted-foreground text-center">
-                                {currentStep === 'cart' && "Siguiente: Envío"}
                                 {currentStep === 'shipping' && "Siguiente: Pago"}
-                                {currentStep === 'payment' && "Listo para finalizar"}
+                                {currentStep === 'payment' && "Completar la compra"}
                             </div>
                         </div>
                     </div>

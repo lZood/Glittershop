@@ -20,6 +20,8 @@ import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { ProductCarousel } from '@/components/product-carousel';
 import { products } from '@/lib/products';
 import { useCart } from '@/lib/cart-context';
+import { useWishlist } from '@/lib/store/wishlist';
+import { toast } from 'sonner';
 
 function formatPrice(price: number) {
     return new Intl.NumberFormat('es-MX', {
@@ -60,11 +62,26 @@ export default function ProductDetailClient({ product, relatedProducts = [], chi
     const [selectedMetal, setSelectedMetal] = useState(dynamicMetals[0] || null);
     const [selectedSize, setSelectedSize] = useState<string | null>(uniqueSizes[0] || null);
     const [quantity, setQuantity] = useState(1);
-    const [isWishlisted, setIsWishlisted] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [[page, direction], setPage] = useState([0, 0]);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const { addItem } = useCart();
+
+    // Global Wishlist
+    const { addItem: addWishlistItem, removeItem: removeWishlistItem, isInWishlist } = useWishlist();
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
+    const isWishlisted = mounted ? isInWishlist(product.id) : false;
+
+    const handleWishlistToggle = () => {
+        if (isWishlisted) {
+            removeWishlistItem(product.id);
+            toast.success('Eliminado de favoritos');
+        } else {
+            addWishlistItem(product);
+            toast.success('¡Agregado a tu lista de deseos!', { icon: '✨' });
+        }
+    };
 
     const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
 
@@ -280,10 +297,33 @@ export default function ProductDetailClient({ product, relatedProducts = [], chi
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="rounded-full hover:bg-secondary"
-                                    onClick={() => setIsWishlisted(!isWishlisted)}
+                                    className="rounded-full hover:bg-secondary h-12 w-12"
+                                    onClick={handleWishlistToggle}
                                 >
-                                    <Heart className={cn("w-6 h-6 transition-colors", isWishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
+                                    <AnimatePresence mode="wait" initial={false}>
+                                        {isWishlisted ? (
+                                            <motion.div
+                                                key="filled"
+                                                initial={{ scale: 0.5, opacity: 0 }}
+                                                animate={{ scale: 1, opacity: 1 }}
+                                                exit={{ scale: 0.5, opacity: 0 }}
+                                                transition={{ duration: 0.2, type: 'spring', stiffness: 300, damping: 20 }}
+                                            >
+                                                <Heart className="w-8 h-8 text-red-500 fill-red-500" />
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="outline"
+                                                initial={{ scale: 0.5, opacity: 0 }}
+                                                animate={{ scale: 1, opacity: 1 }}
+                                                exit={{ scale: 0.5, opacity: 0 }}
+                                                transition={{ duration: 0.2, type: 'spring', stiffness: 300, damping: 20 }}
+                                                whileHover={{ scale: 1.1 }}
+                                            >
+                                                <Heart className="w-8 h-8 text-black" />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </Button>
                             </div>
 
