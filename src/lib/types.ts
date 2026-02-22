@@ -2,13 +2,13 @@ import type { ImagePlaceholder } from './placeholder-images';
 
 export type Product = {
   id: string;
-  slug: string;
+  slug?: string;
   name: string;
   price: number;
   originalPrice?: number;
   description: string;
   image: ImagePlaceholder; // Keeping for compatibility, but we should use 'images' array
-  images: string[];
+  images?: string[];
   colors?: string[];
   images_metadata?: {
     url: string;
@@ -21,7 +21,7 @@ export type Product = {
   tags?: string[];
   care_instructions?: string;
   video?: string;
-  variants: {
+  variants?: {
     id: number;
     sku: string;
     color?: string;

@@ -5,7 +5,18 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, Image as ImageIcon, Save, ArrowLeft, Upload, Plus, X, ChevronRight, ChevronDown } from "lucide-react";
+import {
+    Loader2,
+    Image as ImageIcon,
+    Save,
+    ArrowLeft,
+    Upload,
+    Plus,
+    X,
+    ChevronRight,
+    ChevronDown,
+    Activity
+} from "lucide-react";
 import Image from "next/image";
 import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +30,8 @@ import { Switch } from "@/components/ui/switch";
 import { ProductPicker } from "./product-picker";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import * as motion from "framer-motion/client";
+import { AnimatePresence } from "framer-motion";
 
 // Reuse similar schema but for Edit (fields optional?)
 const formSchema = z.object({
@@ -228,165 +241,300 @@ export function CollectionDetail({ initialData, id }: CollectionDetailProps) {
     // Let's implement the UI.
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-20 font-sans">
+        <div className="min-h-screen bg-background font-sans transition-colors duration-500 pb-32">
             {/* Header */}
-            <header className="bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-40 shadow-sm">
-                <Button variant="ghost" size="icon" onClick={() => router.back()} className="-ml-2">
-                    <ArrowLeft className="w-6 h-6 text-slate-700" />
-                </Button>
-                <h1 className="text-base font-bold text-slate-900 truncate max-w-[200px]">{form.watch("name")}</h1>
-                <Button
-                    disabled={isSubmitting}
-                    onClick={form.handleSubmit(onSubmit)}
-                    className="text-[#b47331] font-bold hover:bg-[#b47331]/10 hover:text-[#a1662a] bg-transparent h-9 px-3"
-                >
-                    Guardar
-                </Button>
+            <header className="bg-background/80 backdrop-blur-xl border-b border-border/50 px-4 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-40 transition-all duration-300">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-10 w-10 text-muted-foreground hover:bg-secondary dark:hover:bg-white/5 border border-transparent hover:border-border/30 rounded-none transition-all">
+                        <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                            <div className="h-2 w-2 bg-brand rounded-full animate-pulse opacity-50"></div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-[0.3em]">Editor de Colecciones</span>
+                        </div>
+                        <h1 className="text-xl font-bold text-foreground tracking-[0.1em] uppercase truncate max-w-[200px] sm:max-w-md">{form.watch("name") || "Sin Nombre"}</h1>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Button
+                        disabled={isSubmitting}
+                        onClick={form.handleSubmit(onSubmit)}
+                        className="bg-foreground text-background font-bold hover:bg-foreground/90 h-11 px-8 rounded-none uppercase tracking-[0.2em] text-[10px] shadow-lg transition-all active:scale-95"
+                    >
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <span>Guardando</span>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <Save className="w-3.5 h-3.5" />
+                                <span>Guardar Cambios</span>
+                            </div>
+                        )}
+                    </Button>
+                </div>
             </header>
 
-            <main className="max-w-lg mx-auto p-4 space-y-8">
+            <main className="max-w-5xl mx-auto px-4 lg:px-8 pt-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
+                {/* Left Column: Form Details */}
+                <div className="lg:col-span-7 space-y-12">
 
-                {/* Status Toggle - Simplified */}
-                <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-2">
-                        <div className={cn("w-2.5 h-2.5 rounded-full", form.watch("is_active") ? "bg-green-500" : "bg-slate-300")} />
-                        <div className="flex flex-col">
-                            <span className="text-sm font-bold text-slate-900">{form.watch("is_active") ? "Publicado" : "Borrador"}</span>
-                            <span className="text-[10px] text-slate-400">Visible en la tienda</span>
+                    {/* Primary Info */}
+                    <section className="space-y-8">
+                        <div className="flex items-center gap-3 border-b border-border/50 pb-4">
+                            <div className="w-1.5 h-4 bg-brand shadow-[0_0_8px_rgba(180,115,49,0.5)]"></div>
+                            <h2 className="text-[10px] uppercase font-bold text-foreground tracking-[0.3em]">Información General</h2>
                         </div>
-                    </div>
-                    <Switch
-                        checked={form.watch("is_active")}
-                        onCheckedChange={(val) => form.setValue("is_active", val)}
-                        className="data-[state=checked]:bg-[#b47331]"
-                    />
-                </div>
 
-                {/* General Info - Simplified */}
-                <section className="space-y-4">
-                    <h2 className="text-base font-bold text-slate-900 px-2">Información General</h2>
-                    <div className="space-y-5">
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-slate-500 font-medium ml-1">Nombre</Label>
-                            <Input {...form.register("name")} className="h-12 bg-white border-transparent shadow-sm rounded-2xl focus-visible:ring-[#b47331]" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-slate-500 font-medium ml-1">Slug</Label>
-                            <Input {...form.register("slug")} className="h-12 bg-white border-transparent shadow-sm rounded-2xl font-mono text-xs focus-visible:ring-[#b47331]" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-slate-500 font-medium ml-1">Descripción</Label>
-                            <Textarea {...form.register("description")} className="min-h-[100px] bg-white border-transparent shadow-sm rounded-2xl resize-none focus-visible:ring-[#b47331]" />
-                        </div>
-                    </div>
-                </section>
-
-                {/* Products List - Simplified */}
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                            Productos <span className="text-slate-400 font-normal">({watchedProductIds.length})</span>
-                        </h2>
-                        <Button variant="ghost" className="text-[#b47331] text-xs font-bold h-auto p-0 hover:bg-transparent">Editar Orden</Button>
-                    </div>
-
-                    <div className="space-y-2">
-                        {/* Inline list */}
-                        {products.filter(p => watchedProductIds.includes(p.id)).map(prod => (
-                            <div key={prod.id} className="flex items-center gap-3 p-3 bg-white shadow-sm hover:shadow-md rounded-2xl transition-all group relative">
-                                <div className="w-12 h-12 bg-slate-100 rounded-xl overflow-hidden relative border border-slate-100 shrink-0">
-                                    {prod.product_images?.[0]?.image_url ? (
-                                        <Image src={prod.product_images[0].image_url} alt={prod.name} fill className="object-cover" />
-                                    ) : <div className="w-full h-full bg-slate-200" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-bold text-slate-900 truncate">{prod.name}</h4>
-                                    <p className="text-xs text-slate-400 font-mono">${(prod.price || 0).toFixed(2)}</p>
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full w-8 h-8"
-                                    onClick={() => removeProduct(prod.id)}
-                                >
-                                    <X className="w-4 h-4" />
-                                </Button>
+                        <div className="grid grid-cols-1 gap-8">
+                            <div className="space-y-3">
+                                <Label className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] ml-1">Título de Colección</Label>
+                                <Input
+                                    {...form.register("name")}
+                                    className="h-14 bg-card border-border/50 rounded-none focus-visible:ring-brand/50 text-base font-medium tracking-tight uppercase"
+                                    placeholder="EJ. ESSENTIALS SUMMER 2024"
+                                />
+                                {form.formState.errors.name && <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">{form.formState.errors.name.message}</p>}
                             </div>
-                        ))}
 
-                        <Sheet open={isProductSheetOpen} onOpenChange={setIsProductSheetOpen}>
-                            <SheetTrigger asChild>
-                                <Button variant="ghost" className="w-full h-12 text-[#b47331] font-bold bg-white shadow-sm hover:bg-[#b47331]/5 hover:text-[#a1662a] rounded-2xl flex items-center justify-center gap-2 mt-2 border border-dashed border-slate-200">
-                                    <Plus className="w-4 h-4" /> Agregar Productos
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent side="bottom" className="h-[90vh] rounded-t-[2rem] p-0 flex flex-col">
-                                <SheetHeader className="px-6 pt-6 pb-4 border-b flex flex-row items-center justify-between space-y-0">
-                                    <Button variant="ghost" className="text-slate-400 p-0 hover:bg-transparent" onClick={() => setIsProductSheetOpen(false)}>Cancelar</Button>
-                                    <SheetTitle className="text-base font-bold">Seleccionar Productos</SheetTitle>
-                                    <Button variant="ghost" className="text-[#b47331] font-bold p-0 hover:bg-transparent" onClick={() => setIsProductSheetOpen(false)}>Listo</Button>
-                                </SheetHeader>
-                                <div className="flex-1 overflow-y-auto w-full relative">
-                                    <ProductPicker
-                                        selectedIds={watchedProductIds}
-                                        onSelectionChange={handleProductSelection}
-                                        onConfirm={() => setIsProductSheetOpen(false)}
+                            <div className="space-y-3">
+                                <Label className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] ml-1">Slug URL</Label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-mono opacity-50">/</div>
+                                    <Input
+                                        {...form.register("slug")}
+                                        className="h-14 bg-card border-border/50 rounded-none pl-7 font-mono text-sm focus-visible:ring-brand/50"
+                                        placeholder="summer-collection"
                                     />
                                 </div>
-                            </SheetContent>
-                        </Sheet>
-                    </div>
-                </section>
+                                <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest px-1">Identificador único para la URL pública.</p>
+                            </div>
 
-                {/* Cover Image - Simplified */}
-                <section className="space-y-4">
-                    <h2 className="text-base font-bold text-slate-900 px-2">Imagen de Portada</h2>
-                    <div className="relative w-full aspect-[2/1] rounded-3xl overflow-hidden shadow-sm bg-white group border border-slate-200/50">
-                        {imagePreview ? (
-                            <Image src={imagePreview} alt="Cover" fill className="object-cover" />
-                        ) : (
-                            <div className="flex-center w-full h-full text-slate-400">Sin Imagen</div>
-                        )}
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-end justify-end p-4">
-                            <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition-transform">
-                                <ImageIcon className="w-4 h-4" /> Cambiar
-                                <input type="file" className="hidden" accept="image/*" onChange={handleImageSelect} />
-                            </label>
+                            <div className="space-y-3">
+                                <Label className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] ml-1">Descripción Narrativa</Label>
+                                <Textarea
+                                    {...form.register("description")}
+                                    className="min-h-[160px] bg-card border-border/50 rounded-none resize-none focus-visible:ring-brand/50 p-4 text-sm leading-relaxed"
+                                    placeholder="DESCRIBE EL CONCEPTO DE ESTA COLECCIÓN..."
+                                />
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                {/* SEO Config */}
-                <div className="bg-white shadow-sm rounded-2xl overflow-hidden">
-                    <button
-                        onClick={() => setSeoOpen(!seoOpen)}
-                        className="w-full flex items-center justify-between p-4 text-sm font-bold text-slate-900 hover:bg-slate-50"
-                    >
-                        Configuración SEO
-                        {seoOpen ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
-                    </button>
-                    {seoOpen && (
-                        <div className="p-4 pt-0 space-y-3">
-                            <p className="text-xs text-slate-500">Configuración de meta tags y visualización en buscadores.</p>
-                            {/* Placeholder for SEO fields */}
+                    {/* Product Selection */}
+                    <section className="space-y-8">
+                        <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-1.5 h-4 bg-brand shadow-[0_0_8px_rgba(180,115,49,0.5)]"></div>
+                                <h2 className="text-[10px] uppercase font-bold text-foreground tracking-[0.3em]">
+                                    Productos Vinculados <span className="text-muted-foreground ml-2 opacity-50 font-normal">[{watchedProductIds.length}]</span>
+                                </h2>
+                            </div>
+
+                            <Sheet open={isProductSheetOpen} onOpenChange={setIsProductSheetOpen}>
+                                <SheetTrigger asChild>
+                                    <Button variant="outline" className="h-10 px-6 rounded-none border-border/50 hover:bg-brand/10 hover:text-brand transition-all uppercase tracking-[0.2em] text-[10px] font-bold">
+                                        <Plus className="w-3.5 h-3.5 mr-2" /> Gestionar Lista
+                                    </Button>
+                                </SheetTrigger>
+                                <SheetContent side="bottom" className="h-[95vh] rounded-none p-0 flex flex-col bg-background border-t-brand/30">
+                                    <SheetHeader className="px-8 py-6 border-b border-border/30 flex flex-row items-center justify-between space-y-0 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+                                        <div className="flex flex-col text-left">
+                                            <span className="text-[9px] font-bold text-brand uppercase tracking-[0.3em]">Selector Avanzado</span>
+                                            <SheetTitle className="text-2xl font-bold uppercase tracking-[0.1em]">Catálogo de Productos</SheetTitle>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <Button variant="ghost" className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] font-bold hover:bg-transparent" onClick={() => setIsProductSheetOpen(false)}>Cancelar</Button>
+                                            <Button className="bg-brand text-white hover:bg-brand/90 px-8 rounded-none uppercase tracking-[0.2em] text-[10px] font-bold h-11" onClick={() => setIsProductSheetOpen(false)}>Confirmar Selección</Button>
+                                        </div>
+                                    </SheetHeader>
+                                    <div className="flex-1 overflow-y-auto w-full relative pb-20">
+                                        <ProductPicker
+                                            selectedIds={watchedProductIds}
+                                            onSelectionChange={handleProductSelection}
+                                            onConfirm={() => setIsProductSheetOpen(false)}
+                                        />
+                                    </div>
+                                </SheetContent>
+                            </Sheet>
                         </div>
-                    )}
+
+                        <div className="grid grid-cols-1 gap-px bg-border/20 border border-border/50 overflow-hidden">
+                            <AnimatePresence initial={false}>
+                                {products.filter(p => watchedProductIds.includes(p.id)).length > 0 ? (
+                                    products.filter(p => watchedProductIds.includes(p.id)).map((prod, idx) => (
+                                        <motion.div
+                                            key={prod.id}
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            transition={{ delay: idx * 0.05 }}
+                                            className="group bg-card hover:bg-secondary/40 dark:hover:bg-white/[0.02] transition-all p-5 flex items-center gap-6 relative overflow-hidden"
+                                        >
+                                            <div className="relative w-16 h-16 bg-secondary/30 dark:bg-white/5 border border-border/30 overflow-hidden shrink-0 group-hover:border-brand/30 transition-colors">
+                                                {prod.product_images?.[0]?.image_url ? (
+                                                    <Image src={prod.product_images[0].image_url} alt={prod.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                ) : <div className="w-full h-full flex-center text-[10px] font-bold opacity-30">N/A</div>}
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[9px] font-bold text-brand uppercase tracking-widest">#{prod.id.slice(0, 8)}</span>
+                                                </div>
+                                                <h4 className="text-sm font-bold text-foreground uppercase tracking-tight truncate group-hover:text-brand transition-colors">{prod.name}</h4>
+                                                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">MXN ${(prod.price || 0).toLocaleString()}</p>
+                                            </div>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-none w-10 h-10 transition-all border border-transparent hover:border-red-500/20"
+                                                onClick={() => removeProduct(prod.id)}
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </Button>
+                                        </motion.div>
+                                    ))
+                                ) : (
+                                    <div className="bg-card/30 p-16 text-center space-y-4 border border-dashed border-border/50">
+                                        <div className="w-12 h-12 bg-secondary/50 mx-auto flex items-center justify-center opacity-30">
+                                            <Plus className="w-6 h-6" />
+                                        </div>
+                                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-[0.3em]">No hay productos en esta colección</p>
+                                    </div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </section>
                 </div>
 
+                {/* Right Column: Status & Aesthetics */}
+                <div className="lg:col-span-5 space-y-12">
+
+                    {/* Visual Configuration */}
+                    <section className="space-y-8">
+                        <div className="flex items-center gap-3 border-b border-border/50 pb-4">
+                            <div className="w-1.5 h-4 bg-brand shadow-[0_0_8px_rgba(180,115,49,0.5)]"></div>
+                            <h2 className="text-[10px] uppercase font-bold text-foreground tracking-[0.3em]">Estética Visual</h2>
+                        </div>
+
+                        <div className="space-y-6">
+                            <Label className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] ml-1">Imagen de Portada (Premium)</Label>
+                            <div className="relative w-full aspect-[4/3] bg-card border border-border/50 group overflow-hidden hover:border-brand/40 transition-all duration-700 shadow-sm hover:shadow-2xl hover:shadow-brand/5">
+                                {imagePreview ? (
+                                    <Image src={imagePreview} alt="Cover Preview" fill className="object-cover transition-transform duration-[2s] group-hover:scale-105" />
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center w-full h-full text-muted-foreground space-y-4 opacity-40">
+                                        <ImageIcon className="w-12 h-12 stroke-[1px]" />
+                                        <span className="text-[10px] uppercase font-bold tracking-[0.3em]">Sin Medios Seleccionados</span>
+                                    </div>
+                                )}
+
+                                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-12">
+                                    <label className="cursor-pointer bg-foreground text-background px-8 py-3 rounded-none text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-3 shadow-2xl hover:bg-brand transition-all transform translate-y-4 group-hover:translate-y-0 duration-500">
+                                        <Upload className="w-4 h-4" />
+                                        <span>Seleccionar Archivo</span>
+                                        <input type="file" className="hidden" accept="image/*" onChange={handleImageSelect} />
+                                    </label>
+                                </div>
+
+                                {imageFile && (
+                                    <div className="absolute top-4 left-4 bg-brand text-white px-3 py-1 text-[8px] font-bold uppercase tracking-widest shadow-lg animate-pulse">
+                                        Nuevo Archivo Pendiente
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-[9px] text-muted-foreground uppercase tracking-widest leading-relaxed text-center opacity-60">Recomendado: 1200x800px min. Formato JPG/PNG/WebP optimizado.</p>
+                        </div>
+                    </section>
+
+                    {/* Publication Controls */}
+                    <section className="space-y-6 p-8 bg-card border border-border/50 relative overflow-hidden">
+                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-brand/5 rounded-full blur-3xl"></div>
+
+                        <div className="flex items-center justify-between relative z-10">
+                            <div className="space-y-1">
+                                <h3 className="text-[10px] font-bold text-foreground uppercase tracking-[0.3em] mb-3">Estado de Publicación</h3>
+                                <div className="flex items-center gap-3">
+                                    <div className={cn("w-2 h-2 rounded-full", form.watch("is_active") ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-muted-foreground/30")} />
+                                    <span className="text-sm font-bold text-foreground uppercase tracking-wider">{form.watch("is_active") ? "Visible en Tienda" : "Modo Borrador"}</span>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={form.watch("is_active")}
+                                onCheckedChange={(val) => form.setValue("is_active", val)}
+                                className="data-[state=checked]:bg-brand rounded-none"
+                            />
+                        </div>
+
+                        <div className="pt-6 border-t border-border/30 relative z-10 opacity-70">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-relaxed">
+                                {form.watch("is_active")
+                                    ? "La colección y sus productos vinculados son accesibles para todos los visitantes del catálogo público."
+                                    : "La colección está oculta. Solo personal con acceso administrativo puede previsualizar esta sección."}
+                            </p>
+                        </div>
+                    </section>
+
+                    {/* Advanced View options */}
+                    <div className="border border-border/50 overflow-hidden bg-card">
+                        <button
+                            onClick={() => setSeoOpen(!seoOpen)}
+                            className="w-full h-14 flex items-center justify-between px-6 hover:bg-secondary/40 transition-colors group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Activity className="w-4 h-4 text-brand group-hover:scale-110 transition-transform" />
+                                <span className="text-[10px] font-bold text-foreground uppercase tracking-[0.3em]">Configuración SEO</span>
+                            </div>
+                            {seoOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                        </button>
+                        <AnimatePresence>
+                            {seoOpen && (
+                                <motion.div
+                                    initial={{ height: 0 }}
+                                    animate={{ height: "auto" }}
+                                    exit={{ height: 0 }}
+                                    className="overflow-hidden border-t border-border/30"
+                                >
+                                    <div className="p-8 space-y-4">
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-loose opacity-70 italic border-l border-brand/20 pl-4">
+                                            Los metadatos SEO se generan automáticamente basándose en el título y descripción. Las configuraciones manuales personalizadas estarán disponibles en la próxima actualización del motor de indexación de Glittershop.
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
             </main>
 
-            {/* Loading Overlay */}
-            {isSubmitting && (
-                <div className="fixed inset-0 z-[60] bg-white/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
-                        <div className="p-4 bg-white rounded-full shadow-2xl shadow-[#b47331]/20 relative">
-                            <div className="absolute inset-0 rounded-full border-4 border-[#b47331]/10 border-t-[#b47331] animate-spin" />
-                            <Save className="w-6 h-6 text-[#b47331]" />
+            {/* Loading Overlay Minimalist */}
+            <AnimatePresence>
+                {isSubmitting && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-md flex items-center justify-center p-4 transition-colors"
+                    >
+                        <div className="flex flex-col items-center gap-8 max-w-xs text-center">
+                            <div className="relative w-20 h-20">
+                                <div className="absolute inset-0 border-[1px] border-brand/10 rounded-full" />
+                                <div className="absolute inset-0 border-t-[1px] border-brand rounded-full animate-spin" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <Save className="w-6 h-6 text-brand" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-[12px] font-bold uppercase tracking-[0.4em] text-foreground animate-pulse">{loadingLog || "Procesando Datos"}</h3>
+                                <p className="text-[9px] text-muted-foreground uppercase tracking-widest leading-relaxed">Estamos sincronizando tus cambios con la infraestructura global por favor no cierres esta ventana.</p>
+                            </div>
                         </div>
-                        <p className="text-sm font-bold text-slate-600 animate-pulse">{loadingLog || "Procesando..."}</p>
-                    </div>
-                </div>
-            )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

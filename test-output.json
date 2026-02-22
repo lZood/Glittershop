@@ -1,0 +1,85 @@
+[
+  {
+    "id": 1,
+    "user_id": "c6ab4718-e47c-4f7a-ae9b-eced4c8247f6",
+    "total_amount": 800,
+    "status": "paid",
+    "shipping_address": {
+      "id": "d1d8eed9-2a0b-4d39-a0c2-ee1fd53ef2ab",
+      "city": "Guasave",
+      "phone": "6873668085",
+      "state": "Sinaloa",
+      "street": "Calle 200",
+      "country": "MX",
+      "user_id": "c6ab4718-e47c-4f7a-ae9b-eced4c8247f6",
+      "full_name": "Jose Carlos",
+      "created_at": "2026-02-21T00:51:20.620821+00:00",
+      "is_default": true,
+      "postal_code": "81140",
+      "neighborhood": "Bamoa",
+      "exterior_number": "30",
+      "interior_number": "",
+      "delivery_instructions": "QWEQWE"
+    },
+    "created_at": "2026-02-21T00:55:29.44748+00:00",
+    "updated_at": "2026-02-21T00:55:29.44748+00:00",
+    "guest_email": "misrrafan777@gmail.com",
+    "order_items": [
+      {
+        "id": 1,
+        "price": 650,
+        "product": {
+          "id": 3,
+          "sku": null,
+          "name": "Anillo de plata con gema rosa",
+          "slug": "anillo-de-plata-con-gema-rosa",
+          "tags": [],
+          "price": 650,
+          "stock": 9,
+          "video": null,
+          "is_active": true,
+          "cost_price": null,
+          "created_at": "2026-02-19T06:19:23.147455+00:00",
+          "updated_at": "2026-02-19T06:19:23.147455+00:00",
+          "category_id": 1,
+          "description": "Anillo premium con gema rosa",
+          "collection_id": null,
+          "original_price": 800,
+          "product_images": [
+            {
+              "id": 9,
+              "color": "Plata",
+              "alt_text": null,
+              "image_url": "https://aylnczeyemqdnhhqczzi.supabase.co/storage/v1/object/public/products/anillo-de-plata-con-gema-rosa/Plata-1771481960180.jpg",
+              "created_at": "2026-02-19T06:19:23.431749+00:00",
+              "is_primary": false,
+              "product_id": 3,
+              "updated_at": "2026-02-19T06:19:23.431749+00:00",
+              "storage_path": "anillo-de-plata-con-gema-rosa/Plata-1771481960180.jpg"
+            },
+            {
+              "id": 10,
+              "color": "Plata",
+              "alt_text": null,
+              "image_url": "https://aylnczeyemqdnhhqczzi.supabase.co/storage/v1/object/public/products/anillo-de-plata-con-gema-rosa/Plata-1771481961191.jpg",
+              "created_at": "2026-02-19T06:19:23.431749+00:00",
+              "is_primary": false,
+              "product_id": 3,
+              "updated_at": "2026-02-19T06:19:23.431749+00:00",
+              "storage_path": "anillo-de-plata-con-gema-rosa/Plata-1771481961191.jpg"
+            }
+          ],
+          "size_guide_type": "none",
+          "stripe_price_id": "price_1T2Qa71jvFPqS2gWHyJ2qmkj",
+          "care_instructions": "",
+          "stripe_product_id": "prod_U0RTyNiNCFHGUD"
+        },
+        "order_id": 1,
+        "quantity": 1,
+        "product_id": 3,
+        "variant_size": "6",
+        "variant_color": "Plata"
+      }
+    ]
+  }
+]

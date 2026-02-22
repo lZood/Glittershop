@@ -36,9 +36,10 @@ export function DeleteProductButton({ productId, productName }: DeleteProductBut
                 toast({
                     title: "Producto eliminado",
                     description: `El producto "${productName}" ha sido eliminado correctamente.`,
+                    className: "bg-background border-border/50 rounded-none uppercase tracking-widest font-bold"
                 });
                 router.push('/admin/inventory');
-                router.refresh(); // Ensure the list is updated
+                router.refresh();
             } else {
                 toast({
                     title: "Error",
@@ -61,27 +62,27 @@ export function DeleteProductButton({ productId, productName }: DeleteProductBut
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isDeleting} className="h-8 md:h-9">
-                    {isDeleting ? <Loader2 className="mr-2 h-3 w-3 md:h-4 md:w-4 animate-spin" /> : <Trash2 className="md:mr-2 h-3 w-3 md:h-4 md:w-4" />}
-                    <span className="hidden md:inline">Eliminar</span>
+                <Button variant="outline" size="sm" disabled={isDeleting} className="h-10 rounded-none border border-red-200 bg-red-50/10 hover:bg-red-500 hover:text-white text-red-600 transition-all font-bold uppercase tracking-[0.1em] text-[10px]">
+                    {isDeleting ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Trash2 className="mr-2 h-3.5 w-3.5" />}
+                    Eliminar
                 </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="rounded-none border-border/50">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>¿Estás completamente seguro?</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <AlertDialogTitle className="uppercase tracking-[0.1em] font-bold">¿Estás completamente seguro?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-sm">
                         Esta acción no se puede deshacer. Esto eliminará permanentemente el producto
-                        <strong> "{productName}" </strong> y todas sus variantes, imágenes y datos asociados.
+                        <strong className="text-foreground"> "{productName}" </strong> y todas sus variantes, imágenes y datos asociados.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogFooter className="mt-6">
+                    <AlertDialogCancel disabled={isDeleting} className="rounded-none uppercase tracking-[0.1em] text-[10px] font-bold">Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                         onClick={(e) => {
-                            e.preventDefault(); // Prevent closing immediately to show loading state if needed
+                            e.preventDefault();
                             handleDelete();
                         }}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        className="bg-red-600 hover:bg-red-700 text-white rounded-none uppercase tracking-[0.1em] text-[10px] font-bold h-10 px-6"
                         disabled={isDeleting}
                     >
                         {isDeleting ? "Eliminando..." : "Sí, eliminar producto"}

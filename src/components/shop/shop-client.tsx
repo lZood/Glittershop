@@ -222,7 +222,7 @@ export function ShopClient({ initialProducts }: ShopClientProps) {
                     <div
                         className={cn(
                             'w-full z-30 transition-transform duration-300',
-                            isSticky ? 'fixed top-16 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm' : 'relative bg-background',
+                            isSticky ? 'fixed top-16 left-0 right-0 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-sm' : 'relative bg-background',
                             !isHeaderVisible && isSticky && '-translate-y-full'
                         )}
                     >

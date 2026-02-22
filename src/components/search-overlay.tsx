@@ -19,10 +19,14 @@ import { products } from '@/lib/products';
 import type { Product } from '@/lib/types';
 import { useDebounce } from '@/hooks/use-debounce';
 
-export default function SearchOverlay() {
+export default function SearchOverlay({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<Product[]>([]);
     const [isOpen, setIsOpen] = useState(false);
+
+    useEffect(() => {
+        onOpenChange?.(isOpen);
+    }, [isOpen, onOpenChange]);
     const [totalResults, setTotalResults] = useState(0);
     const debouncedQuery = useDebounce(query, 300);
     const router = useRouter();
@@ -90,9 +94,15 @@ export default function SearchOverlay() {
             <SheetContent
                 side="top"
                 overlayClassName="bg-transparent top-16 z-30"
-                className="h-auto min-h-[400px] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-0 [&>button]:hidden top-16 shadow-none z-40"
+                className="h-auto min-h-[400px] w-full border-b-0 p-0 [&>button]:hidden top-16 shadow-none z-40 overflow-hidden"
             >
-                <div className="container mx-auto max-w-7xl px-4 md:px-8 py-6">
+                {/* Isolated Glass Background Layer */}
+                <div
+                    className="absolute inset-0 z-[-1] backdrop-blur-[25px] backdrop-saturate-[210%] backdrop-brightness-[1.25] bg-white/[0.05] border-b border-white/10"
+                    style={{ isolation: 'isolate' }}
+                />
+
+                <div className="container mx-auto max-w-7xl px-4 md:px-8 py-6 relative" style={{ isolation: 'isolate' }}>
                     {/* Custom Header Row */}
                     <div className="flex items-center justify-between mb-8 pt-4">
                         <span className="text-sm font-semibold tracking-widest text-foreground uppercase">Buscar</span>

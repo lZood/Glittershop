@@ -5,12 +5,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { products } from '@/lib/products';
-import { X, ShoppingBag, Heart, ArrowRight, Share2, Trash2, AlertCircle, Check } from 'lucide-react';
+import { X, ShoppingBag, Star, ArrowRight, Share2, Trash2, AlertCircle, Check } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { useWishlist } from '@/lib/store/wishlist';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,13 +24,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// Initial mock data
-const initialWishlistItems = [
-  products.find(p => p.id === '1'),
-  products.find(p => p.id === '2'),
-  products.find(p => p.id === '4'),
-].filter(Boolean) as Product[];
-
 function formatPrice(price: number) {
   return new Intl.NumberFormat('es-MX', {
     style: 'currency',
@@ -38,9 +32,13 @@ function formatPrice(price: number) {
 }
 
 export default function WishlistPage() {
-  const [items, setItems] = useState<Product[]>(initialWishlistItems);
-  const { toast } = useToast();
+  const { items, removeItem, clearWishlist } = useWishlist();
+  const [mounted, setMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const footer = document.getElementById('main-footer');
@@ -58,24 +56,19 @@ export default function WishlistPage() {
     return () => observer.disconnect();
   }, []);
 
-  const removeItem = (id: string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
-    toast({
-      description: "Producto eliminado de favoritos",
-    });
+  const handleRemoveItem = (id: string) => {
+    removeItem(id);
+    toast.success("Producto eliminado de favoritos");
   };
 
   const clearAll = () => {
-    setItems([]);
-    toast({
-      description: "Lista de favoritos vaciada",
-    });
+    clearWishlist();
+    toast.success("Lista de favoritos vaciada");
   };
 
   const shareWishlist = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast({
-      title: "¡Enlace copiado!",
+    toast.success("¡Enlace copiado!", {
       description: "Comparte tu lista de deseos con tus amigos.",
     });
   };
@@ -93,12 +86,18 @@ export default function WishlistPage() {
         initial={{ y: 0 }}
         animate={{ y: isVisible ? 0 : '-200%' }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="sticky top-16 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        className="sticky top-16 z-30 w-full overflow-hidden"
       >
-        <div className="container mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between max-w-6xl">
+        {/* Isolated Glass Background Layer */}
+        <div
+          className="absolute inset-0 z-[-1] backdrop-blur-[25px] backdrop-saturate-[210%] backdrop-brightness-[1.25] bg-white/[0.05] border-b border-white/10"
+          style={{ isolation: 'isolate' }}
+        />
+
+        <div className="container mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between max-w-6xl relative" style={{ isolation: 'isolate' }}>
           <div className="flex items-baseline gap-3">
             <h1 className="text-xl md:text-3xl font-black tracking-tighter uppercase text-foreground">
-              Favoritos
+              Lista de deseos
             </h1>
             <Badge variant="secondary" className="text-xs font-bold rounded-full px-2.5">
               {items.length}
@@ -142,7 +141,9 @@ export default function WishlistPage() {
       </motion.div>
 
       <div className="container mx-auto px-4 md:px-8 py-8 md:py-12 max-w-6xl">
-        {items.length > 0 ? (
+        {!mounted ? (
+          <div className="flex justify-center flex-col items-center py-20 text-muted-foreground"><div className="animate-pulse w-24 h-24 mb-6 rounded-full bg-secondary"></div>Cargando favoritos...</div>
+        ) : items.length > 0 ? (
           <motion.div
             layout
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
@@ -180,7 +181,7 @@ export default function WishlistPage() {
 
                       {/* Remove Button (Desktop Overlay) */}
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => handleRemoveItem(item.id)}
                         className="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur text-black rounded-full p-2.5 shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-50 hover:text-red-600 transform translate-y-[-10px] group-hover:translate-y-0"
                         title="Eliminar"
                       >
@@ -216,7 +217,7 @@ export default function WishlistPage() {
                           variant="ghost"
                           size="icon"
                           className="md:hidden text-muted-foreground hover:text-destructive -mr-2"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemoveItem(item.id)}
                         >
                           <Trash2 className="w-5 h-5" />
                         </Button>
@@ -242,7 +243,7 @@ export default function WishlistPage() {
             <div className="relative mb-8">
               <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full"></div>
               <div className="relative w-24 h-24 bg-background border-2 border-dashed border-primary/30 rounded-full flex items-center justify-center">
-                <Heart className="w-10 h-10 text-primary/50" />
+                <Star className="w-10 h-10 text-primary/50" />
               </div>
             </div>
             <h2 className="text-2xl md:text-4xl font-black mb-3 tracking-tight uppercase">Tu lista está vacía</h2>

@@ -57,16 +57,16 @@ export function Step4Preview({
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 pb-24">
             {/* Header */}
             <div className="text-center space-y-2">
-                <h2 className="text-xl font-bold text-slate-900">Vista Previa</h2>
-                <p className="text-slate-500 text-sm max-w-xs mx-auto">
+                <h2 className="text-xl font-bold text-foreground">Vista Previa</h2>
+                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
                     Así es como tus clientes verán el producto.
                 </p>
             </div>
 
             {/* Mock Product Page */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-card rounded-3xl shadow-sm border border-border/50 overflow-hidden">
                 {/* Image Gallery Mock */}
-                <div className="relative aspect-square bg-slate-100">
+                <div className="relative aspect-square bg-secondary/10">
                     <img
                         src={currentImage?.url}
                         alt="Preview"
@@ -75,10 +75,10 @@ export function Step4Preview({
 
                     {displayImages.length > 1 && (
                         <>
-                            <button onClick={prevImage} className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white backdrop-blur-md flex items-center justify-center text-slate-900 shadow-sm z-10">
+                            <button onClick={prevImage} className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-card/80 hover:bg-card backdrop-blur-md flex items-center justify-center text-foreground shadow-sm z-10">
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
-                            <button onClick={nextImage} className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white backdrop-blur-md flex items-center justify-center text-slate-900 shadow-sm z-10">
+                            <button onClick={nextImage} className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-card/80 hover:bg-card backdrop-blur-md flex items-center justify-center text-foreground shadow-sm z-10">
                                 <ChevronRight className="w-5 h-5" />
                             </button>
 
@@ -102,25 +102,25 @@ export function Step4Preview({
                 <div className="p-6 space-y-6">
                     <div>
                         <div className="flex justify-between items-start">
-                            <h3 className="text-2xl font-bold text-slate-900 leading-tight">{values.title || 'Nombre del Producto'}</h3>
-                            <div className="bg-slate-100 px-2 py-1 rounded text-[10px] font-black uppercase text-slate-500">
+                            <h3 className="text-2xl font-bold text-foreground leading-tight">{values.title || 'Nombre del Producto'}</h3>
+                            <div className="bg-secondary/10 px-2 py-1 rounded text-[10px] font-black uppercase text-muted-foreground">
                                 {values.category || 'Categoría'}
                             </div>
                         </div>
-                        <p className="text-[#b47331] text-xl font-bold mt-2">
+                        <p className="text-brand font-bold mt-2">
                             ${Number(values.base_price || 0).toFixed(2)}
                         </p>
                     </div>
 
                     {/* Description */}
-                    <div className="prose prose-sm text-slate-500 line-clamp-3">
+                    <div className="prose prose-sm text-muted-foreground line-clamp-3">
                         {values.description || 'Sin descripción...'}
                     </div>
 
                     {/* Colors Mock */}
                     {colors.length > 0 && (
                         <div className="space-y-3">
-                            <span className="text-xs font-bold uppercase text-slate-900 tracking-wider">Color: {selectedColor}</span>
+                            <span className="text-xs font-bold uppercase text-foreground tracking-wider">Color: {selectedColor}</span>
                             <div className="flex gap-2">
                                 {colors.map(color => (
                                     <button
@@ -131,7 +131,7 @@ export function Step4Preview({
                                         }}
                                         className={cn(
                                             "w-8 h-8 rounded-full border-2 transition-all",
-                                            selectedColor === color.name ? "border-[#b47331] scale-110" : "border-transparent hover:scale-110"
+                                            selectedColor === color.name ? "border-brand scale-110" : "border-transparent hover:scale-110"
                                         )}
                                         style={{ backgroundColor: color.hex }}
                                     />
@@ -141,7 +141,7 @@ export function Step4Preview({
                     )}
 
                     {/* Size Guide Label Mock */}
-                    <div className="flex items-center gap-2 text-[#b47331] text-xs font-bold font-mono">
+                    <div className="flex items-center gap-2 text-brand text-xs font-bold font-mono">
                         <ArrowRight className="w-3 h-3" />
                         Guía de Tallas
                     </div>
@@ -153,7 +153,7 @@ export function Step4Preview({
                 <Button
                     variant="outline"
                     onClick={onBack}
-                    className="h-14 rounded-2xl border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-bold"
+                    className="h-14 rounded-2xl border-border text-muted-foreground hover:bg-secondary/50 hover:text-foreground font-bold"
                 >
                     <ArrowRight className="w-5 h-5 rotate-180 mr-2" />
                     Atrás
@@ -163,7 +163,7 @@ export function Step4Preview({
                     variant="outline"
                     onClick={() => onSubmit('draft')}
                     disabled={isSubmitting}
-                    className="h-14 rounded-2xl border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-bold"
+                    className="h-14 rounded-2xl border-border text-muted-foreground hover:bg-secondary/50 hover:text-foreground font-bold"
                 >
                     <EyeOff className="w-4 h-4 mr-2" />
                     <div className="flex flex-col items-start gap-0.5">
@@ -175,7 +175,7 @@ export function Step4Preview({
                 <Button
                     onClick={() => onSubmit('active')}
                     disabled={isSubmitting}
-                    className="h-14 rounded-2xl bg-[#b47331] hover:bg-[#a3692c] text-white font-bold shadow-lg shadow-[#b47331]/30"
+                    className="h-14 rounded-2xl bg-brand hover:bg-brand/90 text-brand-foreground font-bold shadow-lg shadow-brand/30"
                 >
                     <Rocket className="w-4 h-4 mr-2" />
                     <div className="flex flex-col items-start gap-0.5">

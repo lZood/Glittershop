@@ -208,6 +208,48 @@ export async function updateCollection(id: string, formData: FormData) {
     }
 }
 
+export async function deleteCollection(id: string) {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+        return { success: false, message: "No autorizado" };
+    }
+
+    const isAdmin = await checkAdmin(user.id);
+    if (!isAdmin) {
+        return { success: false, message: "Acceso denegado" };
+    }
+
+    const adminSupabase = createAdminClient();
+
+    try {
+        // First delete relationships in collection_products (though they might have on delete cascade, it's safer)
+        await adminSupabase
+            .from('collection_products')
+            .delete()
+            .eq('collection_id', id);
+
+        const { error } = await adminSupabase
+            .from('collections')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error("Error deleting collection:", error);
+            return { success: false, message: error.message };
+        }
+
+        revalidatePath('/admin/collections');
+        revalidatePath('/collections');
+
+        return { success: true, message: "Colección eliminada" };
+    } catch (error: any) {
+        console.error("Unexpected error in deleteCollection:", error);
+        return { success: false, message: error.message || "Error inesperado" };
+    }
+}
+
 export async function getCollection(id: string) {
     const supabase = await createClient();
 

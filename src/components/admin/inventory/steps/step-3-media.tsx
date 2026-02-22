@@ -50,8 +50,8 @@ export function Step3Media({
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             {/* Header */}
             <div className="text-center space-y-2">
-                <h2 className="text-xl font-bold text-slate-900">Multimedia</h2>
-                <p className="text-slate-500 text-sm max-w-xs mx-auto">
+                <h2 className="text-foreground font-bold">Multimedia</h2>
+                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
                     Añade fotos de alta calidad y un video para destacar tu producto.
                 </p>
             </div>
@@ -59,12 +59,12 @@ export function Step3Media({
             {/* Images Section */}
             <div className="space-y-6">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                    <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-muted-foreground">
                         <ImageIcon className="w-4 h-4" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-slate-900 text-sm">Galería de Fotos</h3>
-                        <p className="text-[10px] text-slate-400">Sube fotos por variante de color.</p>
+                        <h3 className="font-bold text-foreground font-bold text-sm">Galería de Fotos</h3>
+                        <p className="text-[10px] text-muted-foreground/60">Sube fotos por variante de color.</p>
                     </div>
                 </div>
 
@@ -76,10 +76,10 @@ export function Step3Media({
                                 key={color.name}
                                 onClick={() => setActiveTab(color.name)}
                                 className={cn(
-                                    "flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs whitespace-nowrap transition-all",
+                                    "flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs whitespace-nowrap transition-all active:scale-95",
                                     activeTab === color.name
-                                        ? "bg-[#b47331] text-white shadow-lg shadow-[#b47331]/20"
-                                        : "bg-white border border-slate-200 text-slate-500 hover:border-[#b47331]/50"
+                                        ? "bg-brand text-brand-foreground shadow-lg shadow-brand/20 active:bg-brand/80"
+                                        : "bg-card border border-border text-muted-foreground hover:border-brand/50 active:bg-secondary/20"
                                 )}
                             >
                                 <span className="w-2 h-2 rounded-full border border-white/50" style={{ backgroundColor: color.hex }} />
@@ -99,7 +99,7 @@ export function Step3Media({
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {/* Previews */}
                         {currentImages.map((img, idx) => (
-                            <div key={idx} className="relative group aspect-[3/4] rounded-2xl overflow-hidden bg-slate-100 shadow-sm border border-slate-100 animate-in fade-in duration-300">
+                            <div key={idx} className="relative group aspect-[3/4] rounded-2xl overflow-hidden bg-secondary/10 shadow-sm border border-border/50 animate-in fade-in duration-300">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={img.url} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
 
@@ -107,14 +107,14 @@ export function Step3Media({
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex flex-col items-end justify-between p-2 opacity-0 group-hover:opacity-100">
                                     <button
                                         onClick={() => removeImage(activeTab, idx)}
-                                        className="bg-white/90 hover:bg-red-500 hover:text-white text-slate-500 p-1.5 rounded-full shadow-sm transition-colors"
+                                        className="bg-brand/20 text-brand p-1.5 rounded-full shadow-sm transition-colors backdrop-blur-md"
                                     >
                                         <X className="w-3.5 h-3.5" />
                                     </button>
 
                                     <button
                                         onClick={() => openFramer(idx)}
-                                        className="bg-white/90 hover:bg-[#b47331] hover:text-white text-slate-500 px-3 py-1.5 rounded-full shadow-sm transition-colors flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm"
+                                        className="bg-brand text-brand-foreground px-3 py-1.5 rounded-full shadow-sm transition-colors flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide backdrop-blur-md"
                                     >
                                         <Crop className="w-3 h-3" />
                                         <span>Editar</span>
@@ -124,11 +124,11 @@ export function Step3Media({
                         ))}
 
                         {/* Add Button */}
-                        <div className="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex flex-col items-center justify-center gap-2 relative group cursor-pointer">
-                            <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 group-hover:text-[#b47331] transition-colors">
+                        <div className="bg-secondary/10 border-2 border-dashed border-border bg-secondary/5 hover:bg-secondary/20 transition-colors flex flex-col items-center justify-center gap-2 relative group cursor-pointer">
+                            <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-muted-foreground/60 group-hover:text-brand transition-colors">
                                 <Plus className="w-5 h-5" />
                             </div>
-                            <span className="text-xs font-bold text-slate-400 group-hover:text-[#b47331] transition-colors">Añadir Foto</span>
+                            <span className="text-xs font-bold text-muted-foreground/60 group-hover:text-brand transition-colors">Añadir Foto</span>
                             <input
                                 type="file"
                                 accept="image/*"
@@ -141,23 +141,23 @@ export function Step3Media({
                 )}
 
                 {colors.length > 0 && currentImages.length === 0 && (
-                    <div className="text-center py-8 bg-slate-50 rounded-2xl border border-slate-100 border-dashed text-slate-400">
+                    <div className="text-center py-8 bg-secondary/10 rounded-2xl border border-border border-dashed text-muted-foreground/60">
                         <p className="text-xs">No hay imágenes para esta variante.</p>
                     </div>
                 )}
             </div>
 
-            <div className="h-px bg-slate-100" />
+            <div className="h-px bg-border/50" />
 
             {/* Video Section */}
             <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                    <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-muted-foreground">
                         <Video className="w-4 h-4" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-slate-900 text-sm">Video del Producto</h3>
-                        <p className="text-[10px] text-slate-400">Opcional. Máx 50MB.</p>
+                        <h3 className="font-bold text-foreground font-bold text-sm">Video del Producto</h3>
+                        <p className="text-[10px] text-muted-foreground/60">Opcional. Máx 50MB.</p>
                     </div>
                 </div>
 
@@ -174,9 +174,9 @@ export function Step3Media({
                             </button>
                         </div>
                     ) : (
-                        <div className="relative h-32 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex flex-col items-center justify-center gap-2">
+                        <div className="relative h-32 rounded-2xl border-2 border-dashed border-slate-200 bg-secondary/10 transition-colors flex flex-col items-center justify-center gap-2">
                             <Video className="w-8 h-8 text-slate-300" />
-                            <span className="text-xs font-bold text-slate-400">Subir Video (MP4)</span>
+                            <span className="text-xs font-bold text-muted-foreground/60">Subir Video (MP4)</span>
                             <Input
                                 type="file"
                                 accept="video/mp4,video/quicktime"

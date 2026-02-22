@@ -43,6 +43,31 @@ import {
 import { useSession } from '@/lib/supabase/session-provider';
 import { createClient } from '@/lib/supabase/client';
 import { Separator } from '@/components/ui/separator';
+import { getUserOrders } from '@/lib/actions/orders';
+import { getUserAddresses, Address } from '@/lib/actions/address';
+import { AddressForm } from '@/components/checkout/address-form';
+import { useWishlist } from '@/lib/store/wishlist';
+
+const translateStatus = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'pending': return 'Pendiente';
+    case 'paid': return 'Pagado';
+    case 'shipped': return 'Enviado';
+    case 'delivered': return 'Entregado';
+    case 'cancelled': return 'Cancelado';
+    default: return status || 'Recibido';
+  }
+};
+
+const getOrderImage = (order: any) => {
+  const firstItem = order.order_items?.[0];
+  if (!firstItem) return null;
+  const { product_images } = firstItem.product || {};
+  if (product_images && product_images.length > 0) {
+    return product_images[0].image_url;
+  }
+  return null;
+};
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -87,34 +112,38 @@ export default function ProfilePage() {
     }
   };
 
-  // Mock Data
-  const recentOrder = {
-    id: 'GS-88291',
-    date: '22 Nov 2025',
-    status: 'En camino',
-    total: '$12,450',
-    items: [PlaceHolderImages.find(p => p.id === 'product-necklace-1')]
-  };
+  const [orders, setOrders] = useState<any[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
-  const orders = [
-    recentOrder,
-    {
-      id: 'GS-88102',
-      date: '15 Oct 2025',
-      status: 'Entregado',
-      total: '$4,200',
-      items: [PlaceHolderImages.find(p => p.id === 'product-ring-2')]
-    },
-    {
-      id: 'GS-87955',
-      date: '02 Sep 2025',
-      status: 'Entregado',
-      total: '$8,900',
-      items: [PlaceHolderImages.find(p => p.id === 'product-earrings-1')]
-    }
-  ];
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | undefined>(undefined);
 
   const [connectionError, setConnectionError] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { items: wishlistItems } = useWishlist();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      Promise.all([
+        getUserOrders(),
+        getUserAddresses()
+      ]).then(([fetchedOrders, fetchedAddresses]) => {
+        setOrders(fetchedOrders);
+        setAddresses(fetchedAddresses);
+        setIsLoadingData(false);
+      }).catch(err => {
+        console.error('Data fetch error:', err);
+      });
+    }
+  }, [user]);
+
+  // Derived
+  const recentOrder = orders.length > 0 ? orders[0] : null;
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -263,62 +292,71 @@ export default function ProfilePage() {
               <TabsContent value="overview" className="space-y-8 mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
                 {/* Active Order Card */}
-                <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-background to-secondary/20">
-                  <CardHeader className="border-b bg-secondary/10 pb-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Package className="w-5 h-5 text-primary" />
-                        <CardTitle className="text-sm font-bold uppercase tracking-widest">Pedido en Curso</CardTitle>
+                {recentOrder ? (
+                  <Card className="overflow-hidden border-none shadow-2xl bg-gradient-to-br from-background via-secondary/10 to-primary/5 hover:shadow-primary/10 transition-shadow duration-500 rounded-3xl relative before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/40 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:pointer-events-none border border-border/50">
+                    <CardHeader className="border-b border-border/50 bg-secondary/20 pb-4 backdrop-blur-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-primary/10 rounded-full">
+                            <Package className="w-5 h-5 text-primary" />
+                          </div>
+                          <CardTitle className="text-sm font-black uppercase tracking-widest text-foreground/80">Último Pedido</CardTitle>
+                        </div>
+                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200/50 shadow-sm font-black uppercase tracking-wider text-[10px] px-3 py-1">
+                          {translateStatus(recentOrder.status)}
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 font-bold uppercase text-[10px]">
-                        {recentOrder.status}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-6">
-                      <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-white border shadow-sm flex-shrink-0">
-                        {recentOrder.items[0] && (
-                          <Image
-                            src={recentOrder.items[0].imageUrl}
-                            alt="Product"
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover p-1"
-                          />
-                        )}
+                    </CardHeader>
+                    <CardContent className="p-6 md:p-8">
+                      <div className="flex items-center gap-6 md:gap-8">
+                        <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-white border border-border/50 shadow-inner flex-shrink-0 group">
+                          {getOrderImage(recentOrder) ? (
+                            <Image
+                              src={getOrderImage(recentOrder)}
+                              alt="Product"
+                              fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              className="object-cover p-1 transition-transform duration-700 group-hover:scale-110"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-secondary/50 flex items-center justify-center">
+                              <Package className="w-6 h-6 text-muted-foreground/50" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase">Pedido #{recentOrder.id}</p>
+                          <h3 className="font-black text-xl md:text-2xl leading-tight line-clamp-2 text-foreground/90">{recentOrder.order_items?.[0]?.product?.name || 'Varios Artículos'}</h3>
+                          <p className="text-sm font-medium text-muted-foreground pt-1">Fecha: <span className="text-primary font-bold">{new Date(recentOrder.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</span></p>
+                        </div>
+                        <Button size="icon" variant="default" className="rounded-full shadow-lg shadow-primary/20 hover:scale-105 transition-transform h-12 w-12 shrink-0 group" asChild>
+                          <Link href={`/profile/orders/${recentOrder.id}`}>
+                            <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                          </Link>
+                        </Button>
                       </div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-xs text-muted-foreground font-medium">Pedido #{recentOrder.id}</p>
-                        <h3 className="font-bold text-lg leading-tight">Collar de Diamantes "Eternity"</h3>
-                        <p className="text-sm font-medium">Llega el <span className="text-primary">28 de Noviembre</span></p>
-                      </div>
-                      <Button size="icon" variant="secondary" className="rounded-full h-10 w-10 shrink-0">
-                        <ChevronRight className="w-5 h-5" />
-                      </Button>
-                    </div>
-                    <div className="mt-6 bg-secondary/30 rounded-full h-2 w-full overflow-hidden">
-                      <div className="bg-primary h-full w-[65%] rounded-full shadow-[0_0_10px_rgba(0,0,0,0.1)] animate-pulse"></div>
-                    </div>
-                    <div className="flex justify-between mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                      <span>Procesado</span>
-                      <span>Enviado</span>
-                      <span>Entregado</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="overflow-hidden shadow-sm rounded-3xl border-dashed border-2">
+                    <CardContent className="p-12 text-center text-muted-foreground">
+                      No tienes pedidos recientes. <br />
+                      <Link href="/shop" className="text-primary hover:text-primary/80 transition-colors mt-4 inline-block font-black uppercase tracking-widest text-sm">Explorar Boutique</Link>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
                   <Link href="/wishlist" className="group">
                     <Card className="h-full hover:border-primary/50 transition-all duration-300 hover:shadow-md">
                       <CardContent className="p-6 flex flex-col items-center text-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-500 group-hover:scale-110 transition-transform">
-                          <Heart className="w-6 h-6" />
+                        <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                          <Star className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="text-2xl font-black">12</p>
-                          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Favoritos</p>
+                          <p className="text-2xl font-black">{mounted ? wishlistItems.length : '-'}</p>
+                          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Lista de deseos</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -347,37 +385,45 @@ export default function ProfilePage() {
                     <CardDescription>Revisa el estado de tus compras recientes.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {orders.map((order) => (
-                      <div key={order.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-lg border hover:bg-secondary/30 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary border">
-                            {order.items[0] && (
-                              <Image
-                                src={order.items[0].imageUrl}
-                                alt="Product"
-                                fill
-                                className="object-cover"
-                              />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-bold text-sm">Pedido #{order.id}</p>
-                            <p className="text-xs text-muted-foreground">{order.date}</p>
-                            <div className="mt-1">
-                              <Badge variant="outline" className="text-[10px] font-bold uppercase">
-                                {order.status}
-                              </Badge>
+                    {orders.length === 0 ? (
+                      <div className="text-center p-8 text-muted-foreground">Aún no has realizado pedidos.</div>
+                    ) : (
+                      orders.map((order) => (
+                        <div key={order.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-lg border hover:bg-secondary/30 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-white border shadow-sm group-hover:shadow-md transition-shadow">
+                              {getOrderImage(order) ? (
+                                <Image
+                                  src={getOrderImage(order)}
+                                  alt="Product"
+                                  fill
+                                  className="object-cover p-1 transition-transform duration-500 group-hover:scale-105"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-secondary/20 flex flex-col items-center justify-center">
+                                  <Package className="w-4 h-4 text-muted-foreground/40" />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-black text-base text-foreground/90">Pedido #{order.id}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{new Date(order.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                              <div className="mt-2 text-left">
+                                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-wider bg-secondary/30">
+                                  {translateStatus(order.status)}
+                                </Badge>
+                              </div>
                             </div>
                           </div>
+                          <div className="flex items-center justify-between w-full sm:w-auto gap-8 sm:pr-4">
+                            <p className="font-black text-lg text-primary">{new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(order.total_amount)}</p>
+                            <Button variant="ghost" className="hover:bg-primary hover:text-primary-foreground transition-colors rounded-full" asChild>
+                              <Link href={`/profile/orders/${order.id}`}>Ver Detalles</Link>
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between w-full sm:w-auto gap-6">
-                          <p className="font-bold">{order.total}</p>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/profile/orders/${order.id}`}>Ver Detalles</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -435,23 +481,49 @@ export default function ProfilePage() {
                     </AccordionTrigger>
                     <AccordionContent className="pt-2 pb-6">
                       <div className="space-y-4">
-                        <div className="p-4 border rounded-lg flex items-start justify-between bg-background">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-bold text-sm">Casa</span>
-                              <Badge className="text-[10px]">Principal</Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground">Av. Reforma 222, Col. Juárez</p>
-                            <p className="text-sm text-muted-foreground">CDMX, México, 06600</p>
+                        {isAddingAddress || editingAddress ? (
+                          <div className="bg-background rounded-lg p-2 border">
+                            <AddressForm
+                              existingAddress={editingAddress}
+                              onSuccess={async () => {
+                                setIsAddingAddress(false);
+                                setEditingAddress(undefined);
+                                const newAddresses = await getUserAddresses();
+                                setAddresses(newAddresses);
+                              }}
+                              onCancel={() => {
+                                setIsAddingAddress(false);
+                                setEditingAddress(undefined);
+                              }}
+                            />
                           </div>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="icon" className="h-8 w-8"><Edit2 className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="w-4 h-4" /></Button>
-                          </div>
-                        </div>
-                        <Button variant="outline" className="w-full border-dashed">
-                          <Plus className="w-4 h-4 mr-2" /> Agregar Nueva Dirección
-                        </Button>
+                        ) : (
+                          <>
+                            {addresses.length === 0 ? (
+                              <p className="text-muted-foreground text-sm py-4 text-center">No tienes direcciones guardadas.</p>
+                            ) : (
+                              addresses.map(addr => (
+                                <div key={addr.id} className="p-4 border rounded-lg flex items-start justify-between bg-background">
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="font-bold text-sm">{addr.full_name}</span>
+                                      {addr.is_default && <Badge className="text-[10px]">Principal</Badge>}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{addr.street} {addr.exterior_number} {addr.interior_number && `Int ${addr.interior_number}`}</p>
+                                    <p className="text-sm text-muted-foreground">{addr.neighborhood}, {addr.city}, {addr.state} {addr.postal_code}</p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingAddress(addr)}><Edit2 className="w-4 h-4" /></Button>
+                                    {/* To make Delete functional, we'd add an action. For now keeping it visually there or wiring it if action exists. */}
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                            <Button variant="outline" className="w-full border-dashed" onClick={() => setIsAddingAddress(true)}>
+                              <Plus className="w-4 h-4 mr-2" /> Agregar Nueva Dirección
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </AccordionContent>
                   </AccordionItem>
