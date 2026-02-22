@@ -16,7 +16,7 @@ import { Step3Media } from "./steps/step-3-media";
 import { Step4Preview } from "./steps/step-4-preview";
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
-import { createProduct, updateProduct } from '@/lib/actions/products';
+import { createProduct, updateProduct, uploadProductImage } from '@/lib/actions/products';
 import { Point, Area } from 'react-easy-crop';
 import { Form } from '@/components/ui/form';
 
@@ -386,21 +386,12 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
         if (isSubmitting) return;
         setIsSubmitting(true);
         setLoadingLog('Iniciando proceso...');
-        console.log('Iniciando proceso...');
+        console.log('🚀 onSubmit: Iniciando proceso de guardado...');
 
         try {
-            const supabase = createClient();
-
-            // Verify session is valid before uploading
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            if (sessionError || !session) {
-                console.error('No valid session for upload:', sessionError);
-                throw new Error('Tu sesión ha expirado. Por favor recarga la página e inicia sesión de nuevo.');
-            }
-            console.log('Session valid, token expires:', new Date(session.expires_at! * 1000).toLocaleString());
-
             // Helper: compress image before upload
             async function compressImage(blob: Blob, maxWidth = 1200, quality = 0.85): Promise<Blob> {
+                console.log('🗜️ Comprimiendo imagen...');
                 return new Promise((resolve, reject) => {
                     const img = new Image();
                     img.onload = () => {
@@ -421,7 +412,7 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
                         canvas.toBlob(
                             (result) => {
                                 if (!result) { reject(new Error('Compression failed')); return; }
-                                console.log(`Compressed: ${(blob.size / 1024).toFixed(0)}KB → ${(result.size / 1024).toFixed(0)}KB`);
+                                console.log(`✅ Comprimida: ${(blob.size / 1024).toFixed(0)}KB → ${(result.size / 1024).toFixed(0)}KB`);
                                 resolve(result);
                             },
                             'image/jpeg',
@@ -433,36 +424,8 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
                 });
             }
 
-            // Helper: upload with timeout
-            async function uploadWithTimeout(
-                bucket: ReturnType<typeof supabase.storage.from>,
-                fileName: string,
-                blob: Blob,
-                timeoutMs = 30000
-            ) {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-                try {
-                    const result = await Promise.race([
-                        bucket.upload(fileName, blob, {
-                            upsert: true,
-                            contentType: 'image/jpeg',
-                            cacheControl: '3600',
-                        }),
-                        new Promise<never>((_, reject) =>
-                            setTimeout(() => reject(new Error(`Upload timeout after ${timeoutMs / 1000}s — intenta con imágenes más pequeñas`)), timeoutMs)
-                        )
-                    ]);
-                    return result;
-                } finally {
-                    clearTimeout(timeoutId);
-                }
-            }
-
             // 1. Process Images
             setLoadingLog('Procesando imágenes...');
-            console.log('Procesando imágenes...');
             const imageUrls: any[] = [];
 
             const allItemsToProcess: { colorKey: string, item: any, index: number }[] = [];
@@ -470,14 +433,13 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
                 items.forEach((item, index) => allItemsToProcess.push({ colorKey, item, index }));
             });
 
-            // Upload Loop
+            // Upload Loop via Server Action
             let processedCount = 0;
             for (const { colorKey, item } of allItemsToProcess) {
                 processedCount++;
                 setLoadingLog(`Subiendo imagen ${processedCount} de ${allItemsToProcess.length}...`);
-                console.log(`Subiendo imagen ${processedCount} de ${allItemsToProcess.length}...`, item);
+                console.log(`📸 Procesando imagen ${processedCount}...`);
 
-                let blobToUpload: Blob;
                 if (item.isExisting && !item.pixelCrop) {
                     imageUrls.push({
                         url: item.url,
@@ -488,44 +450,37 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
                     continue;
                 }
 
+                let blobToUpload: Blob;
                 if (item.pixelCrop) {
-                    console.log('Cropping image...');
                     blobToUpload = await getCroppedImg(item.url, item.pixelCrop);
-                    console.log('Image crop done.');
                 } else {
-                    console.log('Fetching image blob...', item.url);
                     const res = await fetch(item.url);
                     blobToUpload = await res.blob();
-                    console.log('Fetch done, blob size:', blobToUpload.size);
                 }
 
-                // Compress if larger than 500KB
-                if (blobToUpload.size > 500 * 1024) {
-                    setLoadingLog(`Comprimiendo imagen ${processedCount} de ${allItemsToProcess.length}...`);
-                    blobToUpload = await compressImage(blobToUpload);
+                // Compress if larger than 200KB to keep server payload small
+                if (blobToUpload.size > 200 * 1024) {
+                    blobToUpload = await compressImage(blobToUpload, 1200, 0.75);
                 }
 
                 const fileName = `${data.slug}/${colorKey}-${Date.now()}.jpg`;
-                console.log('Uploading to Supabase:', fileName, 'Type: image/jpeg', 'Size:', blobToUpload.size);
 
-                const { error: uploadError } = await uploadWithTimeout(
-                    supabase.storage.from('products'),
-                    fileName,
-                    blobToUpload
-                );
+                const formData = new FormData();
+                formData.append('file', blobToUpload, fileName);
+                formData.append('fileName', fileName);
 
-                if (uploadError) {
-                    console.error('Upload Error:', uploadError);
-                    throw uploadError;
+                console.log(`📤 Enviando a servidor: ${fileName} (${(blobToUpload.size / 1024).toFixed(0)}KB)`);
+                const uploadRes = await uploadProductImage(formData);
+
+                if (!uploadRes.success) {
+                    throw new Error(`Error al subir imagen: ${uploadRes.error}`);
                 }
-                console.log('Upload success');
 
-                const publicUrl = supabase.storage.from('products').getPublicUrl(fileName).data.publicUrl;
                 imageUrls.push({
-                    url: publicUrl,
+                    url: uploadRes.url || "",
                     color: colorKey === 'default' ? undefined : colorKey,
                     isPrimary: item.isPrimary || false,
-                    storagePath: fileName
+                    storagePath: uploadRes.storagePath
                 });
             }
 
@@ -534,20 +489,29 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
                 imageUrls[0].isPrimary = true;
             }
 
-            // 2. Video
+            // 2. Video via Server Action (limit to 10MB for direct transport)
             let videoUrl = "";
             if (videoFile) {
                 setLoadingLog('Subiendo video...');
-                console.log('Subiendo video...');
+                console.log('📹 Procesando video...');
+
+                if (videoFile.size > 10 * 1024 * 1024) {
+                    throw new Error("El video es demasiado grande para este método (máx 10MB).");
+                }
+
                 const fileName = `${data.slug}/video-${Date.now()}.${videoFile.name.split('.').pop()}`;
-                await supabase.storage.from('products').upload(fileName, videoFile);
-                videoUrl = supabase.storage.from('products').getPublicUrl(fileName).data.publicUrl;
+                const formData = new FormData();
+                formData.append('file', videoFile, fileName);
+                formData.append('fileName', fileName);
+
+                const uploadRes = await uploadProductImage(formData);
+
+                if (!uploadRes.success) throw new Error(`Error al subir video: ${uploadRes.error}`);
+                videoUrl = uploadRes.url || "";
             }
 
             // 3. Save to DB
-            setLoadingLog('Guardando producto en base de datos...');
-            console.log('Guardando producto en base de datos...');
-
+            setLoadingLog('Guardando producto...');
             const variantsData = data.variants.map(v => ({
                 ...v,
                 color_metadata: v.color ? { hex: COLOR_MAP[v.color] || '#CCCCCC', name: v.color } : undefined
@@ -561,9 +525,6 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
                 is_active: status === 'active'
             };
 
-            setLoadingLog('Sincronizando con Stripe y guardando...');
-            console.log('Sincronizando con Stripe y guardando...');
-
             let result;
             if (initialData?.id) {
                 result = await updateProduct(initialData.id, serverPayload);
@@ -573,16 +534,15 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
 
             if (!result.success) throw new Error(result.error);
 
-            setLoadingLog('¡Listo! Redirigiendo...');
-            console.log('¡Listo! Redirigiendo...');
+            setLoadingLog('¡Éxito!');
             toast({ title: "Éxito", description: status === 'active' ? "Producto publicado" : "Borrador guardado" });
             router.push('/admin/inventory');
 
         } catch (error: any) {
-            console.error(error);
+            console.error('❌ Error fatal en onSubmit:', error);
             setLoadingLog('');
             toast({ variant: "destructive", title: "Error", description: error.message });
-            setIsSubmitting(false); // Only reset on error
+            setIsSubmitting(false);
         }
     }
 

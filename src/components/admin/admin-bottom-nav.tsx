@@ -8,7 +8,9 @@ import {
     ShoppingBag,
     Menu,
     Moon,
-    Sun
+    Sun,
+    BarChart3,
+    Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from "next-themes";
@@ -19,10 +21,10 @@ export function AdminBottomNav() {
 
     const navItems = [
         {
-            label: "Dashboard",
-            href: "/admin",
-            icon: LayoutDashboard,
-            activeMatch: (path: string) => path === "/admin"
+            label: "Reportes",
+            href: "/admin/analytics",
+            icon: BarChart3,
+            activeMatch: (path: string) => path.startsWith("/admin/analytics")
         },
         {
             label: "Pedidos",
@@ -31,10 +33,22 @@ export function AdminBottomNav() {
             activeMatch: (path: string) => path.startsWith("/admin/orders")
         },
         {
-            label: "Inventario",
+            label: "Dash",
+            href: "/admin",
+            icon: LayoutDashboard,
+            activeMatch: (path: string) => path === "/admin"
+        },
+        {
+            label: "Inv",
             href: "/admin/inventory",
             icon: Package,
             activeMatch: (path: string) => path.startsWith("/admin/inventory")
+        },
+        {
+            label: "Col",
+            href: "/admin/collections",
+            icon: Layers,
+            activeMatch: (path: string) => path.startsWith("/admin/collections")
         }
     ];
 
@@ -49,7 +63,7 @@ export function AdminBottomNav() {
                         key={item.href}
                         href={item.href}
                         className={cn(
-                            "relative flex flex-col items-center gap-1.5 p-2 transition-all duration-300 min-w-[70px] active:scale-95 group",
+                            "relative flex flex-col items-center gap-1.5 p-1 transition-all duration-300 min-w-[60px] active:scale-95 group",
                         )}
                     >
                         {/* Active Glow/Indicator */}

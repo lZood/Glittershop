@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { stripe } from '@/lib/stripe';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 // Define the input type explicitly or import it if shared
 // Using a simplified version of the Zod schema for the action input
@@ -39,12 +40,15 @@ type ProductActionInput = {
 
 export async function createProduct(data: ProductActionInput) {
     const supabase = await createClient();
+    console.log('🚀 [CREATE] Iniciando creación de producto:', data.title);
 
     // 1. Auth Check
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
+        console.error('❌ [CREATE] No autorizado (no se encontró usuario)');
         return { success: false, error: 'Unauthorized' };
     }
+    console.log('👤 [CREATE] Usuario identificado:', user.email);
 
     const isAdmin = await checkAdmin(supabase, user.id);
     if (!isAdmin) {
@@ -455,7 +459,7 @@ export async function updateProduct(productId: string, data: ProductActionInput)
     }
 }
 
-import { createAdminClient } from '@/lib/supabase/admin';
+
 
 const ADMIN_EMAILS = ['jramirezlopez03@gmail.com', 'admin@glittershop.com', 'antigravity@glittershop.com']; // Add your admin emails here
 
@@ -594,4 +598,66 @@ export async function updateProductStock(productId: string, newStock: number) {
 
     revalidatePath('/admin/inventory');
     return { success: true };
+}
+
+/**
+ * Uploads a product image from the server to bypass client-side connectivity/auth issues.
+ * @param formData FormData containing 'file' (Blob) and 'fileName' (string)
+ */
+export async function uploadProductImage(formData: FormData) {
+    const fileName = formData.get('fileName') as string;
+    const file = formData.get('file') as Blob;
+
+    console.log(`📤 [SERVER UPLOAD] Iniciando subida de: ${fileName} (${(file?.size / 1024).toFixed(0)}KB)`);
+
+    try {
+        const supabase = await createClient();
+
+        // 1. Auth Check
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        if (authError || !authData?.user) {
+            console.error('❌ [SERVER UPLOAD] No autorizado:', authError);
+            return { success: false, error: 'Unauthorized' };
+        }
+
+        const isAdmin = await checkAdmin(supabase, authData.user.id);
+        if (!isAdmin) {
+            console.error('❌ [SERVER UPLOAD] El usuario no es administrador:', authData.user.email);
+            return { success: false, error: 'Forbidden: Admin access required' };
+        }
+
+        const adminSupabase = createAdminClient();
+
+        // 2. Convert Blob to Buffer
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        // 3. Upload to 'products' bucket
+        const { data, error } = await adminSupabase.storage
+            .from('products')
+            .upload(fileName, buffer, {
+                contentType: file.type || 'image/jpeg',
+                upsert: true
+            });
+
+        if (error) {
+            console.error('❌ [SERVER UPLOAD] Error de Supabase:', error);
+            return { success: false, error: error.message };
+        }
+
+        // 4. Get Public URL
+        const { data: { publicUrl } } = adminSupabase.storage
+            .from('products')
+            .getPublicUrl(fileName);
+
+        console.log(`✅ [SERVER UPLOAD] Éxito: ${publicUrl}`);
+        return {
+            success: true,
+            url: publicUrl,
+            storagePath: data.path
+        };
+    } catch (err: any) {
+        console.error('🚨 [SERVER UPLOAD] Error crítico:', err);
+        return { success: false, error: err.message || 'Error interno del servidor al subir' };
+    }
 }

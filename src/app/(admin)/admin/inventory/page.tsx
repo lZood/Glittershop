@@ -23,7 +23,7 @@ export default async function InventoryPage() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto md:max-w-4xl">
+        <div className="max-w-5xl mx-auto">
             <InventoryClient products={products || []} />
         </div>
     );

@@ -186,13 +186,7 @@ export default function CartPage() {
               disabled={cartItems.length === 0}
             />
 
-            {/* Promo Code Input (Optional placement) */}
-            <div className="mt-6">
-              <div className="flex gap-2">
-                <Input placeholder="Código de descuento" className="bg-background" />
-                <Button variant="outline">Aplicar</Button>
-              </div>
-            </div>
+            {/* Coupon input removed - now integrated in OrderSummary */}
           </div>
 
         </div>

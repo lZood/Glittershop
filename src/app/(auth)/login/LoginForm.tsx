@@ -15,6 +15,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useSession } from '@/lib/supabase/session-provider';
+import { useEffect, useState } from 'react';
 
 const formSchema = z.object({
   password: z.string().min(1, 'La contraseña no puede estar vacía.'),
@@ -26,15 +28,11 @@ interface LoginFormProps {
   email: string;
 }
 
-import { useSession } from '@/lib/supabase/session-provider';
-import { useEffect } from 'react';
-
-// ... (imports remain)
-
 export default function LoginForm({ email }: LoginFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useSession();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
@@ -45,21 +43,15 @@ export default function LoginForm({ email }: LoginFormProps) {
   useEffect(() => {
     if (user) {
       console.log('User detected via useSession, redirecting...');
-      window.location.href = '/profile';
+      router.replace('/profile');
     }
-  }, [user]);
+  }, [user, router]);
 
   const handleLogin = async (values: LoginFormValues) => {
     console.log('handleLogin started');
+    setIsLoggingIn(true);
     try {
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-        console.error('Missing NEXT_PUBLIC_SUPABASE_URL');
-        throw new Error('Configuration error: Missing Supabase URL');
-      }
-
-      console.log('Creating client...');
       const supabase = createClient();
-
       console.log('Signing in with password...');
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -77,10 +69,14 @@ export default function LoginForm({ email }: LoginFormProps) {
             : error.message,
           variant: 'destructive',
         });
+        setIsLoggingIn(false);
       } else {
-        console.log('Login successful, redirecting to /profile...');
-        // Force a hard navigation to ensure the session cookie is recognized by the server/middleware immediately
-        window.location.href = '/profile';
+        console.log('Login successful, waiting for session sync...');
+        toast({ title: 'Ingresando...', description: 'Estamos preparando tu perfil.' });
+        // Small delay to allow session-provider to catch the change
+        setTimeout(() => {
+          window.location.href = '/profile';
+        }, 800);
       }
     } catch (err: any) {
       console.error('Unexpected error in handleLogin:', err);
@@ -89,6 +85,7 @@ export default function LoginForm({ email }: LoginFormProps) {
         description: err.message || 'Ocurrió un error desconocido',
         variant: 'destructive'
       });
+      setIsLoggingIn(false);
     }
   };
 
@@ -102,14 +99,14 @@ export default function LoginForm({ email }: LoginFormProps) {
             <FormItem>
               <FormLabel>Contraseña</FormLabel>
               <FormControl>
-                <Input type="password" {...field} />
+                <Input type="password" {...field} disabled={isLoggingIn} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
-          Iniciar Sesión
+        <Button type="submit" className="w-full" disabled={isLoggingIn}>
+          {isLoggingIn ? 'Iniciando sesión...' : 'Iniciar Sesión'}
         </Button>
       </form>
     </Form>

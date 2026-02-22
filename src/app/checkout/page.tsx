@@ -19,6 +19,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { CheckoutForm } from '@/components/checkout/checkout-form';
 import { useToast } from '@/hooks/use-toast';
+import { OrderSummary } from '@/components/checkout/order-summary';
 
 // Load Stripe outside of component render
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -221,35 +222,15 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Right Column: Order Summary (Sticky) */}
-                    <div className="lg:col-span-5 h-fit sticky top-24">
-                        <div className="bg-secondary/10 border rounded-xl p-6 lg:p-8">
-                            <h2 className="text-xl font-bold mb-6">Resumen</h2>
-
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Subtotal ({cartCount} productos)</span>
-                                    <span>{new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(subtotal)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Envío</span>
-                                    <span className={isFreeShipping ? "text-primary font-medium" : ""}>
-                                        {isFreeShipping ? 'Gratis' : new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(shippingCost)}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <Separator className="my-4" />
-
-                            <div className="flex justify-between text-xl font-bold">
-                                <span>Total</span>
-                                <span>{new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(total)}</span>
-                            </div>
-
-                            <div className="mt-8 text-xs text-muted-foreground text-center">
-                                {currentStep === 'shipping' && "Siguiente: Pago"}
-                                {currentStep === 'payment' && "Completar la compra"}
-                            </div>
-                        </div>
+                    <div className="lg:col-span-5">
+                        <OrderSummary
+                            subtotal={subtotal}
+                            shipping={shippingCost}
+                            total={total}
+                            actionLabel={currentStep === 'shipping' ? "Continuar a Pago" : undefined}
+                            onAction={currentStep === 'shipping' ? startPayment : undefined}
+                            disabled={isLoadingPayment}
+                        />
                     </div>
                 </div>
             </div>

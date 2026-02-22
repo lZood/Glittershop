@@ -10,6 +10,8 @@ type Profile = {
   email: string;
   dob: string;
   role: 'user' | 'admin';
+  glitter_points: number;
+  membership_tier: 'bronze' | 'plata' | 'oro';
 };
 
 type SessionContext = {
@@ -32,26 +34,46 @@ export default function SessionProvider({ children }: { children: React.ReactNod
       return null;
     }
     console.log('SessionProvider: fetchProfile starting for user:', user.id, new Date().toISOString());
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*') // Select all fields to be safe
-        .eq('id', user.id)
-        .single();
 
-      if (error) {
-        console.error("SessionProvider: Error fetching profile:", error, new Date().toISOString());
-        // Do not return null immediately if error is just 'not found' - maybe retry? 
-        // But for now log it.
-        return null;
+    // Retry logic for profile fetching (helper for when triggers are slightly slow)
+    let profile = null;
+    let retries = 0;
+    const maxRetries = 2;
+
+    while (retries <= maxRetries) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle(); // Use maybeSingle to avoid PGRST116 error logging
+
+        if (error) {
+          console.error(`SessionProvider: Error fetching profile (attempt ${retries + 1}):`, error);
+          if (retries === maxRetries) break;
+        } else if (data) {
+          profile = data;
+          break;
+        }
+
+        console.log(`SessionProvider: Profile not found for ${user.id}, retrying in 1s... (${retries + 1}/${maxRetries})`);
+        retries++;
+        if (retries <= maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } catch (err) {
+        console.error('SessionProvider: fetchProfile catch error:', err);
+        break;
       }
-
-      console.log('SessionProvider: fetchProfile success:', !!profile, new Date().toISOString());
-      return profile as Profile | null;
-    } catch (err) {
-      console.error('SessionProvider: fetchProfile catch error:', err, new Date().toISOString());
-      return null;
     }
+
+    if (!profile) {
+      console.warn('SessionProvider: Could not fetch profile after retries for user:', user.id);
+    } else {
+      console.log('SessionProvider: fetchProfile success:', !!profile, new Date().toISOString());
+    }
+
+    return profile as Profile | null;
   }, [supabase]);
 
 
@@ -113,13 +135,15 @@ export default function SessionProvider({ children }: { children: React.ReactNod
 
           const profile = await fetchProfile(newSession.user);
           setSession({ ...newSession, profile } as any);
-        } else if (event === 'SIGNED_OUT') {
-          console.log('SessionProvider: Auth state changed - clearing session');
+          setIsLoading(false);
+        } else {
+          console.log('SessionProvider: Auth state changed - clearing session (no user or signed out)');
           setSession(null);
           setIsLoading(false);
         }
       } catch (err) {
         console.error('SessionProvider: Error in onAuthStateChange:', err);
+        setIsLoading(false);
       }
       // Note: we don't necessarily want to setLoading(false) here if it was already false.
       // But if it was true (e.g. from login page), we should.

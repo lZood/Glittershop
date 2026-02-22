@@ -41,14 +41,15 @@ export default function UnifiedAuthPage() {
 
   const checkUserExists = async ({ email }: EmailFormValues) => {
     setIsLoading(true);
-    setEmail(email);
+    const trimmedEmail = email.trim();
+    setEmail(trimmedEmail);
     try {
       const response = await fetch('/api/auth/check-user', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: trimmedEmail }),
       });
 
       if (!response.ok) {
@@ -56,10 +57,13 @@ export default function UnifiedAuthPage() {
       }
 
       const { exists } = await response.json();
-      
+      console.log('[DEBUG] AuthPage: Server returned exists:', exists, 'for email:', trimmedEmail);
+
       if (exists) {
+        console.log('[DEBUG] AuthPage: User found, switching to login step');
         setStep('login');
       } else {
+        console.warn('[DEBUG] AuthPage: User NOT found, switching to register step');
         setStep('register');
       }
     } catch (error: any) {
@@ -82,7 +86,7 @@ export default function UnifiedAuthPage() {
       },
     });
     if (error) {
-       toast({
+      toast({
         title: 'Error al iniciar sesión con Google',
         description: error.message,
         variant: 'destructive',
@@ -99,7 +103,7 @@ export default function UnifiedAuthPage() {
       },
     });
     if (error) {
-       toast({
+      toast({
         title: 'Error al iniciar sesión con Apple',
         description: error.message,
         variant: 'destructive',
@@ -119,7 +123,7 @@ export default function UnifiedAuthPage() {
 
   const AppleIcon = () => (
     <svg viewBox="0 0 24 24" className="w-5 h-5 mr-2" fill="currentColor">
-        <path d="M17.363 12.325c0 2.404-1.153 4.19-2.95 4.19-1.637 0-2.684-.96-3.83-1.004-.987 0-2.224.96-3.483.96-1.886 0-3.323-1.785-3.323-4.145 0-2.88 1.93-5.324 4.09-5.324 1.345 0 2.45.828 3.528.828.987 0 2.224-.873 3.651-.873 2.19 0 4.273 2.145 4.273 5.363zm-4.74-7.512c.764-.914 1.28-2.223 1.153-3.48-1.547.045-2.95.828-3.785 1.74-1.032.96-1.84 2.403-1.592 3.829 1.74.09 3.165-.873 4.224-2.089z"/>
+      <path d="M17.363 12.325c0 2.404-1.153 4.19-2.95 4.19-1.637 0-2.684-.96-3.83-1.004-.987 0-2.224.96-3.483.96-1.886 0-3.323-1.785-3.323-4.145 0-2.88 1.93-5.324 4.09-5.324 1.345 0 2.45.828 3.528.828.987 0 2.224-.873 3.651-.873 2.19 0 4.273 2.145 4.273 5.363zm-4.74-7.512c.764-.914 1.28-2.223 1.153-3.48-1.547.045-2.95.828-3.785 1.74-1.032.96-1.84 2.403-1.592 3.829 1.74.09 3.165-.873 4.224-2.089z" />
     </svg>
   );
 
@@ -130,9 +134,9 @@ export default function UnifiedAuthPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl font-headline">
-             {step === 'email' && 'Bienvenido/a'}
-             {step === 'login' && 'Iniciar Sesión'}
-             {step === 'register' && 'Crear Cuenta'}
+            {step === 'email' && 'Bienvenido/a'}
+            {step === 'login' && 'Iniciar Sesión'}
+            {step === 'register' && 'Crear Cuenta'}
           </CardTitle>
           <CardDescription>
             {step === 'email' && 'Inicia sesión con tu correo electrónico o regístrate para convertirte en miembro de Glittershop.'}
@@ -168,8 +172,8 @@ export default function UnifiedAuthPage() {
           {step === 'register' && <RegisterForm email={email} />}
 
           {step !== 'email' && (
-             <Button variant="link" onClick={handleBack} className="w-full">
-                Volver
+            <Button variant="link" onClick={handleBack} className="w-full">
+              Volver
             </Button>
           )}
 
@@ -185,12 +189,12 @@ export default function UnifiedAuthPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Button variant="outline" onClick={handleGoogleLogin}>
-                <GoogleIcon />
-                Google
+              <GoogleIcon />
+              Google
             </Button>
-             <Button variant="outline" onClick={handleAppleLogin}>
-                <AppleIcon />
-                Apple
+            <Button variant="outline" onClick={handleAppleLogin}>
+              <AppleIcon />
+              Apple
             </Button>
           </div>
         </CardContent>

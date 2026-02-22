@@ -38,15 +38,20 @@ import {
   Plus,
   Trash2,
   Edit2,
-  X
+  X,
+  Ticket,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { useSession } from '@/lib/supabase/session-provider';
 import { createClient } from '@/lib/supabase/client';
 import { Separator } from '@/components/ui/separator';
 import { getUserOrders } from '@/lib/actions/orders';
-import { getUserAddresses, Address } from '@/lib/actions/address';
+import { getUserAddresses, Address, deleteAddress } from '@/lib/actions/address';
 import { AddressForm } from '@/components/checkout/address-form';
 import { useWishlist } from '@/lib/store/wishlist';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const translateStatus = (status: string) => {
   switch (status?.toLowerCase()) {
@@ -72,6 +77,7 @@ const getOrderImage = (order: any) => {
 export default function ProfilePage() {
   const router = useRouter();
   const { session, profile, isLoading } = useSession();
+  const { toast } = useToast();
 
   // Debug logs
   console.log('ProfilePage: Current State', {
@@ -98,16 +104,39 @@ export default function ProfilePage() {
 
   const initials = displayName.substring(0, 2).toUpperCase();
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = async () => {
     console.log('Profile: Logout initiated');
+    setIsLoggingOut(true);
+
+    // Failsafe timer: if signOut hangs, redirect anyway after 2.5 seconds
+    const logoutTimeout = setTimeout(() => {
+      console.warn('Profile: Logout timed out, forcing transition');
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/login';
+      }
+    }, 2500);
+
     try {
       const supabase = createClient();
+      console.log('Profile: Calling supabase.auth.signOut...');
+
       await supabase.auth.signOut();
+
       console.log('Profile: Sign out successful');
-      window.location.href = '/login';
+      clearTimeout(logoutTimeout);
+
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/login';
+      }
     } catch (error) {
       console.error('Profile: Logout error:', error);
-      // Forced redirect as fallback
+      clearTimeout(logoutTimeout);
       window.location.href = '/login';
     }
   };
@@ -121,6 +150,24 @@ export default function ProfilePage() {
 
   const [connectionError, setConnectionError] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isDeletingAddress, setIsDeletingAddress] = useState<string | null>(null);
+
+  // Coupon State
+  const [couponCode, setCouponCode] = useState('');
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [couponResult, setCouponResult] = useState<{ valid: boolean, message?: string, coupon?: any } | null>(null);
+  const [myCoupons, setMyCoupons] = useState<any[]>([
+    { code: 'GLITTER10', name: 'Bienvenida Glitter', discount: '10%', type: 'percentage', expires: '2026-12-31' }
+  ]);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [userPoints, setUserPoints] = useState(profile?.glitter_points || 0);
+
+  useEffect(() => {
+    if (profile?.glitter_points !== undefined) {
+      setUserPoints(profile.glitter_points);
+    }
+  }, [profile?.glitter_points]);
+
   const { items: wishlistItems } = useWishlist();
 
   useEffect(() => {
@@ -202,24 +249,8 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-background pb-20">
       {/* Header / Hero Section */}
       <div className="bg-secondary/30 border-b pb-8 pt-8 md:pt-12 relative overflow-hidden">
-        {/* Close Button (X) */}
-        <div className="absolute top-4 right-4 z-20">
-          <Button variant="ghost" size="icon" className="rounded-full bg-background/50 backdrop-blur hover:bg-background/80" asChild>
-            <Link href="/">
-              <X className="w-5 h-5" />
-            </Link>
-          </Button>
-        </div>
-
         <div className="container mx-auto px-4 md:px-8 max-w-6xl relative z-10">
-          <div className="mb-8">
-            <Button variant="ghost" size="sm" className="bg-background/50 backdrop-blur hover:bg-background/80 flex items-center gap-2 group" asChild>
-              <Link href="/">
-                <ChevronRight className="w-4 h-4 rotate-180 transition-transform group-hover:-translate-x-1" />
-                Volver a la Tienda
-              </Link>
-            </Button>
-          </div>
+          <div className="pt-8 md:pt-4"></div>
 
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8">
             <div className="relative group">
@@ -247,18 +278,23 @@ export default function ProfilePage() {
                   <Badge variant="secondary" className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-background/50 backdrop-blur border-border/50">
                     Miembro desde {new Date(user?.created_at || Date.now()).getFullYear()}
                   </Badge>
-                  <Badge className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-amber-400 to-amber-600 text-white border-none shadow-sm">
+                  <Badge className={cn(
+                    "px-3 py-1 text-xs font-bold uppercase tracking-wider text-white border-none shadow-sm",
+                    profile?.membership_tier === 'oro' ? "bg-gradient-to-r from-amber-400 to-amber-600" :
+                      profile?.membership_tier === 'plata' ? "bg-gradient-to-r from-slate-300 to-slate-500" :
+                        "bg-gradient-to-r from-amber-700 to-amber-900"
+                  )}>
                     <Trophy className="w-3 h-3 mr-1.5" />
-                    Oro Member
+                    {profile?.membership_tier || 'Bronze'} Member
                   </Badge>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col items-center md:items-end gap-1 bg-background/50 backdrop-blur p-4 rounded-xl border border-border/50 shadow-sm">
+            <div className="flex flex-col items-center md:items-end gap-1 bg-background/50 backdrop-blur p-4 rounded-xl border border-border/50 shadow-sm min-w-[140px]">
               <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Puntos Glitter</span>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-primary">2,450</span>
+                <span className="text-3xl font-black text-primary">{userPoints.toLocaleString()}</span>
                 <span className="text-xs font-medium text-muted-foreground">pts</span>
               </div>
             </div>
@@ -267,7 +303,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="container mx-auto px-4 md:px-8 py-8 max-w-6xl">
-        <Tabs defaultValue="overview" className="space-y-8" onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
 
           {/* Navigation Tabs */}
           <div className="flex items-center overflow-x-auto pb-2 md:pb-0 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
@@ -361,21 +397,60 @@ export default function ProfilePage() {
                       </CardContent>
                     </Card>
                   </Link>
-                  <div className="group">
-                    <Card className="h-full hover:border-primary/50 transition-all duration-300 hover:shadow-md">
+                  <button onClick={() => setActiveTab('coupons')} className="group text-left w-full h-full">
+                    <Card className="h-full hover:border-primary/50 transition-all duration-300 hover:shadow-md cursor-pointer">
                       <CardContent className="p-6 flex flex-col items-center text-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
-                          <Star className="w-6 h-6" />
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                          <Ticket className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="text-2xl font-black">3</p>
+                          <p className="text-2xl font-black">{myCoupons.length}</p>
                           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cupones</p>
                         </div>
                       </CardContent>
                     </Card>
-                  </div>
+                  </button>
                 </div>
 
+                {/* Membership Tiers Info */}
+                <Card className="border-none shadow-xl bg-gradient-to-br from-background to-secondary/10 rounded-3xl overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                      <Trophy className="w-4 h-4" /> Beneficios de Nivel
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-3 gap-4">
+                      {[
+                        { tier: 'bronze', label: 'Bronze', perc: '2%', color: 'from-amber-700 to-amber-900' },
+                        { tier: 'plata', label: 'Plata', perc: '3%', color: 'from-slate-300 to-slate-500' },
+                        { tier: 'oro', label: 'Oro', perc: '5%', color: 'from-amber-400 to-amber-600' },
+                      ].map((t) => (
+                        <div key={t.tier} className={cn(
+                          "relative p-4 rounded-2xl flex flex-col items-center gap-1 border transition-all duration-300",
+                          profile?.membership_tier === t.tier
+                            ? "bg-background shadow-lg border-primary/20 scale-105 z-10"
+                            : "bg-muted/30 border-transparent opacity-60"
+                        )}>
+                          {profile?.membership_tier === t.tier && (
+                            <Badge className="absolute -top-2 px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter bg-primary text-primary-foreground border-none">
+                              Tu Nivel
+                            </Badge>
+                          )}
+                          <div className={cn("w-8 h-8 rounded-full bg-gradient-to-br flex items-center justify-center text-white mb-1 shadow-sm", t.color)}>
+                            <Trophy className="w-4 h-4" />
+                          </div>
+                          <span className="font-black text-xs uppercase tracking-tighter">{t.label}</span>
+                          <span className="text-lg font-black text-primary leading-none">{t.perc}</span>
+                          <span className="text-[8px] uppercase font-bold text-muted-foreground tracking-tighter text-center">Cashback en Puntos</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-6 text-center italic font-medium">
+                      * El porcentaje de puntos se calcula sobre el total de tu compra. ¡Sube de nivel comprando más!
+                    </p>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="orders" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
@@ -426,6 +501,182 @@ export default function ProfilePage() {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="coupons" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+
+                {/* Points Redemption Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between px-2">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Canjear Puntos Glitter</h3>
+                    <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-primary/5 text-primary border-primary/20">
+                      Tus Puntos: {userPoints.toLocaleString()}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { id: 'pts-500', points: 500, label: '$50 MXN', desc: 'Descuento' },
+                      { id: 'pts-1000', points: 1000, label: '$100 MXN', desc: 'Descuento' },
+                      { id: 'pts-2000', points: 2000, label: '10% OFF', desc: 'Todo el Carrito' },
+                      { id: 'pts-5000', points: 5000, label: '25% OFF', desc: 'Súper Cupón' },
+                    ].map((opt) => (
+                      <Card key={opt.id} className={cn(
+                        "relative overflow-hidden group cursor-pointer border-2 transition-all duration-300",
+                        userPoints >= opt.points ? "border-primary/20 hover:border-primary bg-card" : "opacity-60 bg-muted/30 grayscale pointer-events-none"
+                      )} onClick={async () => {
+                        if (userPoints < opt.points || isRedeeming) return;
+                        setIsRedeeming(true);
+                        try {
+                          const res = await fetch('/api/points/redeem', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ optionId: opt.id })
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            setMyCoupons([data.coupon, ...myCoupons]);
+                            setUserPoints(data.remainingPoints);
+                            setCouponResult({ valid: true, message: `¡Has canjeado ${opt.label} con éxito!` });
+                          } else {
+                            setCouponResult({ valid: false, message: data.error });
+                          }
+                        } catch (e) {
+                          setCouponResult({ valid: false, message: 'Error de conexión' });
+                        } finally {
+                          setIsRedeeming(false);
+                        }
+                      }}>
+                        <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                          <div className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center mb-1 transition-transform group-hover:scale-110",
+                            userPoints >= opt.points ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                          )}>
+                            <Star className="w-5 h-5 fill-current" />
+                          </div>
+                          <div>
+                            <p className="font-black text-lg leading-none">{opt.label}</p>
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-tighter">{opt.desc}</p>
+                          </div>
+                          <Badge variant="secondary" className="mt-1 text-[10px] font-black h-5">
+                            {opt.points} PTS
+                          </Badge>
+
+                          {/* Progress bar if not enough points */}
+                          {userPoints < opt.points && (
+                            <div className="w-full bg-secondary h-1 rounded-full mt-2 overflow-hidden">
+                              <div
+                                className="bg-primary h-full transition-all duration-500"
+                                style={{ width: `${Math.min(100, (userPoints / opt.points) * 100)}%` }}
+                              />
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+                <Card className="border-none shadow-xl bg-gradient-to-br from-secondary/20 to-primary/5 rounded-3xl">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-foreground/80">Canjear Cupón</CardTitle>
+                    <CardDescription>Ingresa tu código promocional para añadirlo a tu cuenta.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6 md:p-8">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1 relative">
+                        <Input
+                          placeholder="EJ: GLITTER2026"
+                          className="h-12 uppercase font-black tracking-widest text-center md:text-left"
+                          value={couponCode}
+                          onChange={(e) => {
+                            setCouponCode(e.target.value);
+                            if (couponResult) setCouponResult(null);
+                          }}
+                        />
+                        <Ticket className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/30 pointer-events-none" />
+                      </div>
+                      <Button
+                        className="h-12 px-8 font-black uppercase tracking-widest shadow-lg shadow-primary/20"
+                        disabled={!couponCode || isValidatingCoupon}
+                        onClick={async () => {
+                          setIsValidatingCoupon(true);
+                          try {
+                            const res = await fetch('/api/coupons/validate', {
+                              method: 'POST',
+                              body: JSON.stringify({ couponCode })
+                            });
+                            const data = await res.json();
+                            setCouponResult(data);
+                            if (data.valid) {
+                              if (!myCoupons.find(c => c.code === data.coupon.code)) {
+                                setMyCoupons([data.coupon, ...myCoupons]);
+                              }
+                            }
+                          } catch (e) {
+                            setCouponResult({ valid: false, message: 'Error de conexión' });
+                          } finally {
+                            setIsValidatingCoupon(false);
+                          }
+                        }}
+                      >
+                        {isValidatingCoupon ? 'Validando...' : 'Canjear'}
+                      </Button>
+                    </div>
+
+                    {couponResult && (
+                      <div className={`mt-4 p-4 rounded-xl border flex items-center gap-3 animate-in zoom-in-95 duration-200 ${couponResult.valid
+                        ? 'bg-green-500/10 border-green-200 text-green-700'
+                        : 'bg-destructive/10 border-destructive/20 text-destructive'
+                        }`}>
+                        {couponResult.valid ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                        <p className="text-sm font-bold">{couponResult.message || (couponResult.valid ? `¡Cupón ${couponResult.coupon.code} aplicado con éxito!` : 'Error al validar')}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-4">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground px-2">Tus Cupones Disponibles</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {myCoupons.map((coupon) => (
+                      <div key={coupon.code} className="group relative">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                        <Card className="relative border-2 border-dashed bg-card/50 backdrop-blur-sm overflow-hidden rounded-2xl">
+                          <div className="absolute -right-8 -top-8 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors"></div>
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="p-2 bg-primary/10 rounded-lg">
+                                <Ticket className="w-5 h-5 text-primary" />
+                              </div>
+                              <Badge variant="secondary" className="font-black text-[10px] tracking-tighter">
+                                {coupon.type === 'percentage' ? 'DESCUENTO %' : 'ABONO $'}
+                              </Badge>
+                            </div>
+                            <div className="space-y-1">
+                              <h4 className="font-black text-2xl tracking-tighter text-primary">{coupon.discount} OFF</h4>
+                              <p className="text-sm font-bold text-foreground/80">{coupon.name}</p>
+                              <div className="flex items-center gap-2 pt-2">
+                                <code className="bg-muted px-2 py-1 rounded text-xs font-mono font-black border border-border/50 uppercase">
+                                  {coupon.code}
+                                </code>
+                                <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] font-black uppercase" onClick={() => {
+                                  if (typeof window !== 'undefined') {
+                                    navigator.clipboard.writeText(coupon.code);
+                                  }
+                                }}>Copiar</Button>
+                              </div>
+                            </div>
+                            <Separator className="my-4 opacity-50" />
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
+                              Vence el: {new Date(coupon.expires || Date.now()).toLocaleDateString('es-MX')}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="settings" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
@@ -513,49 +764,62 @@ export default function ProfilePage() {
                                     <p className="text-sm text-muted-foreground">{addr.neighborhood}, {addr.city}, {addr.state} {addr.postal_code}</p>
                                   </div>
                                   <div className="flex gap-2">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingAddress(addr)}><Edit2 className="w-4 h-4" /></Button>
-                                    {/* To make Delete functional, we'd add an action. For now keeping it visually there or wiring it if action exists. */}
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => setEditingAddress(addr)}
+                                      disabled={!!isDeletingAddress}
+                                    >
+                                      <Edit2 className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                      disabled={!!isDeletingAddress}
+                                      onClick={async () => {
+                                        if (confirm('¿Estás seguro de que deseas eliminar esta dirección?')) {
+                                          setIsDeletingAddress(addr.id);
+                                          const result = await deleteAddress(addr.id);
+                                          if (result.success) {
+                                            const newAddresses = await getUserAddresses();
+                                            setAddresses(newAddresses);
+                                            toast({
+                                              title: "Dirección eliminada",
+                                              description: "La dirección ha sido eliminada correctamente."
+                                            });
+                                          } else {
+                                            toast({
+                                              title: "Error",
+                                              description: result.error || "No se pudo eliminar la dirección",
+                                              variant: "destructive"
+                                            });
+                                          }
+                                          setIsDeletingAddress(null);
+                                        }
+                                      }}
+                                    >
+                                      {isDeletingAddress === addr.id ? (
+                                        <div className="w-4 h-4 border-2 border-destructive border-t-transparent rounded-full animate-spin"></div>
+                                      ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                      )}
+                                    </Button>
                                   </div>
                                 </div>
                               ))
                             )}
-                            <Button variant="outline" className="w-full border-dashed" onClick={() => setIsAddingAddress(true)}>
+                            <Button
+                              variant="outline"
+                              className="w-full border-dashed"
+                              onClick={() => setIsAddingAddress(true)}
+                              disabled={!!isDeletingAddress}
+                            >
                               <Plus className="w-4 h-4 mr-2" /> Agregar Nueva Dirección
                             </Button>
                           </>
                         )}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  {/* Payment Methods */}
-                  <AccordionItem value="payment" className="border rounded-lg px-4 bg-card">
-                    <AccordionTrigger className="hover:no-underline py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          <CreditCard className="w-4 h-4" />
-                        </div>
-                        <div className="text-left">
-                          <p className="font-bold text-sm">Métodos de Pago</p>
-                          <p className="text-xs text-muted-foreground font-normal">Administra tus tarjetas guardadas</p>
-                        </div>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-2 pb-6">
-                      <div className="space-y-4">
-                        <div className="p-4 border rounded-lg flex items-center justify-between bg-background">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-6 bg-zinc-800 rounded flex items-center justify-center text-[8px] font-bold text-white">VISA</div>
-                            <div>
-                              <p className="font-bold text-sm">•••• •••• •••• 4242</p>
-                              <p className="text-xs text-muted-foreground">Expira 12/28</p>
-                            </div>
-                          </div>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="w-4 h-4" /></Button>
-                        </div>
-                        <Button variant="outline" className="w-full border-dashed">
-                          <Plus className="w-4 h-4 mr-2" /> Agregar Método de Pago
-                        </Button>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -654,16 +918,26 @@ export default function ProfilePage() {
                   variant="ghost"
                   className="w-full justify-start text-left font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={handleLogout}
+                  disabled={isLoggingOut}
                 >
-                  <LogOut className="w-4 h-4 mr-3" />
-                  Cerrar Sesión
+                  {isLoggingOut ? (
+                    <>
+                      <div className="w-4 h-4 mr-3 border-2 border-destructive border-t-transparent rounded-full animate-spin"></div>
+                      Cerrando sesión...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="w-4 h-4 mr-3" />
+                      Cerrar Sesión
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
 
           </div>
-        </Tabs>
-      </div>
-    </div>
+        </Tabs >
+      </div >
+    </div >
   );
 }

@@ -111,19 +111,9 @@ export default function OrdersPage() {
     return (
         <div className="space-y-8 pb-24 max-w-4xl mx-auto px-4 lg:px-0 pt-6">
             {/* Header */}
-            <header className="flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-20 py-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-                <div className="flex items-center gap-4">
-                    <Link href="/admin">
-                        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-secondary">
-                            <ArrowLeft className="w-5 h-5" />
-                        </Button>
-                    </Link>
-                    <div>
-                        <span className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] sm:text-xs font-bold mb-1 block">Panel de Control</span>
-                        <h1 className="text-2xl sm:text-3xl font-medium tracking-[0.1em] uppercase text-foreground">Pedidos</h1>
-                    </div>
-                </div>
-            </header>
+            <div className="pt-24 sm:pt-12 mb-12">
+                <h1 className="text-3xl md:text-5xl font-bold tracking-[0.2em] uppercase text-foreground">Pedidos</h1>
+            </div>
 
             {/* Search */}
             <div className="relative">

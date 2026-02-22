@@ -10,10 +10,14 @@ import {
     Edit3,
     ExternalLink,
     Loader2,
-    AlertCircle
+    AlertCircle,
+    ArrowUpDown,
+    ChevronDown,
+    Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -46,6 +50,37 @@ export function ClientCollectionsList({ initialCollections }: ClientCollectionsL
     const [collections, setCollections] = useState(initialCollections);
     const [isDeleting, setIsDeleting] = useState(false);
     const [collectionToDelete, setCollectionToDelete] = useState<any>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortOrder, setSortOrder] = useState<'newest' | 'name-asc' | 'name-desc'>('newest');
+    const [isVisible, setIsVisible] = useState(true);
+
+    // Track scroll for FAB visibility
+    useState(() => {
+        if (typeof window === 'undefined') return;
+        let lastScrollValue = window.scrollY;
+
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY > lastScrollValue && currentScrollY > 100) {
+                setIsVisible(false);
+            } else {
+                setIsVisible(true);
+            }
+            lastScrollValue = currentScrollY;
+        };
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    });
+
+    const filteredCollections = collections.filter(c =>
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.slug.toLowerCase().includes(searchQuery.toLowerCase())
+    ).sort((a, b) => {
+        if (sortOrder === 'name-asc') return a.name.localeCompare(b.name);
+        if (sortOrder === 'name-desc') return b.name.localeCompare(a.name);
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
     const handleDelete = async () => {
         if (!collectionToDelete) return;
@@ -70,40 +105,45 @@ export function ClientCollectionsList({ initialCollections }: ClientCollectionsL
     return (
         <div className="space-y-8 pb-32 max-w-5xl mx-auto px-4 lg:px-8 pt-6">
             {/* Header */}
-            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sticky top-0 bg-background/80 backdrop-blur-xl z-30 py-6 border-b border-border/30 sm:border-none">
-                <div className="flex items-center gap-4">
-                    <Link href="/admin">
-                        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-secondary border border-transparent hover:border-border/30 rounded-none transition-all">
-                            <ArrowLeft className="w-5 h-5" />
-                        </Button>
-                    </Link>
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="h-3 w-3 bg-brand rounded-full animate-pulse opacity-50"></div>
-                            <span className="text-muted-foreground uppercase tracking-[0.3em] text-[10px] font-bold block">Gestión de Catálogo</span>
-                        </div>
-                        <h1 className="text-3xl font-bold tracking-[0.1em] uppercase text-foreground">Colecciones</h1>
+            <div className="pt-24 sm:pt-12 mb-12">
+                <h1 className="text-3xl md:text-5xl font-bold tracking-[0.1em] uppercase text-foreground">Colecciones</h1>
+            </div>
+
+            <div className="space-y-8">
+                <div className="flex items-center gap-2 md:gap-4">
+                    <div className="relative group flex-1">
+                        <div className="absolute inset-0 bg-brand/5 dark:bg-brand/10 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-brand transition-colors" />
+                        <Input
+                            placeholder="Buscar colecciones..."
+                            className="pl-12 bg-card border-border/50 rounded-none h-16 focus-visible:ring-1 focus-visible:ring-brand focus-visible:border-brand placeholder:text-muted-foreground placeholder:tracking-widest placeholder:uppercase placeholder:text-[10px] text-sm uppercase tracking-wider relative z-10 shadow-sm"
+                            value={searchQuery}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="hidden md:block">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-11 gap-2 text-foreground border-border/50 rounded-none bg-card hover:bg-secondary uppercase tracking-[0.15em] text-[10px] font-bold shadow-sm">
+                                    <ArrowUpDown className="w-4 h-4 text-brand" />
+                                    <span>Ordenar</span>
+                                    <ChevronDown className="w-3 h-3 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="rounded-none w-52 font-bold uppercase tracking-widest text-[10px] p-1 bg-card">
+                                <DropdownMenuItem className="p-3 focus:bg-brand focus:text-white" onClick={() => setSortOrder('newest')}>Más recientes</DropdownMenuItem>
+                                <DropdownMenuItem className="p-3 focus:bg-brand focus:text-white" onClick={() => setSortOrder('name-asc')}>Nombre (A-Z)</DropdownMenuItem>
+                                <DropdownMenuItem className="p-3 focus:bg-brand focus:text-white" onClick={() => setSortOrder('name-desc')}>Nombre (Z-A)</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
-
-                <div className="flex items-center gap-3">
-                    <Link href="/admin/inventory">
-                        <Button variant="outline" size="sm" className="h-11 gap-2 text-foreground border-border/50 rounded-none bg-card hover:bg-secondary uppercase tracking-[0.15em] text-[10px] font-bold shadow-sm transition-all">
-                            Inventario
-                        </Button>
-                    </Link>
-                    <Link href="/admin/collections/new">
-                        <Button size="sm" className="h-11 gap-2 bg-foreground text-background border-border rounded-none hover:bg-foreground/90 uppercase tracking-[0.15em] text-[10px] font-bold shadow-lg transition-all">
-                            <Plus className="w-4 h-4" />
-                            <span>Nueva Colección</span>
-                        </Button>
-                    </Link>
-                </div>
-            </header>
+            </div>
 
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {collections.map((collection, idx) => (
+                {filteredCollections.map((collection, idx) => (
                     <motion.div
                         key={collection.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -248,6 +288,37 @@ export function ClientCollectionsList({ initialCollections }: ClientCollectionsL
                     </div>
                 </div>
             )}
+            {/* Premium FABs */}
+            <div className="fixed bottom-24 right-6 sm:bottom-12 sm:right-12 z-50 flex flex-col gap-4 items-end">
+                {/* Mobile Floating Sort Button */}
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: isVisible ? 1 : 0.8, opacity: isVisible ? 1 : 0 }}
+                    className="md:hidden"
+                >
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" className="w-12 h-12 rounded-none bg-background shadow-xl border-brand/30 text-brand">
+                                <ArrowUpDown className="w-5 h-5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-none w-52 font-bold uppercase tracking-widest text-[10px] p-1 bg-card mb-2">
+                            <DropdownMenuItem className="p-3" onClick={() => setSortOrder('newest')}>Más recientes</DropdownMenuItem>
+                            <DropdownMenuItem className="p-3" onClick={() => setSortOrder('name-asc')}>Nombre (A-Z)</DropdownMenuItem>
+                            <DropdownMenuItem className="p-3" onClick={() => setSortOrder('name-desc')}>Nombre (Z-A)</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </motion.div>
+
+                <Link href="/admin/collections/new" className="group">
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-brand blur-2xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-none bg-brand shadow-[0_15px_30px_rgba(180,115,49,0.4)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.5)] flex items-center justify-center text-brand-foreground hover:scale-105 active:scale-90 transition-all cursor-pointer border-2 border-white/20 relative z-10">
+                            <Plus className="w-8 h-8 sm:w-10 sm:h-10 group-hover:rotate-180 transition-transform duration-500" strokeWidth={3} />
+                        </div>
+                    </div>
+                </Link>
+            </div>
         </div>
     );
 }

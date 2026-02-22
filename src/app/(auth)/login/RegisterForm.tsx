@@ -70,7 +70,7 @@ const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 
 
 import { useSession } from '@/lib/supabase/session-provider';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // ... (imports remain)
 
@@ -92,19 +92,23 @@ export default function RegisterForm({ email }: RegisterFormProps) {
     },
   });
 
+  const [isRegistering, setIsRegistering] = useState(false);
+
   // Auto-redirect if user is detected (failsafe for hanging promises)
   useEffect(() => {
     if (user) {
       console.log('User detected via useSession, redirecting...');
-      window.location.href = '/profile';
+      router.replace('/profile');
     }
-  }, [user]);
+  }, [user, router]);
 
   const handleRegister = async (values: RegisterFormValues) => {
+    setIsRegistering(true);
     const supabase = createClient();
 
     const dob = new Date(parseInt(values.dob_year), parseInt(values.dob_month) - 1, parseInt(values.dob_day)).toISOString();
 
+    console.log('Registering user...');
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password: values.password,
@@ -123,8 +127,12 @@ export default function RegisterForm({ email }: RegisterFormProps) {
         description: signUpError.message,
         variant: 'destructive',
       });
+      setIsRegistering(false);
       return;
     }
+
+    console.log('Sign up success, signing in...');
+    toast({ title: 'Creando perfil...', description: 'Estamos preparando tu nueva cuenta.' });
 
     // After a successful sign-up, Supabase sends a confirmation email.
     // The user's profile is created by a trigger in the backend.
@@ -148,7 +156,9 @@ export default function RegisterForm({ email }: RegisterFormProps) {
         description: 'Hemos creado tu cuenta exitosamente y te hemos conectado.',
       });
       // Force a hard navigation to ensure the session cookie is recognized by the server/middleware immediately
-      window.location.href = '/profile';
+      setTimeout(() => {
+        window.location.href = '/profile';
+      }, 800);
     }
   };
 
@@ -163,7 +173,7 @@ export default function RegisterForm({ email }: RegisterFormProps) {
               <FormItem>
                 <FormLabel>Nombre</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} disabled={isRegistering} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -176,7 +186,7 @@ export default function RegisterForm({ email }: RegisterFormProps) {
               <FormItem>
                 <FormLabel>Apellido</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} disabled={isRegistering} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -192,7 +202,7 @@ export default function RegisterForm({ email }: RegisterFormProps) {
               name="dob_day"
               render={({ field }) => (
                 <FormItem>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isRegistering}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Día" />
@@ -211,7 +221,7 @@ export default function RegisterForm({ email }: RegisterFormProps) {
               name="dob_month"
               render={({ field }) => (
                 <FormItem>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isRegistering}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Mes" />
@@ -230,7 +240,7 @@ export default function RegisterForm({ email }: RegisterFormProps) {
               name="dob_year"
               render={({ field }) => (
                 <FormItem>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isRegistering}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Año" />
@@ -259,7 +269,7 @@ export default function RegisterForm({ email }: RegisterFormProps) {
             <FormItem>
               <FormLabel>Crear Contraseña</FormLabel>
               <FormControl>
-                <Input type="password" {...field} />
+                <Input type="password" {...field} disabled={isRegistering} />
               </FormControl>
               <FormDescription className="text-xs">
                 Entre 8 y 25 caracteres, 1 número, 1 mayúscula, 1 minúscula, sin espacios.
@@ -295,8 +305,15 @@ export default function RegisterForm({ email }: RegisterFormProps) {
         </div>
 
 
-        <Button type="submit" className="w-full">
-          Crear Cuenta
+        <Button type="submit" className="w-full" disabled={isRegistering}>
+          {isRegistering ? (
+            <>
+              <div className="w-4 h-4 mr-2 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
+              Creando cuenta...
+            </>
+          ) : (
+            'Crear Cuenta'
+          )}
         </Button>
       </form>
     </Form>

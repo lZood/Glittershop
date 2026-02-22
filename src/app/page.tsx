@@ -3,10 +3,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/product-card';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { createClient } from '@/lib/supabase/server';
-import type { Product } from '@/lib/types';
 import { SearchX, ChevronDown, ArrowRight, Truck, Percent, ShieldCheck, Undo2 } from 'lucide-react';
+import { HeroSection } from '@/components/home/hero-section';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,39 +127,7 @@ export default async function Home(props: { searchParams: Promise<{ q?: string }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {/* 1. Hero Section with Video Background */}
-      <section className="relative w-full h-[95vh] flex flex-col justify-center items-center text-center overflow-hidden">
-        {/* Video Background - Forced Cover Technique */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto object-cover z-0"
-          style={{ objectFit: 'cover' }}
-        >
-          {/* Your local jewelry video background */}
-          <source src="/videos/Video_Profesional_De_Joyería_Elegante.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-black/40 z-[1]" />
-
-        <div className="relative z-10 px-4 max-w-4xl mx-auto flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-16 md:mt-20">
-          <span className="text-white/90 tracking-[0.3em] uppercase text-xs md:text-sm mb-6 font-medium">Joyería de Lujo</span>
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white mb-6 drop-shadow-lg font-light leading-tight">
-            Elegancia Atemporal <br /> <span className="italic">Para Cada Momento</span>
-          </h1>
-          <p className="text-sm md:text-base text-white/90 mb-10 tracking-widest font-light max-w-xl mx-auto">
-            Descubre obras maestras diseñadas para contar tu historia. Desde el brillo de todos los días hasta grandes celebraciones.
-          </p>
-          <Button asChild size="lg" className="bg-white hover:bg-white/90 text-black px-12 h-14 text-sm tracking-widest uppercase font-semibold rounded-none transition-all transform shadow-2xl">
-            <Link href="/shop">Explorar Colección</Link>
-          </Button>
-        </div>
-
-        <div className="absolute bottom-10 left-0 right-0 flex justify-center animate-bounce z-20">
-          <ChevronDown className="w-8 h-8 text-white/50" />
-        </div>
-      </section>
+      <HeroSection />
 
       {/* 2. Shop by Category */}
       <section className="py-24 container mx-auto px-4 lg:px-10">
@@ -194,7 +161,7 @@ export default async function Home(props: { searchParams: Promise<{ q?: string }
 
       {/* 3. New Arrivals Horizontal Slider */}
       <section className="py-24 bg-secondary/30 overflow-hidden">
-        <div className="container mx-auto px-4 lg:px-10">
+        <div className="container mx-auto px-8 lg:px-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div>
               <span className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] md:text-xs font-bold mb-2 block">Lo Más Nuevo</span>
@@ -206,16 +173,16 @@ export default async function Home(props: { searchParams: Promise<{ q?: string }
             </Link>
           </div>
 
-          <div className="flex overflow-x-auto pb-8 -mx-4 px-4 md:mx-0 md:px-0 gap-4 md:gap-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex overflow-x-auto pb-8 gap-8 md:gap-10 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {bestSellers.map((product: any) => (
-              <div key={product.id} className="w-[75vw] sm:w-[50vw] md:w-[320px] lg:w-[350px] flex-none snap-start">
+              <div key={product.id} className="w-[70vw] sm:w-[50vw] md:w-[280px] lg:w-[300px] flex-none snap-start">
                 <ProductCard product={product} />
               </div>
             ))}
 
             {/* View More Card */}
-            <div className="w-[75vw] sm:w-[50vw] md:w-[320px] lg:w-[350px] flex-none snap-start flex items-center justify-center bg-background border border-border/50 rounded-lg p-6 group">
-              <Link href="/shop?sort=newest" className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors text-center gap-4 w-full h-full min-h-[300px]">
+            <div className="w-[60vw] sm:w-[40vw] md:w-[260px] lg:w-[280px] flex-none snap-start flex items-center justify-center bg-background border border-border/50 rounded-lg p-6 group">
+              <Link href="/shop?sort=newest" className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary transition-colors text-center gap-4 w-full h-full min-h-[200px]">
                 <div className="w-16 h-16 rounded-full border border-current flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <ArrowRight className="w-8 h-8" />
                 </div>

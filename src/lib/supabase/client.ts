@@ -2,14 +2,15 @@ import { createBrowserClient } from '@supabase/ssr'
 
 let client: ReturnType<typeof createBrowserClient> | undefined
 
-export function createClient() {
+export function createClient(forceNew = false) {
   console.log('supabase-client: createClient called', {
     hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
     url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    forceNew
   });
 
-  if (client) return client
+  if (client && !forceNew) return client
 
   console.log('supabase-client: creating new browser client instance');
   client = createBrowserClient(

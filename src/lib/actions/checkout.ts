@@ -122,5 +122,38 @@ export async function processSuccessfulOrder(
         throw new Error('Error al guardar la orden. Contacte soporte con su ID de pago: ' + paymentIntentId);
     }
 
+    // Award Glitter Points for logged in users
+    if (session?.user?.id) {
+        try {
+            // Get user's current tier
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('membership_tier')
+                .eq('id', session.user.id)
+                .single();
+
+            const tier = profile?.membership_tier || 'bronze';
+            let percentage = 0.02; // Bronze default
+            if (tier === 'plata') percentage = 0.03;
+            if (tier === 'oro') percentage = 0.05;
+
+            const pointsAwarded = Math.floor(totalAmount * percentage);
+
+            if (pointsAwarded > 0) {
+                const { error: pointsError } = await supabase.rpc('increment_glitter_points', {
+                    p_user_id: session.user.id,
+                    p_amount: pointsAwarded
+                });
+
+                if (pointsError) {
+                    // Fail silently or log, we don't want to break the success page for points
+                    console.error('Error awarding points:', pointsError);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to award points:', e);
+        }
+    }
+
     return { success: true, orderId };
 }

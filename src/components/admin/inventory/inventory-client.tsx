@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from "react";
-import { Search, Plus, Filter, AlertTriangle, ArrowUpDown, ChevronDown, ArrowLeft, Layers } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Plus, Filter, AlertTriangle, ArrowUpDown, ChevronDown, ArrowLeft, Layers, LayoutGrid, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,34 @@ export function InventoryClient({ products }: InventoryClientProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("Todo");
     const [sortOrder, setSortOrder] = useState<SortOption>('newest');
+    const [isVisible, setIsVisible] = useState(true);
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+
+    // Track scroll for header animation
+    useEffect(() => {
+        let lastScrollValue = window.scrollY;
+
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            const delta = currentScrollY - lastScrollValue;
+
+            // Sensibilidad del scroll: al menos 5px de diferencia
+            if (Math.abs(delta) < 5) return;
+
+            if (currentScrollY > lastScrollValue && currentScrollY > 100) {
+                // Scrolling down - Hide
+                setIsVisible(false);
+            } else if (currentScrollY < lastScrollValue) {
+                // Scrolling up - Show
+                setIsVisible(true);
+            }
+
+            lastScrollValue = currentScrollY;
+        };
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     // Extract unique product categories for the dropdown
     const productCategories = Array.from(new Set(products.map(p => p.categories?.name || "Sin Categoría"))).sort();
@@ -62,63 +90,76 @@ export function InventoryClient({ products }: InventoryClientProps) {
 
     const filterOptions = ["Todo", "Stock Bajo", "Agotado"];
 
+    const renderSortMenu = (isMobile = false) => (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                {isMobile ? (
+                    <Button variant="outline" size="icon" className="h-8 w-8 border-border/50 rounded-none bg-card shadow-sm">
+                        <ArrowUpDown className="w-3 h-3 text-brand" />
+                    </Button>
+                ) : (
+                    <Button variant="outline" size="sm" className="h-11 gap-2 text-foreground border-border/50 rounded-none bg-card hover:bg-secondary dark:hover:bg-brand/10 uppercase tracking-[0.15em] text-[10px] font-bold shadow-sm transition-all">
+                        <ArrowUpDown className="w-4 h-4 text-brand" />
+                        <span>Ordenar</span>
+                        <ChevronDown className="w-3 h-3 opacity-50" />
+                    </Button>
+                )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="rounded-none w-52 font-bold uppercase tracking-widest text-[10px] p-1 bg-card border-border/50 shadow-2xl">
+                <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('newest')}>Más recientes</DropdownMenuItem>
+                <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('name-asc')}>Nombre (A-Z)</DropdownMenuItem>
+                <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('price-asc')}>Precio: Menor a Mayor</DropdownMenuItem>
+                <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('price-desc')}>Precio: Mayor a Menor</DropdownMenuItem>
+                <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('stock-asc')}>Stock: Menor a Mayor</DropdownMenuItem>
+                <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('stock-desc')}>Stock: Mayor a Menor</DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+
     return (
-        <div className="space-y-10 pb-32 max-w-5xl mx-auto px-4 lg:px-8 pt-6 transition-colors duration-500">
-            {/* Header - Fixed & Compact */}
-            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sticky top-0 bg-background/80 backdrop-blur-xl z-30 py-6 border-b border-border/30 sm:border-none">
-                <div className="flex items-center gap-4">
-                    <Link href="/admin">
-                        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-secondary dark:hover:bg-white/5 border border-transparent hover:border-border/30 rounded-none transition-all">
-                            <ArrowLeft className="w-5 h-5" />
-                        </Button>
-                    </Link>
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Layers className="w-3 h-3 text-brand" />
-                            <span className="text-muted-foreground uppercase tracking-[0.3em] text-[10px] font-bold block">Gestión Digital</span>
-                        </div>
-                        <h1 className="text-3xl font-bold tracking-[0.1em] uppercase text-foreground">Inventario</h1>
+        <div className="pb-32 max-w-5xl mx-auto px-4 lg:px-8 pt-6 transition-colors duration-500">
+
+            <div className="pt-24 sm:pt-12 mb-12">
+                <h1 className="text-3xl md:text-5xl font-bold tracking-[0.2em] uppercase text-foreground">Inventario</h1>
+            </div>
+
+            <div className="space-y-8">
+                <div className="flex items-center gap-2 md:gap-4">
+                    <div className="relative group flex-1">
+                        <div className="absolute inset-0 bg-brand/5 dark:bg-brand/10 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-brand transition-colors" />
+                        <Input
+                            placeholder="Filtrar por nombre, categoría o SKU..."
+                            className="pl-12 bg-card border-border/50 rounded-none h-16 focus-visible:ring-1 focus-visible:ring-brand focus-visible:border-brand placeholder:text-muted-foreground placeholder:tracking-widest placeholder:uppercase placeholder:text-[10px] text-sm uppercase tracking-wider relative z-10 shadow-sm"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
-                </div>
 
-                <div className="flex items-center gap-3">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-11 gap-2 text-foreground border-border/50 rounded-none bg-card hover:bg-secondary dark:hover:bg-brand/10 uppercase tracking-[0.15em] text-[10px] font-bold shadow-sm transition-all">
-                                <ArrowUpDown className="w-4 h-4 text-brand" />
-                                <span>Ordenar</span>
-                                <ChevronDown className="w-3 h-3 opacity-50" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-none w-52 font-bold uppercase tracking-widest text-[10px] p-1 bg-card border-border/50 shadow-2xl">
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('newest')}>Más recientes</DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('name-asc')}>Nombre (A-Z)</DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('price-asc')}>Precio: Menor a Mayor</DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('price-desc')}>Precio: Mayor a Menor</DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('stock-asc')}>Stock: Menor a Mayor</DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('stock-desc')}>Stock: Mayor a Menor</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <Link href="/admin/collections" className="hidden sm:block">
-                        <Button variant="outline" size="sm" className="h-11 gap-2 text-foreground border-border/50 rounded-none bg-card hover:bg-secondary dark:hover:bg-brand/10 uppercase tracking-[0.15em] text-[10px] font-bold shadow-sm">
-                            Colecciones
-                        </Button>
-                    </Link>
-                </div>
-            </header>
-
-            {/* Premium Search & Slider Section */}
-            <div className="space-y-6">
-                <div className="relative group">
-                    <div className="absolute inset-0 bg-brand/5 dark:bg-brand/10 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-brand transition-colors" />
-                    <Input
-                        placeholder="Filtrar por nombre, categoría o SKU..."
-                        className="pl-12 bg-card border-border/50 rounded-none h-16 focus-visible:ring-1 focus-visible:ring-brand focus-visible:border-brand placeholder:text-muted-foreground placeholder:tracking-widest placeholder:uppercase placeholder:text-[10px] text-sm uppercase tracking-wider relative z-10 shadow-sm"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                    {/* View Mode Toggle & PC Sort */}
+                    <div className="hidden md:flex items-center gap-2">
+                        <div className="flex bg-card border border-border/50 p-1">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={cn(
+                                    "p-2 transition-all",
+                                    viewMode === 'list' ? "bg-brand text-white shadow-inner" : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                <List className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={cn(
+                                    "p-2 transition-all",
+                                    viewMode === 'grid' ? "bg-brand text-white shadow-inner" : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                <LayoutGrid className="w-5 h-5" />
+                            </button>
+                        </div>
+                        {renderSortMenu()}
+                    </div>
                 </div>
 
                 {/* SLIDER CONTENIDO: CONTROL TOTAL DE ANCHO PARA MÓVIL */}
@@ -179,59 +220,108 @@ export function InventoryClient({ products }: InventoryClientProps) {
                 </div>
             </div>
 
-            {/* Dynamic Results Count */}
-            <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Resultados:</span>
-                <Badge variant="outline" className="rounded-none border-brand/30 text-brand bg-brand/5 px-3 py-1 text-[10px] font-bold">
-                    {filteredProducts.length} PRODUCTOS
-                </Badge>
-            </div>
-
-            {/* Enhanced Products Grid/List */}
-            <div className="grid grid-cols-1 gap-8">
-                {filteredProducts.length === 0 ? (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="text-center py-32 flex flex-col items-center border border-border/50 bg-secondary/10 dark:bg-white/[0.02] shadow-inner"
-                    >
-                        <div className="w-20 h-20 rounded-none flex items-center justify-center mb-8 text-muted-foreground/30 border border-border/50 rotate-45 transform group-hover:rotate-90 transition-transform duration-1000">
-                            <Search className="-rotate-45 w-8 h-8" />
-                        </div>
-                        <h3 className="text-xl font-bold tracking-[0.2em] text-foreground uppercase mb-3">Sin Resultados</h3>
-                        <p className="text-muted-foreground text-[10px] tracking-[0.3em] uppercase max-w-xs leading-relaxed">No encontramos productos que coincidan con tu búsqueda o filtros actuales.</p>
-                        <Button
-                            variant="ghost"
-                            onClick={() => { setSearchQuery(""); setSelectedCategory("Todo"); }}
-                            className="mt-8 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-brand hover:text-white transition-colors h-12 px-10 rounded-none border border-border/50"
-                        >
-                            Limpiar Filtros
-                        </Button>
-                    </motion.div>
-                ) : (
-                    filteredProducts.map((product, idx) => (
-                        <motion.div
-                            key={product.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05, duration: 0.4 }}
-                        >
-                            <InventoryCard product={product} />
-                        </motion.div>
-                    ))
-                )}
-            </div>
-
-            {/* Premium FAB - Floating Action Button (Elevado para móvil) */}
-            <Link href="/admin/inventory/new" className="fixed bottom-24 right-6 sm:bottom-12 sm:right-12 z-50 group">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-brand blur-2xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-none bg-brand shadow-[0_15px_30px_rgba(180,115,49,0.4)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.5)] flex items-center justify-center text-brand-foreground hover:scale-105 active:scale-90 transition-all cursor-pointer border-2 border-white/20 relative z-10">
-                        <Plus className="w-8 h-8 sm:w-10 sm:h-10 group-hover:rotate-180 transition-transform duration-500" strokeWidth={3} />
-                    </div>
+            <div className="space-y-12">
+                {/* Dynamic Results Count */}
+                <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground">Resultados:</span>
+                    <Badge variant="outline" className="rounded-none border-brand/30 text-brand bg-brand/5 px-3 py-1 text-[10px] font-bold">
+                        {filteredProducts.length} PRODUCTOS
+                    </Badge>
                 </div>
-            </Link>
-        </div>
+
+                {/* Enhanced Products Grid/List */}
+                <div className={cn(
+                    "grid gap-4 sm:gap-8",
+                    viewMode === 'grid' ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"
+                )}>
+                    {filteredProducts.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className={cn(
+                                "text-center py-32 flex flex-col items-center border border-border/50 bg-secondary/10 dark:bg-white/[0.02] shadow-inner",
+                                viewMode === 'grid' && "col-span-full"
+                            )}
+                        >
+                            <div className="w-20 h-20 rounded-none flex items-center justify-center mb-8 text-muted-foreground/30 border border-border/50 rotate-45 transform group-hover:rotate-90 transition-transform duration-1000">
+                                <Search className="-rotate-45 w-8 h-8" />
+                            </div>
+                            <h3 className="text-xl font-bold tracking-[0.2em] text-foreground uppercase mb-3">Sin Resultados</h3>
+                            <p className="text-muted-foreground text-[10px] tracking-[0.3em] uppercase max-w-xs leading-relaxed">No encontramos productos que coincidan con tu búsqueda o filtros actuales.</p>
+                            <Button
+                                variant="ghost"
+                                onClick={() => { setSearchQuery(""); setSelectedCategory("Todo"); }}
+                                className="mt-8 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-brand hover:text-white transition-colors h-12 px-10 rounded-none border border-border/50"
+                            >
+                                Limpiar Filtros
+                            </Button>
+                        </motion.div>
+                    ) : (
+                        filteredProducts.map((product, idx) => (
+                            <motion.div
+                                key={product.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.05, duration: 0.4 }}
+                            >
+                                <InventoryCard product={product} mode={viewMode} />
+                            </motion.div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* Premium FABs */}
+            <div className="fixed bottom-24 right-6 sm:bottom-12 sm:right-12 z-50 flex flex-col gap-4 items-end">
+                {/* Mobile Floating View Toggle */}
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: isVisible ? 1 : 0.8, opacity: isVisible ? 1 : 0 }}
+                    className="md:hidden"
+                >
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="w-12 h-12 rounded-none bg-background shadow-xl border-brand/30 text-brand"
+                        onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+                    >
+                        {viewMode === 'list' ? <LayoutGrid className="w-5 h-5" /> : <List className="w-5 h-5" />}
+                    </Button>
+                </motion.div>
+
+                {/* Mobile Floating Sort Button */}
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: isVisible ? 1 : 0.8, opacity: isVisible ? 1 : 0 }}
+                    className="md:hidden"
+                >
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" className="w-12 h-12 rounded-none bg-background shadow-xl border-brand/30 text-brand">
+                                <ArrowUpDown className="w-5 h-5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-none w-52 font-bold uppercase tracking-widest text-[10px] p-1 bg-card border-border/50 shadow-2xl mb-2">
+                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('newest')}>Más recientes</DropdownMenuItem>
+                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('name-asc')}>Nombre (A-Z)</DropdownMenuItem>
+                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('price-asc')}>Precio: Menor a Mayor</DropdownMenuItem>
+                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('price-desc')}>Precio: Mayor a Menor</DropdownMenuItem>
+                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('stock-asc')}>Stock: Menor a Mayor</DropdownMenuItem>
+                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('stock-desc')}>Stock: Mayor a Menor</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </motion.div>
+
+                <Link href="/admin/inventory/new" className="group">
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-brand blur-2xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-none bg-brand shadow-[0_15px_30px_rgba(180,115,49,0.4)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.5)] flex items-center justify-center text-brand-foreground hover:scale-105 active:scale-90 transition-all cursor-pointer border-2 border-white/20 relative z-10">
+                            <Plus className="w-8 h-8 sm:w-10 sm:h-10 group-hover:rotate-180 transition-transform duration-500" strokeWidth={3} />
+                        </div>
+                    </div>
+                </Link>
+            </div>
+        </div >
     );
 }
 

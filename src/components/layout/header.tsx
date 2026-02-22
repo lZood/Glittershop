@@ -326,15 +326,12 @@ export default function Header() {
       <div
         className={cn(
           "absolute inset-0 z-[-1] transition-opacity duration-300",
-          isSolid ? "opacity-100 bg-background" : "opacity-0"
+          isSolid ? "opacity-100 bg-background border-b border-border/50" : "opacity-0"
         )}
       />
 
       {/* Main Header Row */}
-      <div className="container flex h-16 items-center px-4 sm:px-6 lg:px-10 mx-auto w-full md:w-[80%] relative z-10 border-b border-transparent">
-
-        {/* Border overlay for solid state */}
-        <div className={cn("absolute bottom-0 left-0 w-full h-[1px] transition-opacity duration-300", isSolid ? "opacity-100 bg-border" : "opacity-0")} />
+      <div className="container flex h-16 items-center px-4 sm:px-6 lg:px-10 mx-auto w-full md:w-[80%] relative z-10">
 
         {/* Logo */}
         <div className="flex items-center flex-1 md:flex-none md:justify-start">

@@ -32,9 +32,10 @@ import * as motion from "framer-motion/client";
 
 interface InventoryCardProps {
     product: any;
+    mode?: 'list' | 'grid';
 }
 
-export function InventoryCard({ product }: InventoryCardProps) {
+export function InventoryCard({ product, mode = 'list' }: InventoryCardProps) {
     const router = useRouter();
     const { toast } = useToast();
     const stock = product.stock || 0;
@@ -115,6 +116,127 @@ export function InventoryCard({ product }: InventoryCardProps) {
             currency: 'MXN'
         }).format(amount);
     };
+
+    if (mode === 'grid') {
+        return (
+            <>
+                <Card
+                    onClick={() => router.push(`/admin/inventory/${product.id}`)}
+                    className="group border border-border/50 bg-card rounded-none overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-brand/40 active:scale-[0.98] relative flex flex-col h-full"
+                >
+                    {/* Status Badges Overlay */}
+                    <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                        {!isActive ? (
+                            <div className="bg-slate-500/90 text-white p-1 backdrop-blur-sm">
+                                <FileText className="w-3 h-3" />
+                            </div>
+                        ) : stock <= 5 ? (
+                            <div className="bg-amber-500/90 text-white p-1 backdrop-blur-sm">
+                                <AlertCircle className="w-3 h-3" />
+                            </div>
+                        ) : null}
+                    </div>
+
+                    {/* Stock Overlay */}
+                    <div className="absolute top-2 right-2 z-10">
+                        <div className={cn(
+                            "px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest backdrop-blur-sm border",
+                            stock <= 5 ? "bg-red-500 text-white border-red-400" : "bg-black/50 text-white border-white/20"
+                        )}>
+                            STK: {stock}
+                        </div>
+                    </div>
+
+                    {/* Main Image - Protagonist */}
+                    <div className="relative aspect-square w-full overflow-hidden bg-secondary/30">
+                        <Image
+                            src={mainImage}
+                            alt={product.name}
+                            fill
+                            className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-brand/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <ArrowUpRight className="w-6 h-6 text-white" />
+                        </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="p-3 flex-1 flex flex-col justify-between gap-1">
+                        <div>
+                            <span className="text-[7px] font-bold text-brand uppercase tracking-[0.2em] block mb-0.5">
+                                {product.categories?.name || 'General'}
+                            </span>
+                            <h3 className="text-[10px] sm:text-xs font-bold text-foreground uppercase tracking-tight leading-tight group-hover:text-brand transition-colors line-clamp-2">
+                                {product.name}
+                            </h3>
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                                <span className="text-xs sm:text-base font-bold text-foreground">
+                                    {formatCurrency(product.price)}
+                                </span>
+                                {product.original_price && product.original_price > product.price && (
+                                    <span className="text-[8px] text-muted-foreground line-through opacity-50">
+                                        {formatCurrency(product.original_price)}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Compact Grid Actions */}
+                            <div className="flex gap-1 mt-1 border-t border-border/30 pt-2" onClick={(e) => e.stopPropagation()}>
+                                <Link href={`/admin/inventory/edit/${product.id}`} className="flex-1">
+                                    <Button variant="ghost" size="sm" className="w-full h-8 rounded-none hover:bg-brand hover:text-white transition-all p-0">
+                                        <Edit className="w-3 h-3" />
+                                    </Button>
+                                </Link>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="w-8 h-8 rounded-none hover:bg-secondary" onClick={(e) => e.stopPropagation()}>
+                                            <MoreHorizontal className="w-4 h-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="rounded-none font-bold uppercase tracking-widest text-[9px] p-1 w-44">
+                                        <DropdownMenuItem className="p-2" onClick={handleToggleVisibility}>
+                                            {isToggling ? "Cargando..." : isActive ? "Ocultar" : "Publicar"}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="p-2 text-red-600" onClick={() => setShowDeleteDialog(true)}>
+                                            Eliminar
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Shared Delete Dialog */}
+                <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                    <AlertDialogContent className="rounded-none bg-card border-border/50 shadow-2xl">
+                        <AlertDialogHeader>
+                            <AlertDialogTitle className="uppercase tracking-widest font-bold text-lg">¿Confirmar Eliminación?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-xs uppercase tracking-wider leading-relaxed py-4 opacity-70">
+                                Estás a punto de borrar "{product.name}". Esta acción es irreversible.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel className="rounded-none uppercase text-[10px] font-bold tracking-widest h-11 border-border/50">Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handleDelete();
+                                }}
+                                className="bg-red-600 hover:bg-red-700 text-white rounded-none uppercase text-[10px] font-bold tracking-widest h-11"
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? "Eliminando..." : "Eliminar"}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </>
+        );
+    }
 
     return (
         <>
