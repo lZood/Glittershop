@@ -1,4 +1,5 @@
 'use client';
+import { use } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { products } from '@/lib/products';
@@ -47,8 +48,9 @@ const collectionDetails = {
   },
 };
 
-export default function CollectionDetailPage({ params }: { params: { name: string } }) {
-  const collectionKey = params.name as keyof typeof collectionDetails;
+export default function CollectionDetailPage({ params }: { params: Promise<{ name: string }> }) {
+  const { name } = use(params);
+  const collectionKey = name as keyof typeof collectionDetails;
   const collection = collectionDetails[collectionKey];
   const [sortOption, setSortOption] = useState('recomendado');
 

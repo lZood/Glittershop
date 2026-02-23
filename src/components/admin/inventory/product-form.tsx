@@ -1486,13 +1486,13 @@ export function ProductForm({ initialData, availableCategories = [] }: ProductFo
                                                                     src={item.url}
                                                                     alt={`Preview ${index}`}
                                                                     className="w-full h-full object-cover transition-all duration-200"
-                                                                    style={item.croppedArea ? {
+                                                                    style={item.pixelCrop ? {
                                                                         position: 'absolute',
                                                                         top: '0',
                                                                         left: '0',
-                                                                        width: `${10000 / item.croppedArea.width}%`,
-                                                                        height: `${10000 / item.croppedArea.height}%`,
-                                                                        transform: `translate(-${item.croppedArea.x}%, -${item.croppedArea.y}%)`,
+                                                                        width: `${10000 / item.pixelCrop.width}%`,
+                                                                        height: `${10000 / item.pixelCrop.height}%`,
+                                                                        transform: `translate(-${item.pixelCrop.x}%, -${item.pixelCrop.y}%)`,
                                                                         transformOrigin: '0 0'
                                                                     } : {}}
                                                                 />

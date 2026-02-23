@@ -2,7 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gem, Settings, Store, LogOut, Search, Bell } from "lucide-react";
-import { Gem, Settings, Store, LogOut, Search, Bell } from "lucide-react";
 import Link from "next/link";
 import {
     DropdownMenu,

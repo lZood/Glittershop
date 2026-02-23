@@ -32,9 +32,10 @@ const translateStatus = (status: string) => {
     }
 };
 
-export default async function OrderDetailsPage({ params }: { params: { id: string } }) {
+export default async function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id: orderId } = await params;
     // Fetch real order from DB
-    const orderData = await getOrderById(params.id);
+    const orderData = await getOrderById(orderId);
 
     if (!orderData) {
         notFound();

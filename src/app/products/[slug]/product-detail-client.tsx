@@ -48,7 +48,7 @@ export default function ProductDetailClient({ product, relatedProducts = [], chi
     // Extract unique colors/metals from variants
     const uniqueColors = Array.from(new Set(product.variants?.map(v => v.color).filter(Boolean))) as string[];
     const dynamicMetals = uniqueColors.map(colorName => {
-        const variant = product.variants.find(v => v.color === colorName);
+        const variant = product.variants?.find(v => v.color === colorName);
         return {
             id: colorName,
             name: colorName,
@@ -118,8 +118,10 @@ export default function ProductDetailClient({ product, relatedProducts = [], chi
 
     // Filter Images by Color
     const filteredImages = useMemo(() => {
+        const fallbackImages = product.images ?? [];
+
         if (!product.images_metadata || product.images_metadata.length === 0) {
-            return product.images; // Fallback to all strings if no metadata
+            return fallbackImages; // Fallback to all strings if no metadata
         }
 
         const exactMatch = product.images_metadata
@@ -133,7 +135,7 @@ export default function ProductDetailClient({ product, relatedProducts = [], chi
             .filter(img => !img.color || img.color === 'default')
             .map(img => img.url);
 
-        return generic.length > 0 ? generic : product.images;
+        return generic.length > 0 ? generic : fallbackImages;
     }, [selectedMetal, product.images_metadata, product.images]);
 
     // Dynamic Images from Product

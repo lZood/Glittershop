@@ -4,7 +4,7 @@ import { Check, ShoppingCart, Truck, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CheckoutStepperProps {
-    currentStep: 'cart' | 'shipping' | 'payment';
+    currentStep: 'cart' | 'shipping' | 'payment' | 'confirmation';
 }
 
 export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
@@ -12,6 +12,7 @@ export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
         { id: 'cart', label: 'CARRITO', icon: ShoppingCart },
         { id: 'shipping', label: 'ENVÍO', icon: Truck },
         { id: 'payment', label: 'PAGO', icon: CreditCard },
+        { id: 'confirmation', label: 'CONFIRMACION', icon: Check },
     ];
 
     const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
@@ -63,3 +64,4 @@ export function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
         </div>
     );
 }
+
