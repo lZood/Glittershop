@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,15 +17,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import RegisterForm from './RegisterForm';
 import LoginForm from './LoginForm';
+import { CheckCircle2 } from 'lucide-react';
 
 const emailSchema = z.object({
-  email: z.string().email({ message: 'Por favor, introduce una dirección de correo electrónico válida.' }),
+  email: z.string().email({ message: 'Por favor, introduce un correo válido.' }),
 });
 
 type EmailFormValues = z.infer<typeof emailSchema>;
 
 export default function UnifiedAuthPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const [step, setStep] = useState<'email' | 'login' | 'register'>('email');
   const [email, setEmail] = useState('');
@@ -57,18 +56,14 @@ export default function UnifiedAuthPage() {
       }
 
       const { exists } = await response.json();
-      console.log('[DEBUG] AuthPage: Server returned exists:', exists, 'for email:', trimmedEmail);
-
       if (exists) {
-        console.log('[DEBUG] AuthPage: User found, switching to login step');
         setStep('login');
       } else {
-        console.warn('[DEBUG] AuthPage: User NOT found, switching to register step');
         setStep('register');
       }
     } catch (error: any) {
       toast({
-        title: 'Error de Verificación',
+        title: 'Error de verificación',
         description: error.message || 'No se pudo conectar con el servidor. Inténtalo más tarde.',
         variant: 'destructive',
       });
@@ -130,75 +125,112 @@ export default function UnifiedAuthPage() {
   const handleBack = () => setStep('email');
 
   return (
-    <div className="flex items-center justify-center py-12 px-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl font-headline">
-            {step === 'email' && 'Bienvenido/a'}
-            {step === 'login' && 'Iniciar Sesión'}
-            {step === 'register' && 'Crear Cuenta'}
-          </CardTitle>
-          <CardDescription>
-            {step === 'email' && 'Inicia sesión con tu correo electrónico o regístrate para convertirte en miembro de Glittershop.'}
-            {step === 'login' && `¡Bienvenido/a de nuevo! Ingresa la contraseña para ${email}.`}
-            {step === 'register' && `Parece que eres nuevo/a. Completa tus datos para crear tu cuenta para ${email}.`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          {step === 'email' && (
-            <Form {...emailForm}>
-              <form onSubmit={emailForm.handleSubmit(checkUserExists)} className="grid gap-4">
-                <FormField
-                  control={emailForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="m@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Verificando...' : 'Continuar'}
-                </Button>
-              </form>
-            </Form>
-          )}
+    <div className="min-h-[calc(100vh-7rem)] px-4 py-8 sm:py-12 bg-gradient-to-b from-secondary/20 via-background to-background">
+      <div className="mx-auto w-full max-w-5xl">
+        <Card className="overflow-hidden border-border/60 shadow-xl">
+          <div className="grid lg:grid-cols-12">
+            <aside className="hidden lg:flex lg:col-span-5 bg-foreground text-background p-8 xl:p-10 flex-col justify-between">
+              <div>
+                <p className="text-xs tracking-[0.25em] uppercase text-background/70 mb-4">Glittershop Account</p>
+                <h2 className="text-3xl font-semibold leading-tight">Inicia rápido y compra sin fricción</h2>
+                <p className="mt-4 text-sm text-background/75">
+                  Mantén tu historial, favoritos y seguimiento de pedidos en un solo lugar.
+                </p>
+              </div>
+              <div className="space-y-3 pt-8">
+                <div className="flex items-center gap-3 text-sm text-background/85">
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                  Checkout más rápido
+                </div>
+                <div className="flex items-center gap-3 text-sm text-background/85">
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                  Estado de pedidos en tiempo real
+                </div>
+                <div className="flex items-center gap-3 text-sm text-background/85">
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                  Experiencia personalizada
+                </div>
+              </div>
+            </aside>
 
-          {step === 'login' && <LoginForm email={email} />}
-          {step === 'register' && <RegisterForm email={email} />}
+            <div className="lg:col-span-7 p-5 sm:p-7 md:p-8">
+              <CardHeader className="p-0 mb-6">
+                <CardTitle className="text-2xl font-headline">
+                  {step === 'email' && 'Bienvenido/a'}
+                  {step === 'login' && 'Iniciar sesión'}
+                  {step === 'register' && 'Crear cuenta'}
+                </CardTitle>
+                <CardDescription className="mt-2">
+                  {step === 'email' && 'Escribe tu correo y te guiaremos al siguiente paso.'}
+                  {step === 'login' && `Ingresa tu contraseña para ${email}.`}
+                  {step === 'register' && `Completa tus datos para crear tu cuenta con ${email}.`}
+                </CardDescription>
+              </CardHeader>
 
-          {step !== 'email' && (
-            <Button variant="link" onClick={handleBack} className="w-full">
-              Volver
-            </Button>
-          )}
+              <div className="mb-6 grid grid-cols-3 gap-2">
+                <div className={`h-1.5 rounded-full ${step === 'email' ? 'bg-primary' : 'bg-muted'}`} />
+                <div className={`h-1.5 rounded-full ${step === 'login' ? 'bg-primary' : 'bg-muted'}`} />
+                <div className={`h-1.5 rounded-full ${step === 'register' ? 'bg-primary' : 'bg-muted'}`} />
+              </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                O continuar con
-              </span>
+              <CardContent className="p-0 grid gap-4">
+                {step === 'email' && (
+                  <Form {...emailForm}>
+                    <form onSubmit={emailForm.handleSubmit(checkUserExists)} className="grid gap-4">
+                      <FormField
+                        control={emailForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input placeholder="tu@email.com" {...field} className="h-11" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full h-11" disabled={isLoading}>
+                        {isLoading ? 'Verificando...' : 'Continuar'}
+                      </Button>
+                    </form>
+                  </Form>
+                )}
+
+                {step === 'login' && <LoginForm email={email} />}
+                {step === 'register' && <RegisterForm email={email} />}
+
+                {step !== 'email' && (
+                  <Button variant="link" onClick={handleBack} className="w-full">
+                    Volver
+                  </Button>
+                )}
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      O continuar con
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button variant="outline" onClick={handleGoogleLogin} className="h-11">
+                    <GoogleIcon />
+                    Google
+                  </Button>
+                  <Button variant="outline" onClick={handleAppleLogin} className="h-11">
+                    <AppleIcon />
+                    Apple
+                  </Button>
+                </div>
+              </CardContent>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" onClick={handleGoogleLogin}>
-              <GoogleIcon />
-              Google
-            </Button>
-            <Button variant="outline" onClick={handleAppleLogin}>
-              <AppleIcon />
-              Apple
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
