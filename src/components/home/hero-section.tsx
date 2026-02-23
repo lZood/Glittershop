@@ -6,16 +6,25 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 
 const videos = [
-    '/videos/videoreloj.mp4',
-    '/videos/videoanillo.mp4'
+    '/videos/videoanillo.mp4',
+    '/videos/videopulseratous.mp4',
+    '/videos/videopulsera.mp4',
+    '/videos/videocollar.mp4',
+    '/videos/videoreloj.mp4'
 ];
 
 export function HeroSection() {
     const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+    const [isFading, setIsFading] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleVideoEnd = () => {
-        setCurrentVideoIndex((prevIndex) => (prevIndex + 1) % videos.length);
+        setIsFading(true);
+        fadeTimeoutRef.current = setTimeout(() => {
+            setCurrentVideoIndex((prevIndex) => (prevIndex + 1) % videos.length);
+            setIsFading(false);
+        }, 350);
     };
 
     useEffect(() => {
@@ -27,6 +36,14 @@ export function HeroSection() {
         }
     }, [currentVideoIndex]);
 
+    useEffect(() => {
+        return () => {
+            if (fadeTimeoutRef.current) {
+                clearTimeout(fadeTimeoutRef.current);
+            }
+        };
+    }, []);
+
     return (
         <section className="relative w-full h-[95vh] flex flex-col justify-center items-center text-center overflow-hidden bg-black">
             {/* Video Background */}
@@ -36,7 +53,7 @@ export function HeroSection() {
                 muted
                 playsInline
                 onEnded={handleVideoEnd}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto object-cover z-0 transition-opacity duration-1000"
+                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 min-w-full min-h-full w-auto h-auto object-cover z-0 transition-opacity duration-700 ${isFading ? 'opacity-0' : 'opacity-100'}`}
                 style={{ objectFit: 'cover' }}
             >
                 <source src={videos[currentVideoIndex]} type="video/mp4" />
