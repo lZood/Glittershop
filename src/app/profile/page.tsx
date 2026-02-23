@@ -147,6 +147,12 @@ export default function ProfilePage() {
 
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | undefined>(undefined);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | undefined>(undefined);
 
   const [connectionError, setConnectionError] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -370,7 +376,59 @@ export default function ProfilePage() {
                             <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                           </Link>
                         </Button>
-                      </div>
+                        {recentOrder ? (
+                          <Card className="overflow-hidden border-none shadow-2xl bg-gradient-to-br from-background via-secondary/10 to-primary/5 hover:shadow-primary/10 transition-shadow duration-500 rounded-3xl relative before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/40 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:pointer-events-none border border-border/50">
+                            <CardHeader className="border-b border-border/50 bg-secondary/20 pb-4 backdrop-blur-sm">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-primary/10 rounded-full">
+                                    <Package className="w-5 h-5 text-primary" />
+                                  </div>
+                                  <CardTitle className="text-sm font-black uppercase tracking-widest text-foreground/80">Último Pedido</CardTitle>
+                                </div>
+                                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200/50 shadow-sm font-black uppercase tracking-wider text-[10px] px-3 py-1">
+                                  {translateStatus(recentOrder.status)}
+                                </Badge>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="p-6 md:p-8">
+                              <div className="flex items-center gap-6 md:gap-8">
+                                <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-white border border-border/50 shadow-inner flex-shrink-0 group">
+                                  {getOrderImage(recentOrder) ? (
+                                    <Image
+                                      src={getOrderImage(recentOrder)}
+                                      alt="Product"
+                                      fill
+                                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                      className="object-cover p-1 transition-transform duration-700 group-hover:scale-110"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-secondary/50 flex items-center justify-center">
+                                      <Package className="w-6 h-6 text-muted-foreground/50" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                  <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase">Pedido #{recentOrder.id}</p>
+                                  <h3 className="font-black text-xl md:text-2xl leading-tight line-clamp-2 text-foreground/90">{recentOrder.order_items?.[0]?.product?.name || 'Varios Artículos'}</h3>
+                                  <p className="text-sm font-medium text-muted-foreground pt-1">Fecha: <span className="text-primary font-bold">{new Date(recentOrder.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</span></p>
+                                </div>
+                                <Button size="icon" variant="default" className="rounded-full shadow-lg shadow-primary/20 hover:scale-105 transition-transform h-12 w-12 shrink-0 group" asChild>
+                                  <Link href={`/profile/orders/${recentOrder.id}`}>
+                                    <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                                  </Link>
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          <Card className="overflow-hidden shadow-sm rounded-3xl border-dashed border-2">
+                            <CardContent className="p-12 text-center text-muted-foreground">
+                              No tienes pedidos recientes. <br />
+                              <Link href="/shop" className="text-primary hover:text-primary/80 transition-colors mt-4 inline-block font-black uppercase tracking-widest text-sm">Explorar Boutique</Link>
+                            </CardContent>
+                          </Card>
+                        )}
                     </CardContent>
                   </Card>
                 ) : (
@@ -389,11 +447,15 @@ export default function ProfilePage() {
                       <CardContent className="p-6 flex flex-col items-center text-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
                           <Star className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <p className="text-2xl font-black">{mounted ? wishlistItems.length : '-'}</p>
-                          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Lista de deseos</p>
-                        </div>
+                          <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                            <Star className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-black">{mounted ? wishlistItems.length : '-'}</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Lista de deseos</p>
+                            <p className="text-2xl font-black">{mounted ? wishlistItems.length : '-'}</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Lista de deseos</p>
+                          </div>
                       </CardContent>
                     </Card>
                   </Link>
@@ -460,6 +522,34 @@ export default function ProfilePage() {
                     <CardDescription>Revisa el estado de tus compras recientes.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {orders.length === 0 ? (
+                      <div className="text-center p-8 text-muted-foreground">Aún no has realizado pedidos.</div>
+                    ) : (
+                      orders.map((order) => (
+                        <div key={order.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-lg border hover:bg-secondary/30 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-white border shadow-sm group-hover:shadow-md transition-shadow">
+                              {getOrderImage(order) ? (
+                                <Image
+                                  src={getOrderImage(order)}
+                                  alt="Product"
+                                  fill
+                                  className="object-cover p-1 transition-transform duration-500 group-hover:scale-105"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-secondary/20 flex flex-col items-center justify-center">
+                                  <Package className="w-4 h-4 text-muted-foreground/40" />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-black text-base text-foreground/90">Pedido #{order.id}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{new Date(order.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                              <div className="mt-2 text-left">
+                                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-wider bg-secondary/30">
+                                  {translateStatus(order.status)}
+                                </Badge>
+                              </div>
                     {orders.length === 0 ? (
                       <div className="text-center p-8 text-muted-foreground">Aún no has realizado pedidos.</div>
                     ) : (
@@ -890,54 +980,54 @@ export default function ProfilePage() {
               </TabsContent>
             </div>
 
-            {/* Sidebar / Quick Actions (Desktop) */}
-            <div className="space-y-6">
-              <Card className="bg-primary text-primary-foreground border-none shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl"></div>
-                <CardContent className="p-6 relative z-10">
-                  <h3 className="font-black text-xl uppercase mb-2">Invita a un amigo</h3>
-                  <p className="text-sm opacity-90 mb-4">Gana 500 puntos por cada amigo que realice su primera compra.</p>
-                  <Button variant="secondary" className="w-full font-bold text-xs uppercase tracking-wider">
-                    Copiar Link
-                  </Button>
-                </CardContent>
-              </Card>
+                  {/* Sidebar / Quick Actions (Desktop) */}
+                  <div className="space-y-6">
+                    <Card className="bg-primary text-primary-foreground border-none shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                      <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl"></div>
+                      <CardContent className="p-6 relative z-10">
+                        <h3 className="font-black text-xl uppercase mb-2">Invita a un amigo</h3>
+                        <p className="text-sm opacity-90 mb-4">Gana 500 puntos por cada amigo que realice su primera compra.</p>
+                        <Button variant="secondary" className="w-full font-bold text-xs uppercase tracking-wider">
+                          Copiar Link
+                        </Button>
+                      </CardContent>
+                    </Card>
 
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-2">Accesos Rápidos</h4>
-                {(profile?.role === 'admin' || user?.user_metadata?.role === 'admin') && (
-                  <Link href="/admin">
-                    <Button variant="ghost" className="w-full justify-start text-left font-medium hover:bg-secondary/50">
-                      <Shield className="w-4 h-4 mr-3" />
-                      Panel de Administrador
-                    </Button>
-                  </Link>
-                )}
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-left font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                >
-                  {isLoggingOut ? (
-                    <>
-                      <div className="w-4 h-4 mr-3 border-2 border-destructive border-t-transparent rounded-full animate-spin"></div>
-                      Cerrando sesión...
-                    </>
-                  ) : (
-                    <>
-                      <LogOut className="w-4 h-4 mr-3" />
-                      Cerrar Sesión
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-2">Accesos Rápidos</h4>
+                      {(profile?.role === 'admin' || user?.user_metadata?.role === 'admin') && (
+                        <Link href="/admin">
+                          <Button variant="ghost" className="w-full justify-start text-left font-medium hover:bg-secondary/50">
+                            <Shield className="w-4 h-4 mr-3" />
+                            Panel de Administrador
+                          </Button>
+                        </Link>
+                      )}
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-left font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                      >
+                        {isLoggingOut ? (
+                          <>
+                            <div className="w-4 h-4 mr-3 border-2 border-destructive border-t-transparent rounded-full animate-spin"></div>
+                            Cerrando sesión...
+                          </>
+                        ) : (
+                          <>
+                            <LogOut className="w-4 h-4 mr-3" />
+                            Cerrar Sesión
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
 
-          </div>
-        </Tabs >
-      </div >
-    </div >
-  );
+                </div>
+              </Tabs >
+            </div >
+          </div >
+          );
 }

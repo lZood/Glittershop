@@ -5,6 +5,7 @@ import { Search, Plus, Filter, AlertTriangle, ArrowUpDown, ChevronDown, ArrowLef
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { InventoryCard } from "./inventory-card";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import * as motion from "framer-motion/client";
 import * as motion from "framer-motion/client";
 
 interface InventoryClientProps {
@@ -87,6 +89,8 @@ export function InventoryClient({ products }: InventoryClientProps) {
                 return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
         }
     });
+
+    const filterOptions = ["Todo", "Stock Bajo", "Agotado"];
 
     const filterOptions = ["Todo", "Stock Bajo", "Agotado"];
 
@@ -214,6 +218,32 @@ export function InventoryClient({ products }: InventoryClientProps) {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
+                        <div className="w-[1px] h-6 bg-border/50 shrink-0 mx-1"></div>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    className={cn(
+                                        "px-6 py-2.5 text-[10px] tracking-[0.2em] uppercase transition-all whitespace-nowrap border shrink-0 flex items-center gap-2 font-bold",
+                                        !filterOptions.includes(selectedCategory)
+                                            ? "bg-brand text-brand-foreground border-brand shadow-md"
+                                            : "bg-card text-muted-foreground border-border/50 hover:border-brand/40 font-bold"
+                                    )}
+                                >
+                                    {!filterOptions.includes(selectedCategory) ? selectedCategory : "Categorías"}
+                                    <ChevronDown className={cn("w-3 h-3 transition-transform", !filterOptions.includes(selectedCategory) && "rotate-180")} />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-56 max-h-[400px] overflow-y-auto rounded-none font-bold uppercase tracking-widest text-[10px] bg-card border-border/50 shadow-2xl p-1">
+                                <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSelectedCategory("Todo")}>Todas las categorías</DropdownMenuItem>
+                                {productCategories.map(cat => (
+                                    <DropdownMenuItem key={cat} className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSelectedCategory(cat)}>
+                                        {cat}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
 
                     {/* Indicador visual de scroll (derecha) */}
                     <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none md:hidden"></div>
@@ -271,57 +301,58 @@ export function InventoryClient({ products }: InventoryClientProps) {
                 </div>
             </div>
 
-            {/* Premium FABs */}
-            <div className="fixed bottom-24 right-6 sm:bottom-12 sm:right-12 z-50 flex flex-col gap-4 items-end">
-                {/* Mobile Floating View Toggle */}
-                <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: isVisible ? 1 : 0.8, opacity: isVisible ? 1 : 0 }}
-                    className="md:hidden"
-                >
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="w-12 h-12 rounded-none bg-background shadow-xl border-brand/30 text-brand"
-                        onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
-                    >
-                        {viewMode === 'list' ? <LayoutGrid className="w-5 h-5" /> : <List className="w-5 h-5" />}
+            {/* Premium FABs */ }
+    <div className="fixed bottom-24 right-6 sm:bottom-12 sm:right-12 z-50 flex flex-col gap-4 items-end">
+        {/* Mobile Floating View Toggle */}
+        <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: isVisible ? 1 : 0.8, opacity: isVisible ? 1 : 0 }}
+            className="md:hidden"
+        >
+            <Button
+                variant="outline"
+                size="icon"
+                className="w-12 h-12 rounded-none bg-background shadow-xl border-brand/30 text-brand"
+                onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+            >
+                {viewMode === 'list' ? <LayoutGrid className="w-5 h-5" /> : <List className="w-5 h-5" />}
+            </Button>
+        </motion.div>
+
+        {/* Mobile Floating Sort Button */}
+        <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: isVisible ? 1 : 0.8, opacity: isVisible ? 1 : 0 }}
+            className="md:hidden"
+        >
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="w-12 h-12 rounded-none bg-background shadow-xl border-brand/30 text-brand">
+                        <ArrowUpDown className="w-5 h-5" />
                     </Button>
-                </motion.div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="rounded-none w-52 font-bold uppercase tracking-widest text-[10px] p-1 bg-card border-border/50 shadow-2xl mb-2">
+                    <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('newest')}>Más recientes</DropdownMenuItem>
+                    <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('name-asc')}>Nombre (A-Z)</DropdownMenuItem>
+                    <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('price-asc')}>Precio: Menor a Mayor</DropdownMenuItem>
+                    <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('price-desc')}>Precio: Mayor a Menor</DropdownMenuItem>
+                    <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('stock-asc')}>Stock: Menor a Mayor</DropdownMenuItem>
+                    <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('stock-desc')}>Stock: Mayor a Menor</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </motion.div>
 
-                {/* Mobile Floating Sort Button */}
-                <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: isVisible ? 1 : 0.8, opacity: isVisible ? 1 : 0 }}
-                    className="md:hidden"
-                >
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon" className="w-12 h-12 rounded-none bg-background shadow-xl border-brand/30 text-brand">
-                                <ArrowUpDown className="w-5 h-5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-none w-52 font-bold uppercase tracking-widest text-[10px] p-1 bg-card border-border/50 shadow-2xl mb-2">
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('newest')}>Más recientes</DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('name-asc')}>Nombre (A-Z)</DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('price-asc')}>Precio: Menor a Mayor</DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('price-desc')}>Precio: Mayor a Menor</DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('stock-asc')}>Stock: Menor a Mayor</DropdownMenuItem>
-                            <DropdownMenuItem className="p-3 rounded-none focus:bg-brand focus:text-white" onClick={() => setSortOrder('stock-desc')}>Stock: Mayor a Menor</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </motion.div>
-
-                <Link href="/admin/inventory/new" className="group">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-brand blur-2xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-none bg-brand shadow-[0_15px_30px_rgba(180,115,49,0.4)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.5)] flex items-center justify-center text-brand-foreground hover:scale-105 active:scale-90 transition-all cursor-pointer border-2 border-white/20 relative z-10">
-                            <Plus className="w-8 h-8 sm:w-10 sm:h-10 group-hover:rotate-180 transition-transform duration-500" strokeWidth={3} />
-                        </div>
-                    </div>
-                </Link>
+        <Link href="/admin/inventory/new" className="group">
+            <div className="relative">
+                <div className="absolute inset-0 bg-brand blur-2xl opacity-40 group-hover:opacity-60 transition-opacity animate-pulse"></div>
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-none bg-brand shadow-[0_15px_30px_rgba(180,115,49,0.4)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.5)] flex items-center justify-center text-brand-foreground hover:scale-105 active:scale-90 transition-all cursor-pointer border-2 border-white/20 relative z-10">
+                    <Plus className="w-8 h-8 sm:w-10 sm:h-10 group-hover:rotate-180 transition-transform duration-500" strokeWidth={3} />
+                </div>
             </div>
+        </Link>
+    </div>
         </div >
     );
 }
+
 

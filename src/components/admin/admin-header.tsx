@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gem, Settings, Store, LogOut, Search, Bell } from "lucide-react";
+import { Gem, Settings, Store, LogOut, Search, Bell } from "lucide-react";
 import Link from "next/link";
 import {
     DropdownMenu,
@@ -88,6 +89,16 @@ export function AdminHeader() {
 
             {/* Right Side Actions */}
             <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+                    <Search className="h-4 w-4" />
+                </Button>
+
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground relative">
+                    <Bell className="h-4 w-4" />
+                    <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-brand rounded-full"></span>
+                </Button>
+
+                <div className="w-px h-4 bg-border/50 mx-1"></div>
                 <Button variant="ghost" size="icon" className="h-9 w-9 rounded-none hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
                     <Search className="h-4 w-4" />
                 </Button>

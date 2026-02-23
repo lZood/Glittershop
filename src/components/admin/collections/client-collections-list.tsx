@@ -10,6 +10,7 @@ import {
     Edit3,
     ExternalLink,
     Loader2,
+<<<<<<< HEAD
     AlertCircle,
     ArrowUpDown,
     ChevronDown,
@@ -18,6 +19,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+=======
+    AlertCircle
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+>>>>>>> d6ebb696ba508c157f322a677b719639c2c7a394
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -50,6 +57,7 @@ export function ClientCollectionsList({ initialCollections }: ClientCollectionsL
     const [collections, setCollections] = useState(initialCollections);
     const [isDeleting, setIsDeleting] = useState(false);
     const [collectionToDelete, setCollectionToDelete] = useState<any>(null);
+<<<<<<< HEAD
     const [searchQuery, setSearchQuery] = useState("");
     const [sortOrder, setSortOrder] = useState<'newest' | 'name-asc' | 'name-desc'>('newest');
     const [isVisible, setIsVisible] = useState(true);
@@ -81,6 +89,8 @@ export function ClientCollectionsList({ initialCollections }: ClientCollectionsL
         if (sortOrder === 'name-desc') return b.name.localeCompare(a.name);
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
+=======
+>>>>>>> d6ebb696ba508c157f322a677b719639c2c7a394
 
     const handleDelete = async () => {
         if (!collectionToDelete) return;
@@ -105,6 +115,7 @@ export function ClientCollectionsList({ initialCollections }: ClientCollectionsL
     return (
         <div className="space-y-8 pb-32 max-w-5xl mx-auto px-4 lg:px-8 pt-6">
             {/* Header */}
+<<<<<<< HEAD
             <div className="pt-24 sm:pt-12 mb-12">
                 <h1 className="text-3xl md:text-5xl font-bold tracking-[0.1em] uppercase text-foreground">Colecciones</h1>
             </div>
@@ -144,6 +155,42 @@ export function ClientCollectionsList({ initialCollections }: ClientCollectionsL
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {filteredCollections.map((collection, idx) => (
+=======
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sticky top-0 bg-background/80 backdrop-blur-xl z-30 py-6 border-b border-border/30 sm:border-none">
+                <div className="flex items-center gap-4">
+                    <Link href="/admin">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-secondary border border-transparent hover:border-border/30 rounded-none transition-all">
+                            <ArrowLeft className="w-5 h-5" />
+                        </Button>
+                    </Link>
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="h-3 w-3 bg-brand rounded-full animate-pulse opacity-50"></div>
+                            <span className="text-muted-foreground uppercase tracking-[0.3em] text-[10px] font-bold block">Gestión de Catálogo</span>
+                        </div>
+                        <h1 className="text-3xl font-bold tracking-[0.1em] uppercase text-foreground">Colecciones</h1>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <Link href="/admin/inventory">
+                        <Button variant="outline" size="sm" className="h-11 gap-2 text-foreground border-border/50 rounded-none bg-card hover:bg-secondary uppercase tracking-[0.15em] text-[10px] font-bold shadow-sm transition-all">
+                            Inventario
+                        </Button>
+                    </Link>
+                    <Link href="/admin/collections/new">
+                        <Button size="sm" className="h-11 gap-2 bg-foreground text-background border-border rounded-none hover:bg-foreground/90 uppercase tracking-[0.15em] text-[10px] font-bold shadow-lg transition-all">
+                            <Plus className="w-4 h-4" />
+                            <span>Nueva Colección</span>
+                        </Button>
+                    </Link>
+                </div>
+            </header>
+
+            {/* Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {collections.map((collection, idx) => (
+>>>>>>> d6ebb696ba508c157f322a677b719639c2c7a394
                     <motion.div
                         key={collection.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -288,6 +335,7 @@ export function ClientCollectionsList({ initialCollections }: ClientCollectionsL
                     </div>
                 </div>
             )}
+<<<<<<< HEAD
             {/* Premium FABs */}
             <div className="fixed bottom-24 right-6 sm:bottom-12 sm:right-12 z-50 flex flex-col gap-4 items-end">
                 {/* Mobile Floating Sort Button */}
@@ -319,6 +367,8 @@ export function ClientCollectionsList({ initialCollections }: ClientCollectionsL
                     </div>
                 </Link>
             </div>
+=======
+>>>>>>> d6ebb696ba508c157f322a677b719639c2c7a394
         </div>
     );
 }

@@ -152,10 +152,45 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
         return uniqueSizes.size > 0 ? Array.from(uniqueSizes) : ['6', '7', '8'];
     }, [initialData]);
 
+    // Helper to extract unique colors and sizes from variants
+    const initialColors = useMemo(() => {
+        if (!initialData?.product_variants) return [
+            { name: 'Oro', hex: '#FFD700' },
+            { name: 'Plata', hex: '#C0C0C0' }
+        ];
+
+        const uniqueColors = new Map();
+        initialData.product_variants.forEach((v: any) => {
+            if (v.color && !uniqueColors.has(v.color)) {
+                uniqueColors.set(v.color, {
+                    name: v.color,
+                    hex: (v.color_metadata as any)?.hex || COLOR_MAP[v.color] || '#CCCCCC'
+                });
+            }
+        });
+
+        // If no colors found in variants, return defaults
+        return uniqueColors.size > 0 ? Array.from(uniqueColors.values()) : [
+            { name: 'Oro', hex: '#FFD700' },
+            { name: 'Plata', hex: '#C0C0C0' }
+        ];
+    }, [initialData]);
+
+    const initialSizes = useMemo(() => {
+        if (!initialData?.product_variants) return ['6', '7', '8'];
+        const uniqueSizes = new Set<string>();
+        initialData.product_variants.forEach((v: any) => {
+            if (v.size) uniqueSizes.add(v.size);
+        });
+        return uniqueSizes.size > 0 ? Array.from(uniqueSizes) : ['6', '7', '8'];
+    }, [initialData]);
+
     // State for Variants Generation
+    const [colors, setColors] = useState<{ name: string; hex: string }[]>(initialColors);
     const [colors, setColors] = useState<{ name: string; hex: string }[]>(initialColors);
     const [newColorName, setNewColorName] = useState('');
     const [newColorHex, setNewColorHex] = useState('#000000');
+    const [selectedSizes, setSelectedSizes] = useState<string[]>(initialSizes);
     const [selectedSizes, setSelectedSizes] = useState<string[]>(initialSizes);
 
     // State for Images
@@ -447,6 +482,12 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
                         isPrimary: item.isPrimary || false,
                         storagePath: item.storagePath || ""
                     });
+                    imageUrls.push({
+                        url: item.url,
+                        color: colorKey === 'default' ? undefined : colorKey,
+                        isPrimary: item.isPrimary || false,
+                        storagePath: item.storagePath || ""
+                    });
                     continue;
                 }
 
@@ -633,82 +674,108 @@ export function NewProductWizard({ initialData, availableCategories = [] }: NewP
     return (
         <Form {...form}>
             <div className="flex flex-col h-screen bg-background relative">
-                {/* Loading Grid Overlay */}
-                {isSubmitting && (
-                    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center animate-in fade-in duration-300">
-                        <Loader2 className="w-12 h-12 text-brand animate-spin mb-4" />
-                        <h3 className="text-lg font-bold text-foreground animate-pulse">{loadingLog}</h3>
-                    </div>
+                <div className="flex flex-col h-screen bg-background relative">
+                    {/* Loading Grid Overlay */}
+                    {isSubmitting && (
+                        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center animate-in fade-in duration-300">
+                            <Loader2 className="w-12 h-12 text-brand animate-spin mb-4" />
+                            <h3 className="text-lg font-bold text-foreground animate-pulse">{loadingLog}</h3>
+                            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center animate-in fade-in duration-300">
+                                <Loader2 className="w-12 h-12 text-brand animate-spin mb-4" />
+                                <h3 className="text-lg font-bold text-foreground animate-pulse">{loadingLog}</h3>
+                            </div>
                 )}
 
-                {/* Header */}
-                <header className="bg-card px-4 py-3 flex items-center justify-between border-b border-border/50 sticky top-0 z-20">
-                    <Link href="/admin/inventory">
-                        <Button variant="ghost" size="icon" className="hover:bg-secondary rounded-full">
-                            <X className="w-5 h-5 text-muted-foreground" />
-                        </Button>
-                    </Link>
-                    <div className="flex flex-col items-center">
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{initialData ? 'Editar Producto' : 'Nuevo Producto'}</span>
-                        <h1 className="text-sm font-bold text-foreground">{form.watch('title') || 'Sin Título'}</h1>
-                    </div>
-                    <div className="w-10"></div> {/* Spacer for centering */}
-                </header>
+                            {/* Header */}
+                            <header className="bg-card px-4 py-3 flex items-center justify-between border-b border-border/50 sticky top-0 z-20">
+                                <header className="bg-card px-4 py-3 flex items-center justify-between border-b border-border/50 sticky top-0 z-20">
+                                    <Link href="/admin/inventory">
+                                        <Button variant="ghost" size="icon" className="hover:bg-secondary rounded-full">
+                                            <X className="w-5 h-5 text-muted-foreground" />
+                                            <Button variant="ghost" size="icon" className="hover:bg-secondary rounded-full">
+                                                <X className="w-5 h-5 text-muted-foreground" />
+                                            </Button>
+                                    </Link>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{initialData ? 'Editar Producto' : 'Nuevo Producto'}</span>
+                                        <h1 className="text-sm font-bold text-foreground">{form.watch('title') || 'Sin Título'}</h1>
+                                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{initialData ? 'Editar Producto' : 'Nuevo Producto'}</span>
+                                        <h1 className="text-sm font-bold text-foreground">{form.watch('title') || 'Sin Título'}</h1>
+                                    </div>
+                                    <div className="w-10"></div> {/* Spacer for centering */}
+                                </header>
 
-                {/* Stepper */}
-                {/* Stepper */}
-                {/* Stepper */}
-                <div className="bg-card pb-4 pt-2 px-6 flex justify-between items-center relative z-10 border-b border-border/50 shadow-sm">
-                    <div className="flex flex-col items-center gap-1 z-10 cursor-pointer" onClick={() => setCurrentStep(1)}>
-                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 1 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>{currentStep > 1 ? <Check className="w-4 h-4" /> : "1"}</div>
-                        <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 1 ? "text-brand" : "text-muted-foreground")}>Info</span>
-                    </div>
-                    <div className="flex-1 h-[2px] bg-muted mx-2 relative"><div className={cn("absolute left-0 top-0 h-full bg-brand transition-all duration-500", currentStep >= 2 ? "w-full" : "w-0")} /></div>
+                                {/* Stepper */}
+                                {/* Stepper */}
+                                {/* Stepper */}
+                                <div className="bg-card pb-4 pt-2 px-6 flex justify-between items-center relative z-10 border-b border-border/50 shadow-sm">
+                                    {/* Stepper */}
+                                    <div className="bg-card pb-4 pt-2 px-6 flex justify-between items-center relative z-10 border-b border-border/50 shadow-sm">
+                                        <div className="flex flex-col items-center gap-1 z-10 cursor-pointer" onClick={() => setCurrentStep(1)}>
+                                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 1 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>{currentStep > 1 ? <Check className="w-4 h-4" /> : "1"}</div>
+                                            <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 1 ? "text-brand" : "text-muted-foreground")}>Info</span>
+                                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 1 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>{currentStep > 1 ? <Check className="w-4 h-4" /> : "1"}</div>
+                                            <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 1 ? "text-brand" : "text-muted-foreground")}>Info</span>
+                                        </div>
+                                        <div className="flex-1 h-[2px] bg-muted mx-2 relative"><div className={cn("absolute left-0 top-0 h-full bg-brand transition-all duration-500", currentStep >= 2 ? "w-full" : "w-0")} /></div>
+                                        <div className="flex-1 h-[2px] bg-muted mx-2 relative"><div className={cn("absolute left-0 top-0 h-full bg-brand transition-all duration-500", currentStep >= 2 ? "w-full" : "w-0")} /></div>
 
-                    <div className="flex flex-col items-center gap-1 z-10 cursor-pointer" onClick={() => setCurrentStep(2)}>
-                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 2 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>{currentStep > 2 ? <Check className="w-4 h-4" /> : "2"}</div>
-                        <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 2 ? "text-brand" : "text-muted-foreground")}>Stock</span>
-                    </div>
-                    <div className="flex-1 h-[2px] bg-muted mx-2 relative"><div className={cn("absolute left-0 top-0 h-full bg-brand transition-all duration-500", currentStep >= 3 ? "w-full" : "w-0")} /></div>
+                                        <div className="flex flex-col items-center gap-1 z-10 cursor-pointer" onClick={() => setCurrentStep(2)}>
+                                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 2 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>{currentStep > 2 ? <Check className="w-4 h-4" /> : "2"}</div>
+                                            <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 2 ? "text-brand" : "text-muted-foreground")}>Stock</span>
+                                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 2 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>{currentStep > 2 ? <Check className="w-4 h-4" /> : "2"}</div>
+                                            <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 2 ? "text-brand" : "text-muted-foreground")}>Stock</span>
+                                        </div>
+                                        <div className="flex-1 h-[2px] bg-muted mx-2 relative"><div className={cn("absolute left-0 top-0 h-full bg-brand transition-all duration-500", currentStep >= 3 ? "w-full" : "w-0")} /></div>
+                                        <div className="flex-1 h-[2px] bg-muted mx-2 relative"><div className={cn("absolute left-0 top-0 h-full bg-brand transition-all duration-500", currentStep >= 3 ? "w-full" : "w-0")} /></div>
 
-                    <div className="flex flex-col items-center gap-1 z-10 cursor-pointer" onClick={() => setCurrentStep(3)}>
-                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 3 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>{currentStep > 3 ? <Check className="w-4 h-4" /> : "3"}</div>
-                        <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 3 ? "text-brand" : "text-muted-foreground")}>Fotos</span>
-                    </div>
-                    <div className="flex-1 h-[2px] bg-muted mx-2 relative"><div className={cn("absolute left-0 top-0 h-full bg-brand transition-all duration-500", currentStep >= 4 ? "w-full" : "w-0")} /></div>
+                                        <div className="flex flex-col items-center gap-1 z-10 cursor-pointer" onClick={() => setCurrentStep(3)}>
+                                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 3 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>{currentStep > 3 ? <Check className="w-4 h-4" /> : "3"}</div>
+                                            <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 3 ? "text-brand" : "text-muted-foreground")}>Fotos</span>
+                                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 3 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>{currentStep > 3 ? <Check className="w-4 h-4" /> : "3"}</div>
+                                            <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 3 ? "text-brand" : "text-muted-foreground")}>Fotos</span>
+                                        </div>
+                                        <div className="flex-1 h-[2px] bg-muted mx-2 relative"><div className={cn("absolute left-0 top-0 h-full bg-brand transition-all duration-500", currentStep >= 4 ? "w-full" : "w-0")} /></div>
+                                        <div className="flex-1 h-[2px] bg-muted mx-2 relative"><div className={cn("absolute left-0 top-0 h-full bg-brand transition-all duration-500", currentStep >= 4 ? "w-full" : "w-0")} /></div>
 
-                    <div className="flex flex-col items-center gap-1 z-10 cursor-pointer" onClick={() => setCurrentStep(4)}>
-                        <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 4 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>4</div>
-                        <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 4 ? "text-brand" : "text-muted-foreground")}>Fin</span>
-                    </div>
-                </div>
+                                        <div className="flex flex-col items-center gap-1 z-10 cursor-pointer" onClick={() => setCurrentStep(4)}>
+                                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 4 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>4</div>
+                                            <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 4 ? "text-brand" : "text-muted-foreground")}>Fin</span>
+                                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300", currentStep >= 4 ? "bg-brand text-brand-foreground shadow-lg shadow-brand/30" : "bg-muted text-muted-foreground")}>4</div>
+                                            <span className={cn("text-[10px] font-bold uppercase tracking-wider", currentStep >= 4 ? "text-brand" : "text-muted-foreground")}>Fin</span>
+                                        </div>
+                                    </div>
 
-                {/* Main Content */}
-                <main className="flex-1 overflow-y-auto bg-background p-4 pb-32 md:p-6 md:pb-32">
-                    <div className="max-w-3xl mx-auto">
-                        {renderStep()}
-                    </div>
-                </main>
+                                    {/* Main Content */}
+                                    <main className="flex-1 overflow-y-auto bg-background p-4 pb-32 md:p-6 md:pb-32">
+                                        <main className="flex-1 overflow-y-auto bg-background p-4 pb-32 md:p-6 md:pb-32">
+                                            <div className="max-w-3xl mx-auto">
+                                                {renderStep()}
+                                            </div>
+                                        </main>
 
-                {/* Footer (Hidden on Step 4) */}
-                {currentStep < 4 && (
-                    <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border/50 p-4 z-20">
-                        <div className="max-w-3xl mx-auto flex gap-4">
-                            {currentStep > 1 && (
-                                <Button variant="outline" onClick={() => setCurrentStep(p => p - 1)} className="flex-1 h-12 rounded-xl border-border text-muted-foreground font-bold hover:bg-secondary active:bg-secondary/80 active:scale-[0.98] transition-all">
-                                    Atrás
-                                </Button>
+                                        {/* Footer (Hidden on Step 4) */}
+                                        {currentStep < 4 && (
+                                            <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border/50 p-4 z-20">
+                                                <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border/50 p-4 z-20">
+                                                    <div className="max-w-3xl mx-auto flex gap-4">
+                                                        {currentStep > 1 && (
+                                                            <Button variant="outline" onClick={() => setCurrentStep(p => p - 1)} className="flex-1 h-12 rounded-xl border-border text-muted-foreground font-bold hover:bg-secondary active:bg-secondary/80 active:scale-[0.98] transition-all">
+                                                                <Button variant="outline" onClick={() => setCurrentStep(p => p - 1)} className="flex-1 h-12 rounded-xl border-border text-muted-foreground font-bold hover:bg-secondary active:bg-secondary/80 active:scale-[0.98] transition-all">
+                                                                    Atrás
+                                                                </Button>
                             )}
-                            <Button
-                                onClick={handleNext}
-                                className={cn("flex-1 h-12 rounded-xl bg-brand hover:bg-brand/90 active:bg-brand/80 text-brand-foreground font-bold shadow-lg shadow-brand/25 transition-all active:scale-95", currentStep === 1 && "w-full")}
-                            >
-                                Siguiente Paso <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                        </div>
+                                                                <Button
+                                                                    onClick={handleNext}
+                                                                    className={cn("flex-1 h-12 rounded-xl bg-brand hover:bg-brand/90 active:bg-brand/80 text-brand-foreground font-bold shadow-lg shadow-brand/25 transition-all active:scale-95", currentStep === 1 && "w-full")}
+                                                                    className={cn("flex-1 h-12 rounded-xl bg-brand hover:bg-brand/90 active:bg-brand/80 text-brand-foreground font-bold shadow-lg shadow-brand/25 transition-all active:scale-95", currentStep === 1 && "w-full")}
+                                                                >
+                                                                    Siguiente Paso <ArrowRight className="w-4 h-4 ml-2" />
+                                                                </Button>
+                                                            </div>
                     </footer>
                 )}
-            </div>
+                                            </div>
         </Form>
-    );
+                                    );
 }
