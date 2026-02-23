@@ -550,34 +550,6 @@ export default function ProfilePage() {
                                   {translateStatus(order.status)}
                                 </Badge>
                               </div>
-                    {orders.length === 0 ? (
-                      <div className="text-center p-8 text-muted-foreground">Aún no has realizado pedidos.</div>
-                    ) : (
-                      orders.map((order) => (
-                        <div key={order.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-lg border hover:bg-secondary/30 transition-colors">
-                          <div className="flex items-center gap-4">
-                            <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-white border shadow-sm group-hover:shadow-md transition-shadow">
-                              {getOrderImage(order) ? (
-                                <Image
-                                  src={getOrderImage(order)}
-                                  alt="Product"
-                                  fill
-                                  className="object-cover p-1 transition-transform duration-500 group-hover:scale-105"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-secondary/20 flex flex-col items-center justify-center">
-                                  <Package className="w-4 h-4 text-muted-foreground/40" />
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-black text-base text-foreground/90">Pedido #{order.id}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">{new Date(order.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
-                              <div className="mt-2 text-left">
-                                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-wider bg-secondary/30">
-                                  {translateStatus(order.status)}
-                                </Badge>
-                              </div>
                             </div>
                           </div>
                           <div className="flex items-center justify-between w-full sm:w-auto gap-8 sm:pr-4">
@@ -980,54 +952,54 @@ export default function ProfilePage() {
               </TabsContent>
             </div>
 
-                  {/* Sidebar / Quick Actions (Desktop) */}
-                  <div className="space-y-6">
-                    <Card className="bg-primary text-primary-foreground border-none shadow-xl relative overflow-hidden">
-                      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                      <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl"></div>
-                      <CardContent className="p-6 relative z-10">
-                        <h3 className="font-black text-xl uppercase mb-2">Invita a un amigo</h3>
-                        <p className="text-sm opacity-90 mb-4">Gana 500 puntos por cada amigo que realice su primera compra.</p>
-                        <Button variant="secondary" className="w-full font-bold text-xs uppercase tracking-wider">
-                          Copiar Link
-                        </Button>
-                      </CardContent>
-                    </Card>
+            {/* Sidebar / Quick Actions (Desktop) */}
+            <div className="space-y-6">
+              <Card className="bg-primary text-primary-foreground border-none shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl"></div>
+                <CardContent className="p-6 relative z-10">
+                  <h3 className="font-black text-xl uppercase mb-2">Invita a un amigo</h3>
+                  <p className="text-sm opacity-90 mb-4">Gana 500 puntos por cada amigo que realice su primera compra.</p>
+                  <Button variant="secondary" className="w-full font-bold text-xs uppercase tracking-wider">
+                    Copiar Link
+                  </Button>
+                </CardContent>
+              </Card>
 
-                    <div className="space-y-2">
-                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-2">Accesos Rápidos</h4>
-                      {(profile?.role === 'admin' || user?.user_metadata?.role === 'admin') && (
-                        <Link href="/admin">
-                          <Button variant="ghost" className="w-full justify-start text-left font-medium hover:bg-secondary/50">
-                            <Shield className="w-4 h-4 mr-3" />
-                            Panel de Administrador
-                          </Button>
-                        </Link>
-                      )}
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-left font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={handleLogout}
-                        disabled={isLoggingOut}
-                      >
-                        {isLoggingOut ? (
-                          <>
-                            <div className="w-4 h-4 mr-3 border-2 border-destructive border-t-transparent rounded-full animate-spin"></div>
-                            Cerrando sesión...
-                          </>
-                        ) : (
-                          <>
-                            <LogOut className="w-4 h-4 mr-3" />
-                            Cerrar Sesión
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-2">Accesos Rápidos</h4>
+                {(profile?.role === 'admin' || user?.user_metadata?.role === 'admin') && (
+                  <Link href="/admin">
+                    <Button variant="ghost" className="w-full justify-start text-left font-medium hover:bg-secondary/50">
+                      <Shield className="w-4 h-4 mr-3" />
+                      Panel de Administrador
+                    </Button>
+                  </Link>
+                )}
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-left font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                >
+                  {isLoggingOut ? (
+                    <>
+                      <div className="w-4 h-4 mr-3 border-2 border-destructive border-t-transparent rounded-full animate-spin"></div>
+                      Cerrando sesión...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="w-4 h-4 mr-3" />
+                      Cerrar Sesión
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
 
-                </div>
-              </Tabs >
-            </div >
-          </div >
-          );
+          </div>
+        </Tabs >
+      </div >
+    </div >
+  );
 }

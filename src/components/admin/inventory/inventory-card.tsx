@@ -4,12 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MoreHorizontal, Box, Eye, Edit, Loader2, ArrowUpRight, CheckCircle2, AlertCircle, XCircle, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, Box, Eye, Edit, Loader2, ArrowUpRight, CheckCircle2, AlertCircle, XCircle, FileText } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -31,7 +28,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteProduct, toggleProductStatus } from "@/lib/actions/products";
 import { useToast } from "@/hooks/use-toast";
-import * as motion from "framer-motion/client";
 import * as motion from "framer-motion/client";
 
 interface InventoryCardProps {

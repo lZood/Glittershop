@@ -754,20 +754,17 @@ export default function Header() {
                             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Tienda</h3>
                             <nav className="flex flex-col space-y-1">
                               {mobileTiendaLinks.map((link) => (
-                                {
-                                  mobileTiendaLinks.map((link) => (
-                                    <SheetClose asChild key={link.label}>
-                                      <Link
-                                        href={link.href}
-                                        className="group flex items-center justify-between py-2 text-lg font-medium transition-all hover:pl-2 hover:text-primary"
-                                      >
-                                        {link.label}
-                                        <ChevronRight className="w-4 h-4 opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0 text-primary" />
-                                      </Link>
-                                    </SheetClose>
-                                  ))
-                                }
-                  </nav>
+                                <SheetClose asChild key={link.label}>
+                                  <Link
+                                    href={link.href}
+                                    className="group flex items-center justify-between py-2 text-lg font-medium transition-all hover:pl-2 hover:text-primary"
+                                  >
+                                    {link.label}
+                                    <ChevronRight className="w-4 h-4 opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0 text-primary" />
+                                  </Link>
+                                </SheetClose>
+                              ))}
+                            </nav>
                           </div>
 
                           {/* Colecciones Section */}
