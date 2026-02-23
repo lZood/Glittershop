@@ -65,7 +65,11 @@ export function HeroSection() {
 
             {/* Hero Content */}
             <div className="relative z-10 px-4 max-w-4xl mx-auto flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 mt-16 md:mt-20">
-                <span className="text-white tracking-[0.6em] uppercase text-[10px] md:text-xs mb-8 font-bold bg-black/40 backdrop-blur-md px-6 py-2 border border-white/10">T O D O P A R A B R I L L A R</span>
+                <span className="text-white tracking-[0.6em] uppercase text-[10px] md:text-xs mb-8 font-bold bg-black/40 backdrop-blur-md px-6 py-2 border border-white/10 inline-flex items-center gap-4 sm:gap-6">
+                    <span>T O D O</span>
+                    <span>P A R A</span>
+                    <span>B R I L L A R</span>
+                </span>
                 <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white mb-6 drop-shadow-xl font-light leading-tight">
                     Sé <span className="italic">BIENVENIDA</span> <br /> a este mundo
                 </h1>
