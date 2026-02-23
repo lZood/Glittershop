@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -147,12 +147,6 @@ export default function ProfilePage() {
 
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | undefined>(undefined);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
-
-  const [isAddingAddress, setIsAddingAddress] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<Address | undefined>(undefined);
 
   const [connectionError, setConnectionError] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -204,7 +198,7 @@ export default function ProfilePage() {
       router.push('/login');
     }
 
-    // Si terminó de cargar y no hay sesión ni usuario, y hubo timeout
+    // Si terminÃ³ de cargar y no hay sesiÃ³n ni usuario, y hubo timeout
     if (!isLoading && !session && !user) {
       setConnectionError(true);
     }
@@ -229,9 +223,9 @@ export default function ProfilePage() {
             <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-4">
               <Shield className="w-6 h-6" />
             </div>
-            <CardTitle>Error de Conexión</CardTitle>
+            <CardTitle>Error de ConexiÃ³n</CardTitle>
             <CardDescription>
-              No pudimos conectar con el servidor de Supabase. Por favor, verifica que tu conexión a internet sea estable y que el servidor esté activo.
+              No pudimos conectar con el servidor de Supabase. Por favor, verifica que tu conexiÃ³n a internet sea estable y que el servidor estÃ© activo.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -239,7 +233,7 @@ export default function ProfilePage() {
               URL: {process.env.NEXT_PUBLIC_SUPABASE_URL}
             </div>
             <Button className="w-full" onClick={() => window.location.reload()}>
-              Reintentar conexión
+              Reintentar conexiÃ³n
             </Button>
           </CardContent>
         </Card>
@@ -248,7 +242,7 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return null; // El useEffect se encargará de la redirección
+    return null; // El useEffect se encargarÃ¡ de la redirecciÃ³n
   }
 
   return (
@@ -342,7 +336,7 @@ export default function ProfilePage() {
                           <div className="p-2 bg-primary/10 rounded-full">
                             <Package className="w-5 h-5 text-primary" />
                           </div>
-                          <CardTitle className="text-sm font-black uppercase tracking-widest text-foreground/80">Último Pedido</CardTitle>
+                          <CardTitle className="text-sm font-black uppercase tracking-widest text-foreground/80">Ãšltimo Pedido</CardTitle>
                         </div>
                         <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200/50 shadow-sm font-black uppercase tracking-wider text-[10px] px-3 py-1">
                           {translateStatus(recentOrder.status)}
@@ -368,7 +362,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="flex-1 space-y-2">
                           <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase">Pedido #{recentOrder.id}</p>
-                          <h3 className="font-black text-xl md:text-2xl leading-tight line-clamp-2 text-foreground/90">{recentOrder.order_items?.[0]?.product?.name || 'Varios Artículos'}</h3>
+                          <h3 className="font-black text-xl md:text-2xl leading-tight line-clamp-2 text-foreground/90">{recentOrder.order_items?.[0]?.product?.name || 'Varios ArtÃ­culos'}</h3>
                           <p className="text-sm font-medium text-muted-foreground pt-1">Fecha: <span className="text-primary font-bold">{new Date(recentOrder.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</span></p>
                         </div>
                         <Button size="icon" variant="default" className="rounded-full shadow-lg shadow-primary/20 hover:scale-105 transition-transform h-12 w-12 shrink-0 group" asChild>
@@ -376,59 +370,7 @@ export default function ProfilePage() {
                             <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                           </Link>
                         </Button>
-                        {recentOrder ? (
-                          <Card className="overflow-hidden border-none shadow-2xl bg-gradient-to-br from-background via-secondary/10 to-primary/5 hover:shadow-primary/10 transition-shadow duration-500 rounded-3xl relative before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/40 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:pointer-events-none border border-border/50">
-                            <CardHeader className="border-b border-border/50 bg-secondary/20 pb-4 backdrop-blur-sm">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-2 bg-primary/10 rounded-full">
-                                    <Package className="w-5 h-5 text-primary" />
-                                  </div>
-                                  <CardTitle className="text-sm font-black uppercase tracking-widest text-foreground/80">Último Pedido</CardTitle>
-                                </div>
-                                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200/50 shadow-sm font-black uppercase tracking-wider text-[10px] px-3 py-1">
-                                  {translateStatus(recentOrder.status)}
-                                </Badge>
-                              </div>
-                            </CardHeader>
-                            <CardContent className="p-6 md:p-8">
-                              <div className="flex items-center gap-6 md:gap-8">
-                                <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden bg-white border border-border/50 shadow-inner flex-shrink-0 group">
-                                  {getOrderImage(recentOrder) ? (
-                                    <Image
-                                      src={getOrderImage(recentOrder)}
-                                      alt="Product"
-                                      fill
-                                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                      className="object-cover p-1 transition-transform duration-700 group-hover:scale-110"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full bg-secondary/50 flex items-center justify-center">
-                                      <Package className="w-6 h-6 text-muted-foreground/50" />
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex-1 space-y-2">
-                                  <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase">Pedido #{recentOrder.id}</p>
-                                  <h3 className="font-black text-xl md:text-2xl leading-tight line-clamp-2 text-foreground/90">{recentOrder.order_items?.[0]?.product?.name || 'Varios Artículos'}</h3>
-                                  <p className="text-sm font-medium text-muted-foreground pt-1">Fecha: <span className="text-primary font-bold">{new Date(recentOrder.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</span></p>
-                                </div>
-                                <Button size="icon" variant="default" className="rounded-full shadow-lg shadow-primary/20 hover:scale-105 transition-transform h-12 w-12 shrink-0 group" asChild>
-                                  <Link href={`/profile/orders/${recentOrder.id}`}>
-                                    <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                                  </Link>
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ) : (
-                          <Card className="overflow-hidden shadow-sm rounded-3xl border-dashed border-2">
-                            <CardContent className="p-12 text-center text-muted-foreground">
-                              No tienes pedidos recientes. <br />
-                              <Link href="/shop" className="text-primary hover:text-primary/80 transition-colors mt-4 inline-block font-black uppercase tracking-widest text-sm">Explorar Boutique</Link>
-                            </CardContent>
-                          </Card>
-                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ) : (
@@ -447,15 +389,11 @@ export default function ProfilePage() {
                       <CardContent className="p-6 flex flex-col items-center text-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
                           <Star className="w-6 h-6" />
-                          <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
-                            <Star className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="text-2xl font-black">{mounted ? wishlistItems.length : '-'}</p>
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Lista de deseos</p>
-                            <p className="text-2xl font-black">{mounted ? wishlistItems.length : '-'}</p>
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Lista de deseos</p>
-                          </div>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-black">{mounted ? wishlistItems.length : '-'}</p>
+                          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Lista de deseos</p>
+                        </div>
                       </CardContent>
                     </Card>
                   </Link>
@@ -509,7 +447,7 @@ export default function ProfilePage() {
                       ))}
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-6 text-center italic font-medium">
-                      * El porcentaje de puntos se calcula sobre el total de tu compra. ¡Sube de nivel comprando más!
+                      * El porcentaje de puntos se calcula sobre el total de tu compra. Â¡Sube de nivel comprando mÃ¡s!
                     </p>
                   </CardContent>
                 </Card>
@@ -523,7 +461,7 @@ export default function ProfilePage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {orders.length === 0 ? (
-                      <div className="text-center p-8 text-muted-foreground">Aún no has realizado pedidos.</div>
+                      <div className="text-center p-8 text-muted-foreground">AÃºn no has realizado pedidos.</div>
                     ) : (
                       orders.map((order) => (
                         <div key={order.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-lg border hover:bg-secondary/30 transition-colors">
@@ -581,7 +519,7 @@ export default function ProfilePage() {
                       { id: 'pts-500', points: 500, label: '$50 MXN', desc: 'Descuento' },
                       { id: 'pts-1000', points: 1000, label: '$100 MXN', desc: 'Descuento' },
                       { id: 'pts-2000', points: 2000, label: '10% OFF', desc: 'Todo el Carrito' },
-                      { id: 'pts-5000', points: 5000, label: '25% OFF', desc: 'Súper Cupón' },
+                      { id: 'pts-5000', points: 5000, label: '25% OFF', desc: 'SÃºper CupÃ³n' },
                     ].map((opt) => (
                       <Card key={opt.id} className={cn(
                         "relative overflow-hidden group cursor-pointer border-2 transition-all duration-300",
@@ -599,12 +537,12 @@ export default function ProfilePage() {
                           if (data.success) {
                             setMyCoupons([data.coupon, ...myCoupons]);
                             setUserPoints(data.remainingPoints);
-                            setCouponResult({ valid: true, message: `¡Has canjeado ${opt.label} con éxito!` });
+                            setCouponResult({ valid: true, message: `Â¡Has canjeado ${opt.label} con Ã©xito!` });
                           } else {
                             setCouponResult({ valid: false, message: data.error });
                           }
                         } catch (e) {
-                          setCouponResult({ valid: false, message: 'Error de conexión' });
+                          setCouponResult({ valid: false, message: 'Error de conexiÃ³n' });
                         } finally {
                           setIsRedeeming(false);
                         }
@@ -641,8 +579,8 @@ export default function ProfilePage() {
 
                 <Card className="border-none shadow-xl bg-gradient-to-br from-secondary/20 to-primary/5 rounded-3xl">
                   <CardHeader>
-                    <CardTitle className="text-sm font-black uppercase tracking-widest text-foreground/80">Canjear Cupón</CardTitle>
-                    <CardDescription>Ingresa tu código promocional para añadirlo a tu cuenta.</CardDescription>
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-foreground/80">Canjear CupÃ³n</CardTitle>
+                    <CardDescription>Ingresa tu cÃ³digo promocional para aÃ±adirlo a tu cuenta.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 md:p-8">
                     <div className="flex flex-col md:flex-row gap-4">
@@ -676,7 +614,7 @@ export default function ProfilePage() {
                               }
                             }
                           } catch (e) {
-                            setCouponResult({ valid: false, message: 'Error de conexión' });
+                            setCouponResult({ valid: false, message: 'Error de conexiÃ³n' });
                           } finally {
                             setIsValidatingCoupon(false);
                           }
@@ -692,7 +630,7 @@ export default function ProfilePage() {
                         : 'bg-destructive/10 border-destructive/20 text-destructive'
                         }`}>
                         {couponResult.valid ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-                        <p className="text-sm font-bold">{couponResult.message || (couponResult.valid ? `¡Cupón ${couponResult.coupon.code} aplicado con éxito!` : 'Error al validar')}</p>
+                        <p className="text-sm font-bold">{couponResult.message || (couponResult.valid ? `Â¡CupÃ³n ${couponResult.coupon.code} aplicado con Ã©xito!` : 'Error al validar')}</p>
                       </div>
                     )}
                   </CardContent>
@@ -753,8 +691,8 @@ export default function ProfilePage() {
                           <User className="w-4 h-4" />
                         </div>
                         <div className="text-left">
-                          <p className="font-bold text-sm">Información Personal</p>
-                          <p className="text-xs text-muted-foreground font-normal">Nombre, Email, Teléfono</p>
+                          <p className="font-bold text-sm">InformaciÃ³n Personal</p>
+                          <p className="text-xs text-muted-foreground font-normal">Nombre, Email, TelÃ©fono</p>
                         </div>
                       </div>
                     </AccordionTrigger>
@@ -769,7 +707,7 @@ export default function ProfilePage() {
                           <Input id="email" defaultValue={user?.email || ''} readOnly className="bg-muted" />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="phone">Teléfono</Label>
+                          <Label htmlFor="phone">TelÃ©fono</Label>
                           <Input id="phone" placeholder="+52 (55) 1234 5678" />
                         </div>
                       </div>
@@ -788,7 +726,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="text-left">
                           <p className="font-bold text-sm">Direcciones</p>
-                          <p className="text-xs text-muted-foreground font-normal">Gestiona tus direcciones de envío</p>
+                          <p className="text-xs text-muted-foreground font-normal">Gestiona tus direcciones de envÃ­o</p>
                         </div>
                       </div>
                     </AccordionTrigger>
@@ -841,20 +779,20 @@ export default function ProfilePage() {
                                       className="h-8 w-8 text-destructive hover:bg-destructive/10"
                                       disabled={!!isDeletingAddress}
                                       onClick={async () => {
-                                        if (confirm('¿Estás seguro de que deseas eliminar esta dirección?')) {
+                                        if (confirm('Â¿EstÃ¡s seguro de que deseas eliminar esta direcciÃ³n?')) {
                                           setIsDeletingAddress(addr.id);
                                           const result = await deleteAddress(addr.id);
                                           if (result.success) {
                                             const newAddresses = await getUserAddresses();
                                             setAddresses(newAddresses);
                                             toast({
-                                              title: "Dirección eliminada",
-                                              description: "La dirección ha sido eliminada correctamente."
+                                              title: "DirecciÃ³n eliminada",
+                                              description: "La direcciÃ³n ha sido eliminada correctamente."
                                             });
                                           } else {
                                             toast({
                                               title: "Error",
-                                              description: result.error || "No se pudo eliminar la dirección",
+                                              description: result.error || "No se pudo eliminar la direcciÃ³n",
                                               variant: "destructive"
                                             });
                                           }
@@ -878,7 +816,7 @@ export default function ProfilePage() {
                               onClick={() => setIsAddingAddress(true)}
                               disabled={!!isDeletingAddress}
                             >
-                              <Plus className="w-4 h-4 mr-2" /> Agregar Nueva Dirección
+                              <Plus className="w-4 h-4 mr-2" /> Agregar Nueva DirecciÃ³n
                             </Button>
                           </>
                         )}
@@ -895,7 +833,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="text-left">
                           <p className="font-bold text-sm">Notificaciones</p>
-                          <p className="text-xs text-muted-foreground font-normal">Elige cómo quieres que te contactemos</p>
+                          <p className="text-xs text-muted-foreground font-normal">Elige cÃ³mo quieres que te contactemos</p>
                         </div>
                       </div>
                     </AccordionTrigger>
@@ -929,7 +867,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="text-left">
                           <p className="font-bold text-sm">Preferencias de Contacto</p>
-                          <p className="text-xs text-muted-foreground font-normal">Opciones de mensajería</p>
+                          <p className="text-xs text-muted-foreground font-normal">Opciones de mensajerÃ­a</p>
                         </div>
                       </div>
                     </AccordionTrigger>
@@ -952,54 +890,54 @@ export default function ProfilePage() {
               </TabsContent>
             </div>
 
-            {/* Sidebar / Quick Actions (Desktop) */}
-            <div className="space-y-6">
-              <Card className="bg-primary text-primary-foreground border-none shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl"></div>
-                <CardContent className="p-6 relative z-10">
-                  <h3 className="font-black text-xl uppercase mb-2">Invita a un amigo</h3>
-                  <p className="text-sm opacity-90 mb-4">Gana 500 puntos por cada amigo que realice su primera compra.</p>
-                  <Button variant="secondary" className="w-full font-bold text-xs uppercase tracking-wider">
-                    Copiar Link
-                  </Button>
-                </CardContent>
-              </Card>
+                  {/* Sidebar / Quick Actions (Desktop) */}
+                  <div className="space-y-6">
+                    <Card className="bg-primary text-primary-foreground border-none shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                      <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-black/10 rounded-full blur-xl"></div>
+                      <CardContent className="p-6 relative z-10">
+                        <h3 className="font-black text-xl uppercase mb-2">Invita a un amigo</h3>
+                        <p className="text-sm opacity-90 mb-4">Gana 500 puntos por cada amigo que realice su primera compra.</p>
+                        <Button variant="secondary" className="w-full font-bold text-xs uppercase tracking-wider">
+                          Copiar Link
+                        </Button>
+                      </CardContent>
+                    </Card>
 
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-2">Accesos Rápidos</h4>
-                {(profile?.role === 'admin' || user?.user_metadata?.role === 'admin') && (
-                  <Link href="/admin">
-                    <Button variant="ghost" className="w-full justify-start text-left font-medium hover:bg-secondary/50">
-                      <Shield className="w-4 h-4 mr-3" />
-                      Panel de Administrador
-                    </Button>
-                  </Link>
-                )}
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-left font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                >
-                  {isLoggingOut ? (
-                    <>
-                      <div className="w-4 h-4 mr-3 border-2 border-destructive border-t-transparent rounded-full animate-spin"></div>
-                      Cerrando sesión...
-                    </>
-                  ) : (
-                    <>
-                      <LogOut className="w-4 h-4 mr-3" />
-                      Cerrar Sesión
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-2">Accesos RÃ¡pidos</h4>
+                      {(profile?.role === 'admin' || user?.user_metadata?.role === 'admin') && (
+                        <Link href="/admin">
+                          <Button variant="ghost" className="w-full justify-start text-left font-medium hover:bg-secondary/50">
+                            <Shield className="w-4 h-4 mr-3" />
+                            Panel de Administrador
+                          </Button>
+                        </Link>
+                      )}
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-left font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                      >
+                        {isLoggingOut ? (
+                          <>
+                            <div className="w-4 h-4 mr-3 border-2 border-destructive border-t-transparent rounded-full animate-spin"></div>
+                            Cerrando sesiÃ³n...
+                          </>
+                        ) : (
+                          <>
+                            <LogOut className="w-4 h-4 mr-3" />
+                            Cerrar SesiÃ³n
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
 
-          </div>
-        </Tabs >
-      </div >
-    </div >
-  );
+                </div>
+              </Tabs >
+            </div >
+          </div >
+          );
 }
